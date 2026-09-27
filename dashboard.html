@@ -19,9 +19,12 @@
       <button id="franchiseFilterButton" class="filter-button" type="button">Franchises: All Locations <span>▾</span></button>
       <div id="franchiseFilterPanel" class="filter-panel" hidden>
         <div class="filter-panel-head">
-          <div>
-            <p class="section-kicker">Franchise Filter</p>
-            <h3>Select locations</h3>
+          <div class="filter-panel-title-row">
+            <button id="backFranchiseFilter" class="secondary-button" type="button">← Back</button>
+            <div>
+              <p class="section-kicker">Franchise Filter</p>
+              <h3>Select locations</h3>
+            </div>
           </div>
           <button id="closeFranchiseFilter" class="icon-button" type="button" aria-label="Close">×</button>
         </div>
@@ -33,13 +36,6 @@
         <div id="franchiseCheckboxList" class="checkbox-list"></div>
       </div>
     </div>
-    <div class="date-tabs" role="group" aria-label="Date range">
-      <button class="date-tab active" type="button">Today</button>
-      <button class="date-tab" type="button">7 Days</button>
-      <button class="date-tab" type="button">30 Days</button>
-      <button class="date-tab" type="button">Custom</button>
-    </div>
-    <button class="secondary-button" type="button">Search</button>
     <span id="userName" class="user-name">Loading…</span>
     <button id="logoutButton" class="secondary-button" type="button">Log out</button>
   </div>
