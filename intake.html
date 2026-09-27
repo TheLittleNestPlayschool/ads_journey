@@ -18,94 +18,66 @@
   </div>
 </header>
 <main class="page-shell">
-  <section class="intro-card">
-    <div>
-      <p class="section-kicker">Step 1</p>
-      <h2>New Messenger Inquiry</h2>
-      <p>Create one record as soon as a new Facebook conversation begins. Keep it quick; more information can be added later as the parent journey develops.</p>
-    </div>
-    <div class="status-pill">Manual intake</div>
+  <section class="form-card">
+    <form id="inquiryForm" novalidate>
+      <div class="field-grid two-column">
+        <div class="field">
+          <label for="facebookName">Facebook name <span>*</span></label>
+          <input id="facebookName" name="facebook_name" type="text" autocomplete="off" required placeholder="AlexRose Pitogo">
+        </div>
+        <div class="field">
+          <label for="franchiseId">Branch / location <span>*</span></label>
+          <select id="franchiseId" name="franchise_id" required disabled>
+            <option value="">Loading branches…</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="facebookProfileUrl">Facebook profile URL <span>*</span></label>
+        <input id="facebookProfileUrl" name="facebook_profile_url" type="url" autocomplete="off" required placeholder="https://facebook.com/username">
+        <p class="field-help">Open the parent's Facebook profile and paste the URL here.</p>
+      </div>
+      <div class="field-grid two-column">
+        <div class="field">
+          <label for="facebookUsername">Facebook username</label>
+          <input id="facebookUsername" name="facebook_username" type="text" autocomplete="off" placeholder="username">
+        </div>
+        <div class="field">
+          <label for="adId">Ad ID</label>
+          <input id="adId" name="ad_id" type="text" autocomplete="off" placeholder="120249070251960208">
+        </div>
+      </div>
+      <div class="field-grid two-column">
+        <div class="field">
+          <label for="firstMessageAt">First message time <span>*</span></label>
+          <input id="firstMessageAt" name="first_message_at" type="datetime-local" required>
+        </div>
+        <div class="field">
+          <label for="inquiryType">Initial inquiry</label>
+          <select id="inquiryType" name="inquiry_type">
+            <option value="">Select if known</option>
+            <option value="rates">Rates / tuition</option>
+            <option value="schedule">Schedule</option>
+            <option value="location">Location</option>
+            <option value="free_trial">Free trial</option>
+            <option value="enrollment">Enrollment</option>
+            <option value="age_group">Age group</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="initialNote">Initial note</label>
+        <textarea id="initialNote" name="initial_note" rows="4" placeholder="Example: Asked for location and tuition for a 2-year-old."></textarea>
+      </div>
+      <div id="duplicateStatus" hidden></div>
+      <div id="formMessage" class="form-message" role="alert" aria-live="polite"></div>
+      <div class="form-actions">
+        <button id="clearButton" class="secondary-button" type="button">Clear</button>
+        <button id="saveButton" class="primary-button" type="submit">Create Inquiry</button>
+      </div>
+    </form>
   </section>
-  <div class="layout-grid">
-    <section class="form-card">
-      <form id="inquiryForm" novalidate>
-        <div class="field-grid two-column">
-          <div class="field">
-            <label for="facebookName">Facebook name <span>*</span></label>
-            <input id="facebookName" name="facebook_name" type="text" autocomplete="off" required placeholder="AlexRose Pitogo">
-          </div>
-          <div class="field">
-            <label for="franchiseId">Branch / location <span>*</span></label>
-            <select id="franchiseId" name="franchise_id" required disabled>
-              <option value="">Loading branches…</option>
-            </select>
-          </div>
-        </div>
-        <div class="field">
-          <label for="facebookProfileUrl">Facebook profile URL <span>*</span></label>
-          <input id="facebookProfileUrl" name="facebook_profile_url" type="url" autocomplete="off" required placeholder="https://facebook.com/username">
-          <p class="field-help">Open the parent's Facebook profile and paste the URL here.</p>
-        </div>
-        <div class="field-grid two-column">
-          <div class="field">
-            <label for="facebookUsername">Facebook username</label>
-            <input id="facebookUsername" name="facebook_username" type="text" autocomplete="off" placeholder="username">
-          </div>
-          <div class="field">
-            <label for="adId">Ad ID</label>
-            <input id="adId" name="ad_id" type="text" autocomplete="off" placeholder="120249070251960208">
-          </div>
-        </div>
-        <div class="field-grid two-column">
-          <div class="field">
-            <label for="firstMessageAt">First message time <span>*</span></label>
-            <input id="firstMessageAt" name="first_message_at" type="datetime-local" required>
-          </div>
-          <div class="field">
-            <label for="inquiryType">Initial inquiry</label>
-            <select id="inquiryType" name="inquiry_type">
-              <option value="">Select if known</option>
-              <option value="rates">Rates / tuition</option>
-              <option value="schedule">Schedule</option>
-              <option value="location">Location</option>
-              <option value="free_trial">Free trial</option>
-              <option value="enrollment">Enrollment</option>
-              <option value="age_group">Age group</option>
-              <option value="other">Other</option>
-            </select>
-          </div>
-        </div>
-        <div class="field">
-          <label for="initialNote">Initial note</label>
-          <textarea id="initialNote" name="initial_note" rows="4" placeholder="Example: Asked for location and tuition for a 2-year-old."></textarea>
-        </div>
-        <div id="formMessage" class="form-message" role="alert" aria-live="polite"></div>
-        <div class="form-actions">
-          <button id="clearButton" class="secondary-button" type="button">Clear</button>
-          <button id="saveButton" class="primary-button" type="submit">Create Inquiry</button>
-        </div>
-      </form>
-    </section>
-    <aside class="side-column">
-      <section class="side-card">
-        <p class="section-kicker">Duplicate check</p>
-        <h3>Search before creating</h3>
-        <p>When the search endpoint is connected, entering a Facebook username or profile URL will check for an existing record before a new one is created.</p>
-        <div id="duplicateStatus" class="empty-state">No duplicate check run yet.</div>
-      </section>
-      <section class="side-card">
-        <p class="section-kicker">What we capture now</p>
-        <ul class="capture-list">
-          <li>Facebook identity</li>
-          <li>Branch / location</li>
-          <li>Ad ID when visible</li>
-          <li>First message time</li>
-          <li>Initial inquiry type</li>
-          <li>Admin who created the record</li>
-        </ul>
-      </section>
-    </aside>
-  </div>
 </main>
 <div id="messageModal" class="message-modal" hidden>
   <div class="message-modal-backdrop"></div>
