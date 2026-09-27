@@ -43,3 +43,4 @@ const journeyStyle=document.createElement('link');journeyStyle.rel='stylesheet';
 const journeyScript=document.createElement('script');journeyScript.src='journey_panel.js';document.body.appendChild(journeyScript);
 const inquiryStyle=document.createElement('link');inquiryStyle.rel='stylesheet';inquiryStyle.href='inquiry_modal.css';document.head.appendChild(inquiryStyle);
 const inquiryScript=document.createElement('script');inquiryScript.src='inquiry_modal.js';document.body.appendChild(inquiryScript);
+const buttonStyle=document.createElement('link');buttonStyle.rel='stylesheet';buttonStyle.href='button_readability.css';document.head.appendChild(buttonStyle);
