@@ -107,6 +107,17 @@
     </aside>
   </div>
 </main>
+<div id="messageModal" class="message-modal" hidden>
+  <div class="message-modal-backdrop"></div>
+  <section class="message-modal-card" role="alertdialog" aria-modal="true" aria-labelledby="messageModalTitle" aria-describedby="messageModalText">
+    <p class="section-kicker">Messenger Intake</p>
+    <h3 id="messageModalTitle">Unable to create inquiry</h3>
+    <p id="messageModalText"></p>
+    <div class="message-modal-actions">
+      <button id="messageModalOk" class="primary-button" type="button">OK</button>
+    </div>
+  </section>
+</div>
 <script src="intake.js"></script>
 </body>
 </html>
