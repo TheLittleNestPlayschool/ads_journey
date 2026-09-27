@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ads Journey | The Little Nest</title>
+<link rel="stylesheet" href="login.css">
+</head>
+<body>
+<main class="login-shell">
+<section class="login-card" aria-labelledby="login-title">
+<div class="brand-mark">TLN</div>
+<p class="eyebrow">The Little Nest Playschool</p>
+<h1 id="login-title">Ads Journey</h1>
+<p class="subtext">Sign in to manage inquiries, trials, follow-ups and enrollments.</p>
+<form id="loginForm" novalidate>
+<label for="username">Username</label>
+<input id="username" name="username" type="text" autocomplete="username" required>
+<label for="password">Password</label>
+<div class="password-wrap">
+<input id="password" name="password" type="password" autocomplete="current-password" required>
+<button id="togglePassword" class="password-toggle" type="button" aria-label="Show password">Show</button>
+</div>
+<button id="loginButton" class="login-button" type="submit">Sign In</button>
+<p id="loginMessage" class="login-message" role="alert" aria-live="polite"></p>
+</form>
+</section>
+</main>
+<script src="login.js"></script>
+</body>
+</html>
