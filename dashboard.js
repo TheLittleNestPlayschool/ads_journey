@@ -11,6 +11,7 @@ const logoutButton=document.getElementById('logoutButton');
 const franchiseFilterButton=document.getElementById('franchiseFilterButton');
 const franchiseFilterPanel=document.getElementById('franchiseFilterPanel');
 const closeFranchiseFilter=document.getElementById('closeFranchiseFilter');
+const backFranchiseFilter=document.getElementById('backFranchiseFilter');
 const franchiseSearch=document.getElementById('franchiseSearch');
 const franchiseCheckboxList=document.getElementById('franchiseCheckboxList');
 const selectAllFranchises=document.getElementById('selectAllFranchises');
@@ -30,11 +31,11 @@ function openFilter(){franchiseFilterPanel.hidden=false;franchiseSearch.focus();
 function closeFilter(){franchiseFilterPanel.hidden=true;franchiseSearch.value='';renderFranchiseList();}
 franchiseFilterButton.addEventListener('click',()=>franchiseFilterPanel.hidden?openFilter():closeFilter());
 closeFranchiseFilter.addEventListener('click',closeFilter);
+backFranchiseFilter.addEventListener('click',closeFilter);
 franchiseSearch.addEventListener('input',()=>renderFranchiseList(franchiseSearch.value));
 selectAllFranchises.addEventListener('click',()=>{selectedFranchiseIds=new Set(franchises.map(item=>Number(item.id)));saveSelection();renderFranchiseList(franchiseSearch.value);updateFilterLabel();});
 clearAllFranchises.addEventListener('click',()=>{selectedFranchiseIds.clear();saveSelection();renderFranchiseList(franchiseSearch.value);updateFilterLabel();});
 document.addEventListener('click',event=>{if(!franchiseFilterPanel.hidden&&!event.target.closest('.filter-wrap'))closeFilter();});
-document.querySelectorAll('.date-tab').forEach(button=>button.addEventListener('click',()=>{document.querySelectorAll('.date-tab').forEach(item=>item.classList.remove('active'));button.classList.add('active');}));
 document.querySelectorAll('.tab-row').forEach(row=>row.querySelectorAll('.small-tab').forEach(button=>button.addEventListener('click',()=>{row.querySelectorAll('.small-tab').forEach(item=>item.classList.remove('active'));button.classList.add('active');})));
 logoutButton.addEventListener('click',logout);
 function logout(){localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(USER_KEY);window.location.replace('index.html');}
