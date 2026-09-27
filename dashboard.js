@@ -38,3 +38,5 @@ document.querySelectorAll('.date-tab').forEach(button=>button.addEventListener('
 document.querySelectorAll('.tab-row').forEach(row=>row.querySelectorAll('.small-tab').forEach(button=>button.addEventListener('click',()=>{row.querySelectorAll('.small-tab').forEach(item=>item.classList.remove('active'));button.classList.add('active');})));
 logoutButton.addEventListener('click',logout);
 function logout(){localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(USER_KEY);window.location.replace('index.html');}
+const journeyStyle=document.createElement('link');journeyStyle.rel='stylesheet';journeyStyle.href='journey_panel.css';document.head.appendChild(journeyStyle);
+const journeyScript=document.createElement('script');journeyScript.src='journey_panel.js';document.body.appendChild(journeyScript);
