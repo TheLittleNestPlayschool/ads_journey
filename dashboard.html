@@ -4,12 +4,102 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ads Journey</title>
+<link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
-<script>
-const token=localStorage.getItem('ads_journey_token');
-if(!token)window.location.replace('index.html');
-</script>
-<main><h1>Ads Journey</h1><p>Dashboard setup is next.</p></main>
+<header class="topbar">
+  <div>
+    <p class="eyebrow">The Little Nest Playschool</p>
+    <h1>Ads Journey</h1>
+  </div>
+  <div class="topbar-actions">
+    <div class="filter-wrap">
+      <button id="franchiseFilterButton" class="filter-button" type="button">Franchises: All Locations <span>▾</span></button>
+      <div id="franchiseFilterPanel" class="filter-panel" hidden>
+        <div class="filter-panel-head">
+          <div>
+            <p class="section-kicker">Franchise Filter</p>
+            <h3>Select locations</h3>
+          </div>
+          <button id="closeFranchiseFilter" class="icon-button" type="button" aria-label="Close">×</button>
+        </div>
+        <input id="franchiseSearch" class="filter-search" type="text" placeholder="Search locations...">
+        <div class="filter-actions-row">
+          <button id="selectAllFranchises" class="text-button" type="button">Select All</button>
+          <button id="clearAllFranchises" class="text-button" type="button">Clear All</button>
+        </div>
+        <div id="franchiseCheckboxList" class="checkbox-list"></div>
+      </div>
+    </div>
+    <div class="date-tabs" role="group" aria-label="Date range">
+      <button class="date-tab active" type="button">Today</button>
+      <button class="date-tab" type="button">7 Days</button>
+      <button class="date-tab" type="button">30 Days</button>
+      <button class="date-tab" type="button">Custom</button>
+    </div>
+    <button class="secondary-button" type="button">Search</button>
+    <span id="userName" class="user-name">Loading…</span>
+    <button id="logoutButton" class="secondary-button" type="button">Log out</button>
+  </div>
+</header>
+<main class="page-shell">
+  <section class="summary-grid">
+    <button class="summary-card" type="button"><span class="summary-value">43</span><span class="summary-label">New Inquiries</span></button>
+    <button class="summary-card" type="button"><span class="summary-value">12</span><span class="summary-label">Trials Today</span></button>
+    <button class="summary-card warning" type="button"><span class="summary-value">8</span><span class="summary-label">Awaiting Update</span></button>
+    <button class="summary-card" type="button"><span class="summary-value">16</span><span class="summary-label">Follow-ups Due</span></button>
+    <button class="summary-card" type="button"><span class="summary-value">6</span><span class="summary-label">New Enrollments</span></button>
+    <button class="summary-card warning" type="button"><span class="summary-value">5</span><span class="summary-label">Needs Information</span></button>
+    <button class="summary-card danger" type="button"><span class="summary-value">9</span><span class="summary-label">Overdue</span></button>
+  </section>
+
+  <section class="dashboard-section attention-section">
+    <div class="section-heading">
+      <div><p class="section-kicker">Operations</p><h2>Needs Attention</h2></div>
+      <button class="text-button" type="button">View all</button>
+    </div>
+    <div class="attention-list">
+      <article class="attention-item"><div><strong>San Pablo</strong><p>4 trial results are overdue. Oldest update is from yesterday.</p></div><span class="status-badge danger-badge">4 overdue</span></article>
+      <article class="attention-item"><div><strong>Zamboanga</strong><p>6 parent follow-ups are due today.</p></div><span class="status-badge warning-badge">6 follow-ups</span></article>
+      <article class="attention-item"><div><strong>Lucena</strong><p>2 new enrollments are waiting to be processed.</p></div><span class="status-badge neutral-badge">2 enrollments</span></article>
+    </div>
+  </section>
+
+  <section class="dashboard-section">
+    <div class="section-heading"><div><p class="section-kicker">Work Queue</p><h2>Today</h2></div></div>
+    <div class="today-grid">
+      <div class="work-card"><div class="work-card-head"><h3>New Inquiries</h3><span>8</span></div><div class="work-list"><div class="work-row"><div><strong>Maria Santos</strong><p>San Pablo · Rates</p></div><time>7:18 PM</time></div><div class="work-row"><div><strong>Jenny Cruz</strong><p>Lucena · Free Trial</p></div><time>6:52 PM</time></div><div class="work-row"><div><strong>Ana Reyes</strong><p>Zamboanga · Schedule</p></div><time>6:21 PM</time></div></div></div>
+      <div class="work-card"><div class="work-card-head"><h3>Trials</h3><span>12</span></div><div class="work-list"><div class="work-row"><div><strong>9:00 AM · San Pablo</strong><p>Ana Reyes · Awaiting result</p></div><span class="status-dot warning-dot"></span></div><div class="work-row"><div><strong>1:00 PM · Calamba</strong><p>Jessa Ramos · Confirmed</p></div><span class="status-dot success-dot"></span></div><div class="work-row"><div><strong>3:00 PM · Lucena</strong><p>Mark Dela Cruz · Scheduled</p></div><span class="status-dot neutral-dot"></span></div></div></div>
+      <div class="work-card"><div class="work-card-head"><h3>Follow-ups</h3><span>16</span></div><div class="work-list"><div class="work-row"><div><strong>Mark Dela Cruz</strong><p>San Pablo · Trial yesterday</p></div><span class="status-badge danger-badge">Due now</span></div><div class="work-row"><div><strong>Jenny Cruz</strong><p>Zamboanga · No reply 24h</p></div><span class="status-badge warning-badge">Due today</span></div><div class="work-row"><div><strong>Anna Reyes</strong><p>Lucena · Will think about it</p></div><span class="status-badge neutral-badge">Sep 29</span></div></div></div>
+    </div>
+  </section>
+
+  <section class="dashboard-section">
+    <div class="section-heading"><div><p class="section-kicker">30 Locations</p><h2>Location Overview</h2></div><button class="text-button" type="button">Sort by attention</button></div>
+    <div class="table-wrap"><table><thead><tr><th>Location</th><th>Inquiries</th><th>Trials</th><th>Awaiting</th><th>Follow-ups</th><th>Enrolled</th><th>Attention</th></tr></thead><tbody><tr><td><strong>San Pablo</strong></td><td>18</td><td>7</td><td>3</td><td>5</td><td>4</td><td><span class="table-alert danger-badge">4</span></td></tr><tr><td><strong>Lucena</strong></td><td>12</td><td>4</td><td>1</td><td>2</td><td>3</td><td><span class="table-alert warning-badge">2</span></td></tr><tr><td><strong>Zamboanga</strong></td><td>21</td><td>6</td><td>5</td><td>7</td><td>2</td><td><span class="table-alert danger-badge">8</span></td></tr><tr><td><strong>Calamba</strong></td><td>9</td><td>3</td><td>0</td><td>1</td><td>3</td><td>—</td></tr><tr><td><strong>Sariaya</strong></td><td>11</td><td>5</td><td>1</td><td>2</td><td>2</td><td><span class="table-alert warning-badge">1</span></td></tr></tbody></table></div>
+  </section>
+
+  <section class="dashboard-section">
+    <div class="section-heading"><div><p class="section-kicker">Journey</p><h2>Parent Journey</h2></div></div>
+    <div class="journey-flow"><div class="journey-step"><strong>184</strong><span>Inquiries</span></div><span class="journey-arrow">→</span><div class="journey-step"><strong>96</strong><span>Interested</span></div><span class="journey-arrow">→</span><div class="journey-step"><strong>68</strong><span>Trials Scheduled</span></div><span class="journey-arrow">→</span><div class="journey-step"><strong>54</strong><span>Trials Completed</span></div><span class="journey-arrow">→</span><div class="journey-step"><strong>39</strong><span>Follow-ups</span></div><span class="journey-arrow">→</span><div class="journey-step accent"><strong>31</strong><span>Enrolled</span></div></div>
+  </section>
+
+  <section class="two-panel-grid">
+    <section class="dashboard-section"><div class="section-heading"><div><p class="section-kicker">Ads</p><h2>Marketing Performance</h2></div></div><div class="metric-grid"><div class="metric"><span>Inquiries</span><strong>184</strong></div><div class="metric"><span>Trials</span><strong>68</strong></div><div class="metric"><span>Enrollments</span><strong>31</strong></div><div class="metric"><span>Ad Spend</span><strong>₱16,420</strong></div><div class="metric"><span>Cost / Inquiry</span><strong>₱89</strong></div><div class="metric"><span>Cost / Trial</span><strong>₱241</strong></div><div class="metric"><span>Cost / Enrollment</span><strong>₱530</strong></div></div></section>
+    <section class="dashboard-section"><div class="section-heading"><div><p class="section-kicker">Conversion</p><h2>Location Performance</h2></div></div><div class="mini-table"><div class="mini-row head"><span>Location</span><span>Trials</span><span>Enrolled</span><span>Trial → Enroll</span></div><div class="mini-row"><strong>San Pablo</strong><span>29</span><span>14</span><span>48%</span></div><div class="mini-row"><strong>Lucena</strong><span>24</span><span>11</span><span>46%</span></div><div class="mini-row"><strong>Zamboanga</strong><span>31</span><span>7</span><span>23%</span></div><div class="mini-row"><strong>Calamba</strong><span>17</span><span>8</span><span>47%</span></div></div></section>
+  </section>
+
+  <section class="three-panel-grid">
+    <section class="dashboard-section compact-section"><div class="section-heading"><div><p class="section-kicker">Trials</p><h2>Trial Management</h2></div></div><div class="tab-row"><button class="small-tab active">Today</button><button class="small-tab">Upcoming</button><button class="small-tab">Awaiting Result</button><button class="small-tab">No Show</button></div><div class="queue-list"><div><strong>Ana Santos</strong><p>San Pablo · 9:00 AM</p></div><div><strong>Jessa Cruz</strong><p>Lucena · 1:00 PM</p></div><div><strong>Michelle Ramos</strong><p>San Pablo · 3:00 PM</p></div></div></section>
+    <section class="dashboard-section compact-section"><div class="section-heading"><div><p class="section-kicker">Parents</p><h2>Follow-up Queue</h2></div></div><div class="queue-list"><div><strong>Maria Santos</strong><p>San Pablo · Trial attended yesterday</p></div><div><strong>Jenny Cruz</strong><p>Zamboanga · No response for 24 hours</p></div><div><strong>Anna Reyes</strong><p>Lucena · Will think about it</p></div></div></section>
+    <section class="dashboard-section compact-section"><div class="section-heading"><div><p class="section-kicker">Processing</p><h2>New Enrollments</h2></div></div><div class="queue-list"><div><strong>Maria Santos / Liam Santos</strong><p>San Pablo · Needs processing</p></div><div><strong>Joan Reyes / Mika Reyes</strong><p>Lucena · Needs processing</p></div><div><strong>Rica Cruz / Noah Cruz</strong><p>Calamba · Needs processing</p></div></div></section>
+  </section>
+
+  <section class="dashboard-section">
+    <div class="section-heading"><div><p class="section-kicker">Shared Admin View</p><h2>Recent Activity</h2></div></div>
+    <div class="activity-list"><div class="activity-row"><time>7:18 PM</time><span>Dave created inquiry for Maria Santos</span><strong>San Pablo</strong></div><div class="activity-row"><time>7:04 PM</time><span>MJ marked a trial as enrolled</span><strong>San Pablo</strong></div><div class="activity-row"><time>6:51 PM</time><span>Follow-up completed for Jenny Cruz</span><strong>Zamboanga</strong></div><div class="activity-row"><time>6:42 PM</time><span>New inquiry created</span><strong>Lucena</strong></div><div class="activity-row"><time>6:20 PM</time><span>Trial moved to no-show</span><strong>Zamboanga</strong></div></div>
+  </section>
+</main>
+<script src="dashboard.js"></script>
 </body>
 </html>
