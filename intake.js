@@ -2,10 +2,10 @@ const API_BASE_URL='https://x58r-xped-p4y6.n7e.xano.io/api:0Ddhs4dT';
 const ME_ENDPOINT='/ad_journey_me';
 const CREATE_ENDPOINT='/ad_inquiry_create';
 const SEARCH_ENDPOINT='/ad_inquiry_search';
-const TOKEN_KEY='ads_journey_token';
-const USER_KEY='ads_journey_user';
+const TOKEN_KEY='ads_intake_token';
+const USER_KEY='ads_intake_user';
 const token=localStorage.getItem(TOKEN_KEY);
-if(!token)window.location.replace('index.html');
+if(!token)window.location.replace('intake_login.html');
 const form=document.getElementById('inquiryForm');
 const facebookName=document.getElementById('facebookName');
 const facebookProfileUrl=document.getElementById('facebookProfileUrl');
@@ -38,6 +38,6 @@ function extractFacebookUsername(value){try{let raw=(value||'').trim();if(!raw)r
 function normalizeFacebookUrl(value){const raw=(value||'').trim();if(!raw)return'';return /^https?:\/\//i.test(raw)?raw:`https://${raw}`;}
 function setLoading(loading){saveButton.disabled=loading;clearButton.disabled=loading;saveButton.textContent=loading?'Creating…':'Create Inquiry';}
 function showMessage(message,success=false){formMessage.textContent=message;formMessage.classList.toggle('success',success);}
-function logout(){localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(USER_KEY);window.location.replace('index.html');}
+function logout(){localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(USER_KEY);window.location.replace('intake_login.html');}
 function responseEndpointMissing(error){return /404|not found|endpoint/i.test(error?.message||'');}
 function escapeHtml(value){return value.replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));}
