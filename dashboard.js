@@ -24,6 +24,7 @@ let franchises=[];
 let selectedFranchiseIds=new Set();
 let boardJourneys=[];
 start();
+window.addEventListener('inquiry-created',()=>loadBoard());
 async function start(){await validateLogin();await loadFranchises();setupDashboardModals();setupJourneySearch();}
 async function validateLogin(){try{const response=await fetch(`${API_BASE_URL}${ME_ENDPOINT}`,{headers:{Authorization:`Bearer ${token}`}});if(!response.ok)throw new Error('AUTH_FAILED');const data=await response.json();const user=data.ad_user||data.user||data;localStorage.setItem(USER_KEY,JSON.stringify(user));userName.textContent=user.name||user.email||'Admin';}catch(error){logout();}}
 async function loadFranchises(){try{const response=await fetch(`${API_BASE_URL}${FRANCHISE_ENDPOINT}`,{headers:{Authorization:`Bearer ${token}`}});if(response.status===401){logout();return}if(!response.ok)throw new Error('Unable to load franchises.');const data=await response.json();franchises=Array.isArray(data)?data:(data.items||data.records||data.franchise||data.franchises||[]);restoreSelection();renderFranchiseList();updateFilterLabel();await loadBoard();}catch(error){franchiseCheckboxList.innerHTML='<p class="filter-error">Unable to load franchise locations.</p>';}}
