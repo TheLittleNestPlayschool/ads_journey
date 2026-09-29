@@ -3,6 +3,7 @@
 #adminActivityModal .activity-row time,#adminActivityModal .activity-row span,#adminActivityModal .activity-row strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #adminActivityModal .activity-row.franchise-activity-row{border-left:4px solid var(--franchise-accent)}
 #adminActivityModal .activity-row strong{text-align:right}
+.search-result-card{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px 14px;align-items:start}.search-result-actions{justify-content:flex-end;align-items:center;flex-wrap:wrap}.search-result-actions .secondary-button{font-size:9px;padding:7px 9px}.search-record-detail{grid-column:1/-1;border-top:1px solid #eee8df;padding-top:10px;margin-top:2px}.search-record-detail[hidden]{display:none}.search-record-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:10px}.search-record-summary span{border:1px solid #eee8df;border-radius:8px;padding:7px 8px;font-size:9px;color:var(--muted)}.search-record-summary b{display:block;margin-bottom:3px;font-size:8px;text-transform:uppercase;letter-spacing:.06em;color:var(--green-dark)}.search-history-list{display:flex;flex-direction:column}.search-history-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:8px 0;border-top:1px solid #eee8df}.search-history-row:first-child{border-top:0}.search-history-row strong{font-size:10px}.search-history-row p{margin:3px 0 0;font-size:9px}.search-history-row time{font-size:9px;color:var(--muted);white-space:nowrap}
 @media(min-width:981px){
 .filter-panel{width:min(780px,calc(100vw - 32px));max-height:none;right:0;padding:14px 16px}
 .checkbox-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 10px;max-height:none;overflow:visible;padding-right:0}
@@ -13,4 +14,4 @@
 .checkbox-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:none;overflow:visible}
 .filter-panel-head{align-items:flex-start}.filter-panel-controls{flex-wrap:wrap}
 }
-@media(max-width:560px){.filter-panel-head{align-items:flex-start}.filter-panel-controls{flex-wrap:wrap}.checkbox-list{gap:8px}}
+@media(max-width:560px){.filter-panel-head{align-items:flex-start}.filter-panel-controls{flex-wrap:wrap}.checkbox-list{gap:8px}.search-result-card{grid-template-columns:1fr}.search-result-actions{justify-content:flex-start}.search-record-summary{grid-template-columns:1fr}.search-history-row{grid-template-columns:1fr}}
