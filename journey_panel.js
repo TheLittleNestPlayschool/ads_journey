@@ -13,6 +13,7 @@ function initJourneyPanel(){
   function bindJourneyCard(row){if(!row||row.dataset.journeyBound==='true')return;row.dataset.journeyBound='true';row.style.cursor='pointer';row.addEventListener('click',()=>open(row));}
   document.querySelectorAll('.work-row').forEach(bindJourneyCard);
   window.addEventListener('journey-card-added',event=>bindJourneyCard(event.detail?.row));
+  window.addEventListener('journey-sync-refresh',async()=>{if(!panel.classList.contains('open')||!demo.journeyId)return;const row=[...document.querySelectorAll('.journey-card')].find(card=>Number(card.dataset.journeyId)===Number(demo.journeyId));if(row)await open(row);else close();});
   document.getElementById('closeJourneyPanel').addEventListener('click',close);backdrop.addEventListener('click',close);
   document.getElementById('undoEnrollmentButton').addEventListener('click',()=>{const confirmBox=document.getElementById('undoEnrollmentConfirm');document.getElementById('undoEnrollmentError').hidden=true;confirmBox.hidden=false;confirmBox.style.display='';document.getElementById('undoEnrollmentButton').hidden=true;confirmBox.scrollIntoView({behavior:'smooth',block:'nearest'});});
   document.getElementById('cancelUndoEnrollment').addEventListener('click',()=>{document.getElementById('undoEnrollmentConfirm').hidden=true;document.getElementById('undoEnrollmentConfirm').style.display='none';document.getElementById('undoEnrollmentError').hidden=true;document.getElementById('undoEnrollmentNote').value='';document.getElementById('undoEnrollmentButton').hidden=false;});
