@@ -104,3 +104,116 @@ body:has(#journeyPanel.open){overflow:hidden}
   .journey-panel-main{max-height:none}
   .journey-history-scroll{padding:0 12px 12px}
 }
+
+
+/*   fixed stage action dock + stable content controls*/
+.journey-panel{
+  grid-template-rows:112px minmax(0,1fr) 78px;
+}
+.journey-panel-scroll.journey-panel-main,
+.journey-panel-scroll.journey-panel-main:has(#rescheduleForm:not([hidden]),#cancelAppointmentForm:not([hidden]),#enrolledForm:not([hidden]),#followUpLaterForm:not([hidden]),#notInterestedForm:not([hidden])){
+  grid-column:1;grid-row:2;
+}
+.journey-history-scroll{
+  grid-column:2;grid-row:2/4;
+}
+.journey-action-dock{
+  grid-column:1;grid-row:3;
+  box-sizing:border-box;
+  height:78px;min-height:78px;
+  padding:12px 18px 14px;
+  background:var(--card);
+  border-top:1px solid var(--line);
+  overflow:hidden;
+}
+.journey-dock-group{
+  width:100%;height:100%;
+  display:grid;
+  align-items:center;
+  gap:10px;
+}
+.journey-dock-group[hidden]{display:none}
+.journey-dock-grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.journey-dock-grid-6{grid-template-columns:repeat(6,minmax(0,1fr))}
+.journey-dock-slot{min-width:0;height:100%;display:flex;align-items:center}
+.journey-action-dock button{
+  width:100%;
+  min-width:0;
+  min-height:44px;
+  height:44px;
+  margin:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  white-space:nowrap;
+}
+.journey-action-dock button:disabled{opacity:.45;cursor:default}
+#stage1DockActions{grid-template-columns:1fr}
+#stage4DockActions #notInterestedAction:not([hidden]){
+  width:100%;height:100%;margin:0;
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+  align-items:center;
+}
+#stage4DockActions #notInterestedAction button{width:100%}
+#stage5DockActions #undoEnrollmentButton{width:100%}
+.journey-panel-head #closeJourneyPanel{
+  min-width:112px;
+  min-height:46px;
+  padding:11px 18px;
+  border-radius:11px;
+  font-size:13px;
+  font-weight:800;
+}
+.journey-accordion-toggle{
+  width:100%;
+  min-height:44px;
+  border:1px solid var(--line);
+  border-radius:10px;
+  background:#fff;
+  padding:10px 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  color:var(--text);
+  font:inherit;
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+  margin-bottom:9px;
+}
+.journey-accordion-toggle[hidden]{display:none}
+.journey-accordion-chevron{
+  font-size:18px;
+  line-height:1;
+  color:var(--muted);
+  transition:transform .16s ease;
+}
+.journey-accordion-toggle[aria-expanded="true"] .journey-accordion-chevron{transform:rotate(180deg)}
+.journey-panel[data-stage="scheduled"] #copyMessageBlock{
+  height:176px;min-height:176px;max-height:176px;
+  overflow:auto;box-sizing:border-box;margin-bottom:9px;
+}
+.journey-panel[data-stage="scheduled"] #franchiseHandoffActions{display:none}
+.journey-panel[data-stage="scheduled"] #appointmentActionLabel,
+.journey-panel[data-stage="followup"] #appointmentActionLabel{display:none}
+.journey-panel[data-stage="scheduled"] #stage2UpdateBlock,
+.journey-panel[data-stage="followup"] #stage2UpdateBlock{
+  margin-top:0;padding-top:0;border-top:0;
+}
+.journey-panel[data-stage="scheduled"] #stage2UpdateBlock>.handoff-actions,
+.journey-panel[data-stage="followup"] #stage2UpdateBlock>.handoff-actions{display:none}
+@media(max-width:900px){
+  .journey-panel{grid-template-rows:104px minmax(0,1fr) 70px 240px}
+  .journey-action-dock{grid-column:1;grid-row:3;height:70px;min-height:70px;padding:10px 12px}
+  .journey-history-scroll{grid-column:1;grid-row:4;padding:0 12px 12px}
+  .journey-action-dock button{min-height:42px;height:42px;font-size:10px}
+}
+@media(max-width:700px){
+  .journey-dock-grid-6{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,1fr)}
+  .journey-panel[data-stage="awaiting-outcome"]{grid-template-rows:104px minmax(0,1fr) 106px 220px}
+  .journey-panel[data-stage="awaiting-outcome"] .journey-action-dock{height:106px;min-height:106px}
+}
