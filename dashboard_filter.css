@@ -15,3 +15,62 @@
 .filter-panel-head{align-items:flex-start}.filter-panel-controls{flex-wrap:wrap}
 }
 @media(max-width:560px){.filter-panel-head{align-items:flex-start}.filter-panel-controls{flex-wrap:wrap}.checkbox-list{gap:8px}.search-result-card{grid-template-columns:1fr}.search-result-actions{justify-content:flex-start}.search-record-summary{grid-template-columns:1fr}.search-history-row{grid-template-columns:1fr}}
+
+
+/*   franchise filter stage-count columns*/
+@media(min-width:981px){
+  .filter-panel{width:min(860px,calc(100vw - 32px));max-height:82vh}
+  .checkbox-list{display:grid;grid-template-columns:1fr;gap:5px;max-height:64vh;overflow-y:auto;padding-right:4px}
+}
+.franchise-stats-header,
+.franchise-select-option{
+  display:grid;
+  grid-template-columns:24px minmax(170px,1fr) 84px 84px 72px;
+  align-items:center;
+  column-gap:8px;
+}
+.franchise-stats-header{
+  position:sticky;
+  top:0;
+  z-index:2;
+  padding:5px 10px 6px;
+  background:var(--card);
+  border-bottom:1px solid var(--line);
+  color:var(--muted);
+  font-size:8px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+}
+.franchise-stats-header span:nth-child(n+3){text-align:center}
+.franchise-select-option{padding:7px 9px}
+.franchise-select-option>.franchise-name{
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.franchise-metric{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-width:34px;
+  height:24px;
+  border-radius:7px;
+  font-size:10px;
+  font-weight:800;
+  background:#f7f5f1;
+  color:#4d4943;
+}
+.franchise-metric.scheduled{background:#eaf0f8;color:#526d9c}
+.franchise-metric.followup{background:#f1eaf4;color:#6c527b}
+.franchise-metric.enrolled{background:#e8f0e9;color:#496650}
+@media(max-width:980px){
+  .franchise-stats-header,.franchise-select-option{grid-template-columns:24px minmax(120px,1fr) 70px 70px 62px}
+  .checkbox-list{grid-template-columns:1fr;max-height:60vh;overflow-y:auto}
+}
+@media(max-width:560px){
+  .franchise-stats-header,.franchise-select-option{grid-template-columns:22px minmax(100px,1fr) 54px 54px 50px;column-gap:4px}
+  .franchise-stats-header{font-size:7px;padding-left:6px;padding-right:6px}
+  .franchise-select-option{padding:7px 6px}
+  .franchise-metric{font-size:9px}
+}
