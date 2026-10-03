@@ -74,3 +74,14 @@
   .franchise-select-option{padding:7px 6px}
   .franchise-metric{font-size:9px}
 }
+
+
+/*   compact franchise stage-count layout*/
+@media(min-width:981px){
+  .filter-panel{width:min(700px,calc(100vw - 32px))}
+  .franchise-stats-header,
+  .franchise-select-option{
+    grid-template-columns:24px minmax(180px,250px) 76px 76px 66px;
+    justify-content:start;
+  }
+}
