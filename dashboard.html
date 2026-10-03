@@ -37,6 +37,7 @@
         <div id="franchiseCheckboxList" class="checkbox-list"></div>
       </div>
     </div>
+    <button id="helpButton" class="secondary-button" type="button">Help!</button>
     <div class="maintenance-wrap">
       <button id="maintenanceButton" class="filter-button maintenance-button" type="button">Maintenance <span>▾</span></button>
       <div id="maintenancePanel" class="maintenance-menu" hidden>
@@ -86,6 +87,12 @@
   </section>
 </main>
 <div id="dashboardModalBackdrop" class="dashboard-modal-backdrop" hidden></div>
+<section id="helpManualModal" class="dashboard-modal help-modal" hidden>
+  <div class="dashboard-modal-head"><div><p class="section-kicker">Help</p><h2>Ads Journey Manual</h2></div><button class="secondary-button modal-close" type="button">← Back</button></div>
+  <div id="helpManualContent" class="dashboard-modal-body">
+    <div class="search-empty">We’ll build the Ads Journey manual here next.</div>
+  </div>
+</section>
 <section id="journeySearchModal" class="dashboard-modal search-modal" hidden>
   <div class="dashboard-modal-head"><div><p class="section-kicker">Journey Search</p><h2>Find any record</h2></div><button class="secondary-button modal-close" type="button">← Back</button></div>
   <div class="dashboard-modal-body">
@@ -99,7 +106,7 @@
 <section id="marketingPerformanceModal" class="dashboard-modal" hidden><div class="dashboard-modal-head"><div><p class="section-kicker">Ads</p><h2>Marketing Performance</h2></div><button class="secondary-button modal-close" type="button">← Back</button></div><div class="dashboard-modal-body"><div class="marketing-current"></div><button id="addMarketingSnapshotButton" class="secondary-button" type="button">+ Enter New Snapshot</button></div></section>
 <script src="usage_tracker.js"></script>
 <script src="franchise_cards.js"></script>
-<script src="dashboard.js?v=20261004-0604"></script>
+<script src="dashboard.js?v=20261004-0617"></script>
 <script src="batch_import.js?v=20261003-2054"></script>
 <script src="stage1_not_interested.js?v=20261004-0534"></script>
 <script src="stage3_outcome.js?v=20261003-1935"></script>
