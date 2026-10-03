@@ -32,7 +32,7 @@ let currentEventId=null;
 let journeySyncTimer=null;
 let journeySyncChecking=false;
 start();
-window.addEventListener('inquiry-created',event=>{const data=event.detail||{};const inquiry=data.ad_inquiry||data.inquiry||data;const journey=data.ad_journey||data.journey||{};usageEvent('inquiry_created',{module:'new_inquiry',action:'create',target:'inquiry',inquiry_id:Number(inquiry.id)||0,journey_id:Number(journey.id)||0,franchise_id:Number(inquiry.franchise_id||journey.franchise_id)||0,inquiry_type:inquiry.inquiry_type||null});loadBoard();});
+window.addEventListener('inquiry-created',event=>{const data=event.detail||{};const inquiry=data.ad_inquiry||data.inquiry||data;const journey=data.ad_journey||data.journey||{};usageEvent('inquiry_created',{module:'new_inquiry',action:'create',target:'inquiry',inquiry_id:Number(inquiry.id)||0,journey_id:Number(journey.id)||0,franchise_id:Number(inquiry.franchise_id||journey.franchise_id)||0,inquiry_type:inquiry.inquiry_type||null});loadBoard();});window.addEventListener('open-existing-journey',event=>openExistingJourney(event.detail||{}));
 async function start(){await validateLogin();await loadFranchises();setupDashboardModals();setupJourneySearch();}
 async function validateLogin(){try{const response=await fetch(`${API_BASE_URL}${ME_ENDPOINT}`,{headers:{Authorization:`Bearer ${token}`}});if(!response.ok)throw new Error('AUTH_FAILED');const data=await response.json();const user=data.ad_user||data.user||data;localStorage.setItem(USER_KEY,JSON.stringify(user));userName.textContent=user.name||user.email||'Admin';}catch(error){logout();}}
 async function loadFranchises(){try{const response=await fetch(`${API_BASE_URL}${FRANCHISE_ENDPOINT}`,{headers:{Authorization:`Bearer ${token}`}});if(response.status===401){logout();return}if(!response.ok)throw new Error('Unable to load franchises.');const data=await response.json();franchises=Array.isArray(data)?data:(data.items||data.records||data.franchise||data.franchises||[]);restoreSelection();renderFranchiseList();updateFilterLabel();syncUsageFranchiseSelection('initial_load');await loadBoard();await initializeJourneySync();}catch(error){franchiseCheckboxList.innerHTML='<p class="filter-error">Unable to load franchise locations.</p>';}}
@@ -85,6 +85,30 @@ async function viewSearchRecord(event){const card=event.currentTarget.closest('.
 async function reactivateClosedSearchRecord(event){const card=event.currentTarget.closest('.search-result-card');const journeyId=Number(card?.dataset.journeyId)||0;if(!journeyId)return;const button=event.currentTarget;button.disabled=true;button.textContent='Reactivating...';try{const response=await fetch(`${API_BASE_URL}${REACTIVATE_CLOSED_ENDPOINT}`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({journey_id:journeyId,note:'Closed journey reactivated from Search'})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.message||data.error||data.detail||'Unable to reactivate journey.');usageEvent('journey_reactivated',{module:'journey_search',action:'reactivate_closed',journey_id:journeyId,franchise_id:Number(data.ad_journey?.franchise_id)||0});await loadBoard();await runJourneySearch('reactivate');}catch(error){alert(error.message);button.disabled=false;button.textContent='Reactivate Journey';}}
 function searchEventTitle(event){const map={inquiry_created:'Inquiry created',visit_scheduled:'Visit scheduled',trial_scheduled:'Free trial scheduled',franchise_notified:'Details sent to franchise',rescheduled:'Appointment rescheduled',cancelled:'Appointment cancelled',no_show:'No show',visit_completed:'Visit completed',trial_completed:'Free trial completed',follow_up_scheduled:'Follow-up scheduled',follow_up_completed:'Follow-up completed',parent_interested:'Parent interested',parent_not_interested:'Parent not interested',enrollment_reported:'Enrollment reported',enrollment_processed:'Enrollment processed',journey_closed:'Journey closed',journey_dormant:'Journey dormant',journey_reactivated:'Journey reactivated'};return map[event.event_type]||titleCase(event.event_type||'Journey activity');}
 function openSearchRecord(event){const result=event.currentTarget.closest('.search-result-card');const journeyId=Number(result?.dataset.journeyId)||0;if(!journeyId)return;const boardCard=[...document.querySelectorAll('.journey-card')].find(card=>Number(card.dataset.journeyId)===journeyId);if(boardCard){closeDashboardModals();boardCard.click();return;}result.querySelector('p').textContent='This active journey is not currently visible on the selected franchise board.';}
+async function openExistingJourney(detail){
+  const query=String(detail.query||'').trim();if(!query)return;
+  const normalize=value=>String(value||'').trim().replace(/\/$/,'').toLowerCase();
+  try{
+    const response=await fetch(`${API_BASE_URL}${SEARCH_ENDPOINT}?query=${encodeURIComponent(query)}`,{headers:{Authorization:`Bearer ${token}`}});
+    if(response.status===401){logout();return}
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.message||data.error||'SEARCH_FAILED');
+    const results=Array.isArray(data.results)?data.results:[];
+    const exact=results.find(result=>normalize(result.inquiry?.facebook_profile_url)===normalize(query));
+    const match=exact||results[0];
+    if(!match){openDashboardModal('journeySearchModal');journeySearchInput.value=query;journeySearchResults.innerHTML='<div class="search-empty">No matching journey found.</div>';return;}
+    const journey=match.journey||{},inquiry=match.inquiry||{};
+    const journeyId=Number(journey.id)||0;
+    const franchiseId=Number(journey.franchise_id||inquiry.franchise_id)||0;
+    if(franchiseId&&!selectedFranchiseIds.has(franchiseId)){selectedFranchiseIds.add(franchiseId);saveSelection();renderFranchiseList();updateFilterLabel();syncUsageFranchiseSelection('duplicate_open',franchiseId,true);}
+    await loadBoard();
+    const boardCard=[...document.querySelectorAll('.journey-card')].find(card=>Number(card.dataset.journeyId)===journeyId);
+    if(boardCard){boardCard.click();return;}
+    openDashboardModal('journeySearchModal');journeySearchInput.value=query;renderJourneySearchResults(results);
+  }catch(error){
+    openDashboardModal('journeySearchModal');journeySearchInput.value=query;journeySearchResults.innerHTML='<div class="search-empty">Unable to open the existing journey. Search for it here.</div>';
+  }
+}
 function usageEvent(type,details={}){if(typeof window.trackUsageEvent==='function')window.trackUsageEvent(type,details);}
 function syncUsageFranchiseSelection(source,changedFranchiseId=null,checked=null){const ids=[...selectedFranchiseIds].map(Number).sort((a,b)=>a-b);if(typeof window.updateUsageSessionContext==='function')window.updateUsageSessionContext({selected_franchise_ids:ids});usageEvent('franchise_filter_changed',{module:'franchise_filter',action:'change',source,selected_franchise_ids:ids,selected_count:ids.length,changed_franchise_id:changedFranchiseId,checked});}
 function titleCase(value){return String(value||'').replace(/_/g,' ').replace(/\b\w/g,char=>char.toUpperCase());}
