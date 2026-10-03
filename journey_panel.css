@@ -217,3 +217,48 @@ body:has(#journeyPanel.open){overflow:hidden}
   .journey-panel[data-stage="awaiting-outcome"]{grid-template-rows:104px minmax(0,1fr) 106px 220px}
   .journey-panel[data-stage="awaiting-outcome"] .journey-action-dock{height:106px;min-height:106px}
 }
+
+
+/*   stage accent treatment for centered journey workspace*/
+.journey-panel[data-stage="inquiry"]{--panel-stage:#4f8f8b;--panel-stage-deep:#356f6c;--panel-stage-soft:#e7f2f1}
+.journey-panel[data-stage="scheduled"]{--panel-stage:#6f88b6;--panel-stage-deep:#526d9c;--panel-stage-soft:#eaf0f8}
+.journey-panel[data-stage="awaiting-outcome"]{--panel-stage:#bd8c3f;--panel-stage-deep:#8a6326;--panel-stage-soft:#f8edd8}
+.journey-panel[data-stage="followup"]{--panel-stage:#8b6f9a;--panel-stage-deep:#6c527b;--panel-stage-soft:#f1eaf4}
+.journey-panel[data-stage="enrollment"]{--panel-stage:#66866d;--panel-stage-deep:#496650;--panel-stage-soft:#e8f0e9}
+.journey-panel:before{
+  content:"";
+  position:absolute;
+  top:0;left:0;right:0;
+  height:5px;
+  background:var(--panel-stage,var(--green));
+  z-index:2;
+  pointer-events:none;
+}
+.journey-panel-head{
+  background:linear-gradient(180deg,color-mix(in srgb,var(--panel-stage-soft,var(--soft)) 55%,#fff),var(--card) 82%);
+}
+.journey-state-grid .journey-state:first-child{
+  background:color-mix(in srgb,var(--panel-stage-soft,var(--soft)) 78%,#fff);
+  border-color:color-mix(in srgb,var(--panel-stage,var(--green)) 34%,var(--line));
+}
+.journey-state-grid .journey-state:first-child span{color:var(--panel-stage-deep,var(--green-dark))}
+.journey-state-grid .journey-state:first-child strong{color:#24231f}
+.journey-action-card{
+  border-color:#dcd3c8;
+  background:#fffefa;
+}
+.journey-action-head h3{color:#25231f}
+.journey-action-badge{
+  background:color-mix(in srgb,var(--panel-stage-soft,var(--soft)) 86%,#fff);
+  color:var(--panel-stage-deep,var(--green-dark));
+  border:1px solid color-mix(in srgb,var(--panel-stage,var(--green)) 20%,transparent);
+}
+.journey-action-dock{
+  border-top:3px solid color-mix(in srgb,var(--panel-stage,var(--green)) 72%,#fff);
+  background:#fffefa;
+}
+.journey-timeline-section{background:#fffefa;border-color:#dcd3c8}
+.timeline-item strong{font-size:11.5px;color:#2c2a26}
+.timeline-item p{font-size:10.25px;color:#625d55}
+.timeline-item small{font-size:9.5px;color:#6d675f}
+.timeline-dot{background:var(--panel-stage,var(--green))}
