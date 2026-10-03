@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ads Journey</title>
-<link rel="stylesheet" href="dashboard.css?v=20261004-0353">
+<link rel="stylesheet" href="dashboard.css?v=20261004-0552">
 <link rel="stylesheet" href="dashboard_filter.css?v=20261003-1925">
 </head>
 <body>
@@ -22,7 +22,6 @@
   </section>
   <div class="topbar-actions">
     <button id="newInquiryButton" class="secondary-button" type="button">+ New Inquiry</button>
-    <button id="batchImportButton" class="secondary-button" type="button">Batch Import</button>
     <button id="journeySearchButton" class="secondary-button" type="button">Search</button>
     <div class="filter-wrap">
       <button id="franchiseFilterButton" class="filter-button" type="button">Franchises: All Locations <span>▾</span></button>
@@ -38,9 +37,15 @@
         <div id="franchiseCheckboxList" class="checkbox-list"></div>
       </div>
     </div>
-    <button id="adminActivityButton" class="secondary-button" type="button">Admin Activity</button>
-    <button id="locationPerformanceButton" class="secondary-button" type="button">Location Performance</button>
-    <button id="marketingPerformanceButton" class="secondary-button" type="button">Marketing Performance</button>
+    <div class="maintenance-wrap">
+      <button id="maintenanceButton" class="filter-button maintenance-button" type="button">Maintenance <span>▾</span></button>
+      <div id="maintenancePanel" class="maintenance-menu" hidden>
+        <button id="batchImportButton" type="button">Batch Import</button>
+        <button id="adminActivityButton" type="button">Admin Activity</button>
+        <button id="locationPerformanceButton" type="button">Location Performance</button>
+        <button id="marketingPerformanceButton" type="button">Marketing Performance</button>
+      </div>
+    </div>
   </div>
   <div class="user-actions">
     <span id="userName" class="user-name">Loading…</span>
@@ -51,7 +56,6 @@
   <section class="journey-board-section">
     <div class="board-heading">
       <div><p class="section-kicker">Working Queue</p></div>
-      <p class="board-help">Each journey stays in one stage. Due and overdue work is highlighted inside that stage.</p>
     </div>
     <div class="journey-board">
       <section class="journey-column" data-stage="inquiry">
