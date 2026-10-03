@@ -2,5 +2,5 @@
 .inquiry-modal-error{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .inquiry-modal-error[hidden]{display:none}
 .inquiry-modal-error span{min-width:0;flex:1}
-.inquiry-existing-button{flex:0 0 auto;background:#8f3e36}
-.inquiry-existing-button:hover{background:#74322c}
+.inquiry-existing-button{flex:0 0 auto;background:var(--button-bg);border:1px solid var(--button-border);color:var(--button-text)}
+.inquiry-existing-button:hover{background:var(--button-hover);color:var(--button-text)}
