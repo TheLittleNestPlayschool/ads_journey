@@ -6,6 +6,7 @@
 <title>Ads Journey</title>
 <link rel="stylesheet" href="dashboard.css?v=20261004-0604">
 <link rel="stylesheet" href="dashboard_filter.css?v=20261003-1925">
+<link rel="stylesheet" href="help_manual.css?v=20261004-0629">
 </head>
 <body>
 <header class="topbar">
@@ -90,7 +91,13 @@
 <section id="helpManualModal" class="dashboard-modal help-modal" hidden>
   <div class="dashboard-modal-head"><div><p class="section-kicker">Help</p><h2>Ads Journey Manual</h2></div><button class="secondary-button modal-close" type="button">← Back</button></div>
   <div id="helpManualContent" class="dashboard-modal-body">
-    <div class="search-empty">We’ll build the Ads Journey manual here next.</div>
+    <div class="help-manual-shell">
+      <aside class="help-manual-nav">
+        <input id="helpManualSearch" class="help-manual-search" type="search" placeholder="Search the manual">
+        <nav id="helpManualToc" class="help-manual-toc" aria-label="Manual table of contents"></nav>
+      </aside>
+      <div id="helpManualPage" class="help-manual-content"></div>
+    </div>
   </div>
 </section>
 <section id="journeySearchModal" class="dashboard-modal search-modal" hidden>
@@ -107,6 +114,7 @@
 <script src="usage_tracker.js"></script>
 <script src="franchise_cards.js"></script>
 <script src="dashboard.js?v=20261004-0617"></script>
+<script src="help_manual.js?v=20261004-0629"></script>
 <script src="batch_import.js?v=20261003-2054"></script>
 <script src="stage1_not_interested.js?v=20261004-0534"></script>
 <script src="stage3_outcome.js?v=20261003-1935"></script>
