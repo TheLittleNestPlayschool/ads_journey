@@ -52,7 +52,38 @@ async function initializeJourneySync(){try{currentEventId=await fetchLatestJourn
 async function checkJourneySync(){if(journeySyncChecking||document.hidden)return;journeySyncChecking=true;try{const latestEventId=await fetchLatestJourneyEventId();if(latestEventId===null)return;if(currentEventId===null){currentEventId=latestEventId;return;}if(latestEventId!==currentEventId){await loadBoard();currentEventId=latestEventId;window.dispatchEvent(new CustomEvent('journey-sync-refresh',{detail:{latestEventId}}));}}catch(error){}finally{journeySyncChecking=false;}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkJourneySync();});
 function clearBoard(){document.querySelectorAll('.journey-column-list').forEach(list=>list.innerHTML='');document.querySelectorAll('.journey-column .column-count').forEach(count=>count.textContent='0');}
-function renderBoard(journeys){clearBoard();journeys.forEach(journey=>{const stage=normalizeStage(journey.current_stage);const list=document.querySelector(`[data-stage="${stage}"] .journey-column-list`);if(!list)return;const row=buildJourneyCard(journey);list.appendChild(row);window.dispatchEvent(new CustomEvent('journey-card-added',{detail:{row,journey}}));});document.querySelectorAll('.journey-column').forEach(column=>{column.querySelector('.column-count').textContent=column.querySelectorAll('.journey-card').length;});updateSummaryCounts();}
+function renderBoard(journeys){
+  clearBoard();
+  const grouped=new Map();
+  journeys.forEach(journey=>{const stage=normalizeStage(journey.current_stage);if(!grouped.has(stage))grouped.set(stage,[]);grouped.get(stage).push(journey);});
+  document.querySelectorAll('.journey-column').forEach(column=>{
+    const stage=column.dataset.stage;
+    const list=column.querySelector('.journey-column-list');
+    const rows=(grouped.get(stage)||[]).sort((a,b)=>compareStageJourneys(stage,a,b));
+    rows.forEach(journey=>{const row=buildJourneyCard(journey);list.appendChild(row);window.dispatchEvent(new CustomEvent('journey-card-added',{detail:{row,journey}}));});
+    column.querySelector('.column-count').textContent=rows.length;
+  });
+  updateSummaryCounts();
+}
+function compareStageJourneys(stage,a,b){
+  const inquiryA=a._ad_inquiry||{},inquiryB=b._ad_inquiry||{};
+  const firstPositive=(...values)=>{for(const value of values){const number=Number(value)||0;if(number>0)return number;}return 0;};
+  const newestFirst=(aTime,bTime)=>{if(aTime===bTime)return(Number(b.id)||0)-(Number(a.id)||0);return bTime-aTime;};
+  const soonestFirst=(aTime,bTime)=>{if(!aTime&&bTime)return 1;if(aTime&&!bTime)return-1;if(aTime===bTime)return(Number(a.id)||0)-(Number(b.id)||0);return aTime-bTime;};
+  if(stage==='inquiry'){
+    return newestFirst(firstPositive(inquiryA.first_message_at,inquiryA.created_at,a.created_at),firstPositive(inquiryB.first_message_at,inquiryB.created_at,b.created_at));
+  }
+  if(stage==='inquiry-followup'){
+    return newestFirst(firstPositive(a.last_activity_at,a.updated_at,a.created_at,inquiryA.first_message_at),firstPositive(b.last_activity_at,b.updated_at,b.created_at,inquiryB.first_message_at));
+  }
+  if(stage==='scheduled'||stage==='awaiting-outcome'||stage==='followup'){
+    return soonestFirst(firstPositive(a.next_action_at),firstPositive(b.next_action_at));
+  }
+  if(stage==='enrollment'){
+    return newestFirst(firstPositive(a.last_activity_at,a.updated_at,a.created_at),firstPositive(b.last_activity_at,b.updated_at,b.created_at));
+  }
+  return 0;
+}
 function buildJourneyCard(journey){const inquiry=journey._ad_inquiry||{};const location=journeyLocation(journey);const stage=normalizeStage(journey.current_stage);const status=String(journey.current_status||'active');const enrolled=status.toLowerCase()==='enrolled';const nextAt=Number(journey.next_action_at)||0;const urgent=stage!=='scheduled'&&!enrolled&&nextAt>0&&nextAt<=Date.now();const article=document.createElement('article');article.className=`journey-card work-row${urgent?' urgent':''}${enrolled?' enrolled':''}`;article.dataset.franchise=location;article.dataset.status=status;article.dataset.journeyId=String(journey.id);article.dataset.inquiryId=String(journey.ad_inquiry_id||'');article.dataset.franchiseId=String(journey.franchise_id||'');const badgeClass=urgent?'overdue':badgeClassFor(status);const badgeText=urgent?'Due now':badgeTextFor(status);if(stage==='inquiry'){article.innerHTML=`<div class="card-top"><strong>${escapeHtml(inquiry.facebook_name||`Journey #${journey.id}`)}</strong><time>${escapeHtml(formatInquiryDateTime(inquiry.first_message_at||inquiry.created_at))}</time></div><p>${escapeHtml(cardDescription(journey,location))}</p>`;}else{article.innerHTML=`<div class="card-top"><strong>${escapeHtml(inquiry.facebook_name||`Journey #${journey.id}`)}</strong><span class="priority ${badgeClass}">${escapeHtml(badgeText)}</span></div><p>${escapeHtml(cardDescription(journey,location))}</p><div class="card-next"><span>${escapeHtml(nextActionText(journey))}</span><time>${escapeHtml(nextTimeText(journey))}</time></div>`;}return article;}
 function normalizeStage(stage){const value=String(stage||'inquiry').toLowerCase();if(value==='inquiry_follow_up')return'inquiry-followup';if(value==='awaiting_outcome')return'awaiting-outcome';if(value==='follow_up')return'followup';return value;}
 function journeyLocation(journey){const franchise=journey._franchise||{};return franchise.location||franchise.name||franchise.branch_name||franchiseName(franchises.find(item=>Number(item.id)===Number(journey.franchise_id))||{id:journey.franchise_id});}
