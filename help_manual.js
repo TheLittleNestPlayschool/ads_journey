@@ -18,28 +18,66 @@ const sections=[
 {id:'status-reference',number:'16',title:'Status and Action Reference',summary:'Plain-language meanings for statuses and next actions.',keywords:'status action reference new inquiry ready to send awaiting outcome follow-up due no longer interested',intro:'This section will provide a quick reference for the status and action labels used throughout Ads Journey.'},
 {id:'troubleshooting',number:'17',title:'Troubleshooting / What If Something Is Wrong?',summary:'How to correct common mistakes without losing the journey history.',keywords:'troubleshooting wrong stage wrong appointment duplicate missing record accidental enrollment',intro:'This section will explain how to correct common problems such as a wrong stage, wrong appointment, accidental enrollment, duplicate journey, or missing record.'}
 ];
+const tagalog={
+about:{title:'Tungkol sa Ads Journey',summary:'Para saan ang Ads Journey at ano ang responsibilidad ng admin.',intro:'Ang Ads Journey ang pangunahing working system para sa pag-manage ng parent inquiries mula sa unang contact hanggang enrollment.',keywords:'layunin responsibilidad admin inquiry magulang record update',
+content:"<h3>Ano ang Ads Journey</h3><p>Ang Ads Journey ang iisang working system para sa pag-manage ng bawat parent inquiry mula sa unang contact hanggang sa matapos ang journey sa enrollment o sa isang malinaw na closed outcome.</p><p>Maaaring sa Facebook Messenger pa rin nangyayari ang actual na usapan sa parent. Sa Ads Journey naman natin nire-record kung ano ang ibig sabihin ng usapang iyon sa trabaho: nasaan na ang parent sa journey, ano na ang nangyari, at ano ang kailangang mangyari next.</p><h3>Bakit natin ito ginagamit</h3><ul><li>Para hindi mawala ang inquiries at follow-ups.</li><li>Para pare-pareho ang nakikita ng lahat ng admin tungkol sa bawat parent.</li><li>Para may malinaw na history ng mahahalagang actions at outcomes.</li><li>Para malinaw ang next action at hindi nakaasa sa memorya, Messenger threads, o hiwa-hiwalay na sheets.</li><li>Para magkaroon tayo ng maaasahang impormasyon tungkol sa inquiries, trials, follow-ups, enrollments, at performance ng bawat location.</li></ul><h3>Responsibilidad mo bilang admin</h3><p>Ang trabaho mo ay hindi lang ilipat ang cards mula sa isang stage papunta sa iba. Ang trabaho mo ay panatilihing accurate ang bawat Journey.</p><ul><li>Siguraduhing ipinapakita ng Journey kung ano talaga ang nangyayari sa parent.</li><li>I-update ang Journey kapag may mahalagang pagbabago, gaya ng active conversation, scheduled visit o trial, result mula sa franchise, planned follow-up, enrollment, o malinaw na desisyon na hindi na ituloy.</li><li>Maglagay ng useful notes kapag makakatulong ito sa susunod na admin na maintindihan ang nangyari.</li><li>Gamitin ang Search bago gumawa ng bagong record kung posibleng existing na ang parent.</li><li>Huwag ilipat o i-close ang Journey para lang malinis ang isang column.</li></ul><h3>Ang pinakamahalagang rule</h3><div class='help-manual-note'><strong>Dapat laging ipinapakita ng Journey kung ano talaga ang nangyayari sa parent ngayon.</strong><br><br>Kung active ang conversation, dapat iyon ang ipinapakita ng Journey. Kung may naka-book na trial, dapat Scheduled. Kung hinihintay natin ang result, dapat Awaiting Outcome. Kung nagdedesisyon pa ang parent, dapat Follow-up / Decision. Kapag nag-enroll, dapat Enrollment.</div><h3>Ano ang dapat makita sa isang magandang Journey record</h3><p>Kapag binuksan ng kahit sinong admin ang isang Journey, dapat sa loob lang ng ilang segundo ay malinaw na:</p><ul><li>Sino ang parent at anong location ang ini-inquire nila.</li><li>Anong stage na sila ngayon.</li><li>Ano ang huling mahalagang event.</li><li>Ano ang kailangang mangyari next.</li><li>Anong importanteng note ang makakaapekto sa pagpapatuloy ng conversation.</li></ul><h3>Isipin ang Journey bilang shared memory</h3><p>Hindi dapat nakaasa ang system sa isang admin na nakakaalala ng nangyari, naghahanap ng lumang Messenger thread, o tumitingin sa hiwalay na sheet. Kapag updated ang Journey, dapat kayang ipagpatuloy ng ibang admin ang trabaho nang hindi nanghuhula.</p>"},
+'journey-at-a-glance':{title:'Buod ng Buong Journey',summary:'Paano gumagalaw ang inquiry mula unang contact hanggang enrollment.',intro:'Ipapaliwanag sa section na ito ang buong Journey sa simpleng paraan, kung paano dumadaan ang parent sa bawat stage, at bakit kailangan ang bawat stage.',keywords:'buod stages daloy inquiry enrollment'},
+'main-dashboard':{title:'Main Dashboard',summary:'Counters, working queue, Journey cards, at pagkakaayos ng board.',intro:'Ipapaliwanag dito ang nakikita sa main screen, ang ibig sabihin ng counters, kung paano gumagana ang stage columns, at kung paano nakaayos ang records sa bawat stage.',keywords:'dashboard counters board cards ayos'},
+'stage-1':{title:'Stage 1 — Inquiry',summary:'Mga bagong inquiry at ang unang decisions na kailangang gawin ng admin.',intro:'Ipapaliwanag dito kung ano ang dapat nasa Stage 1 at kung kailan mag-schedule ng visit o trial, magpatuloy ng conversation, mag-enroll diretso, o mag-close ng Journey.',keywords:'bagong inquiry trial visit conversation enroll close'},
+'stage-1a':{title:'Stage 1A — Continue Conversation',summary:'Mga active na usapan sa parent na wala pang scheduled outcome.',intro:'Ipapaliwanag dito kung kailan sapat na active ang conversation para mapunta sa Stage 1A, paano ito ipagpatuloy, at kailan ito dapat lumipat sa susunod na stage.',keywords:'active usapan reply message conversation'},
+'stage-2':{title:'Stage 2 — Scheduled',summary:'Visits, free trials, franchise handoff, reschedule, at cancellation.',intro:'Ipapaliwanag dito kung ano ang mangyayari kapag may scheduled visit o free trial, kasama ang pagpapadala ng details sa franchise at pag-handle ng changes sa appointment.',keywords:'scheduled visit trial franchise reschedule cancel'},
+'stage-3':{title:'Stage 3 — Awaiting Outcome',summary:'Pagkuha ng result pagkatapos ng scheduled visit o free trial.',intro:'Ipapaliwanag dito kung kailan napupunta ang Journey sa Awaiting Outcome at paano i-record ang result na ibinibigay ng franchise pagkatapos ng appointment.',keywords:'result outcome franchise trial visit'},
+'stage-4':{title:'Stage 4 — Follow-up / Decision',summary:'Parent follow-up pagkatapos ng appointment o ibang decision point.',intro:'Ipapaliwanag dito ang iba’t ibang outcomes na nangangailangan ng follow-up, kailan mag-schedule ng panibagong contact, at kailan dapat mag-move forward o mag-close ang Journey.',keywords:'follow up decision interested no show cancelled'},
+'stage-5':{title:'Stage 5 — Enrollment',summary:'Pag-record ng enrollment at pag-correct nito kung kinakailangan.',intro:'Ipapaliwanag dito kung ano ang maituturing na enrollment, ano ang ibig sabihin ng final stage, at kailan dapat gamitin ang Undo Enrollment.',keywords:'enrollment enrolled undo'},
+'reading-a-journey':{title:'Pagbukas at Pagbasa ng Journey',summary:'Parent information, stage, status, next step, notes, at timeline.',intro:'Ipapaliwanag dito kung paano basahin ang Journey window para mabilis maintindihan kung ano na ang nangyari, ano ang nangyayari ngayon, at ano ang dapat gawin next.',keywords:'basa journey timeline notes status next step'},
+search:{title:'Search',summary:'Paghahanap ng active, closed, enrolled, dormant, at lumang Journeys.',intro:'Ipapaliwanag dito kung paano hanapin ang Journeys na hindi kasalukuyang nakikita sa working board at ano ang gagawin kapag bumalik ang isang lumang conversation.',keywords:'hanap closed dormant enrolled reactivate lumang record'},
+'franchise-filter':{title:'Franchise Filter',summary:'Pagpili kung aling locations ang kasalukuyang nakikita mo.',intro:'Ipapaliwanag dito kung paano binabago ng Franchise Filter ang records na ipinapakita sa dashboard at paano magtrabaho sa isa o maraming locations.',keywords:'filter location branch pili'},
+maintenance:{title:'Maintenance',summary:'Batch Import, Admin Activity, Location Performance, at Marketing Performance.',intro:'Ipapaliwanag dito ang tools sa ilalim ng Maintenance at kung kailan ginagamit ang bawat isa.',keywords:'maintenance import activity performance'},
+'common-situations':{title:'Paano Harapin ang Karaniwang Sitwasyon',summary:'Practical examples para sa mga sitwasyong madalas makita ng admins.',intro:'Sasaklawin dito ang mga common situations gaya ng mabagal na reply, direct enrollment, missed trial, cancellation, duplicate inquiry, at pagbabalik ng lumang conversation.',keywords:'mabagal reply direct enrollment missed trial cancel duplicate bumalik'},
+'rules-good-practices':{title:'Journey Rules at Good Practices',summary:'Mga operating rules para manatiling accurate at useful ang Journey.',intro:'Ipapaliwanag dito ang habits na nagpapanatiling maaasahan ang system, kasama ang pagpapanatiling tugma ng stage sa totoong nangyayari at pag-record ng useful notes.',keywords:'rules practice accurate notes duplicate close'},
+'status-reference':{title:'Status at Action Reference',summary:'Simpleng paliwanag sa statuses at next actions.',intro:'Magbibigay ang section na ito ng mabilis na reference para sa status at action labels na ginagamit sa buong Ads Journey.',keywords:'status action reference labels'},
+troubleshooting:{title:'Troubleshooting / Kapag May Mali',summary:'Paano ayusin ang common mistakes nang hindi nawawala ang Journey history.',intro:'Ipapaliwanag dito kung paano ayusin ang mga problemang gaya ng maling stage, maling appointment, accidental enrollment, duplicate Journey, o missing record.',keywords:'mali stage appointment enrollment duplicate missing record'}
+};
 let currentId='about';
 function q(id){return document.getElementById(id);}
+const LANGUAGE_KEY='ads_journey_help_language';
+let language=localStorage.getItem(LANGUAGE_KEY)==='tl'?'tl':'en';
+function localized(section,key){return language==='tl'?(tagalog[section.id]?.[key]||section[key]):section[key];}
+function updateLanguageControls(){
+  const english=q('helpLangEnglish'),tagalogButton=q('helpLangTagalog'),search=q('helpManualSearch');
+  if(english)english.classList.toggle('active',language==='en');
+  if(tagalogButton)tagalogButton.classList.toggle('active',language==='tl');
+  if(search)search.placeholder=language==='tl'?'Hanapin sa manual':'Search the manual';
+}
+function setLanguage(next){
+  language=next==='tl'?'tl':'en';localStorage.setItem(LANGUAGE_KEY,language);updateLanguageControls();renderToc(q('helpManualSearch')?.value||'');selectSection(currentId);
+}
 function renderToc(filter=''){
   const toc=q('helpManualToc');if(!toc)return;
   const term=filter.trim().toLowerCase();
-  const visible=sections.filter(s=>!term||[`${s.title} ${s.summary} ${s.keywords} ${s.intro}`.toLowerCase()].some(v=>v.includes(term)));
-  if(!visible.length){toc.innerHTML='<div class="help-manual-empty">No manual sections match that search.</div>';return;}
+  const visible=sections.filter(s=>{const t=tagalog[s.id]||{};const haystack=`${s.title} ${s.summary} ${s.keywords} ${s.intro} ${t.title||''} ${t.summary||''} ${t.keywords||''} ${t.intro||''}`.toLowerCase();return !term||haystack.includes(term);});
+  if(!visible.length){toc.innerHTML=`<div class="help-manual-empty">${language==='tl'?'Walang section na tumutugma sa search.':'No manual sections match that search.'}</div>`;return;}
   toc.innerHTML='';
-  visible.forEach(section=>{const button=document.createElement('button');button.type='button';button.className='help-manual-link'+(section.id===currentId?' active':'');button.dataset.manualId=section.id;button.innerHTML=`<span>Section ${section.number}</span>${section.title}`;button.addEventListener('click',()=>selectSection(section.id));toc.appendChild(button);});
+  visible.forEach(section=>{const button=document.createElement('button');button.type='button';button.className='help-manual-link'+(section.id===currentId?' active':'');button.dataset.manualId=section.id;button.innerHTML=`<span>${language==='tl'?'Seksyon':'Section'} ${section.number}</span>${localized(section,'title')}`;button.addEventListener('click',()=>selectSection(section.id));toc.appendChild(button);});
 }
 function renderPage(section){
   const page=q('helpManualPage');if(!page)return;
-  const body=section.content||`<h3>What this section will cover</h3><p>${section.intro}</p><div class="help-manual-note">We are building the manual section by section. This page is ready for its finalized instructions.</div>`;
-  page.innerHTML=`<div class="help-manual-page"><p class="section-kicker">Section ${section.number}</p><h2>${section.title}</h2><p class="manual-summary">${section.summary}</p>${body}</div>`;
+  const translated=tagalog[section.id]||{};
+  const body=language==='tl'?(translated.content||`<h3>Ano ang sakop ng section na ito</h3><p>${localized(section,'intro')}</p><div class="help-manual-note">Binubuo natin ang manual section by section. Handa na ang page na ito para sa final instructions.</div>`):(section.content||`<h3>What this section will cover</h3><p>${section.intro}</p><div class="help-manual-note">We are building the manual section by section. This page is ready for its finalized instructions.</div>`);
+  page.innerHTML=`<div class="help-manual-page"><p class="section-kicker">${language==='tl'?'Seksyon':'Section'} ${section.number}</p><h2>${localized(section,'title')}</h2><p class="manual-summary">${localized(section,'summary')}</p>${body}</div>`;
 }
 function selectSection(id){
   const section=sections.find(s=>s.id===id)||sections[0];currentId=section.id;renderPage(section);renderToc(q('helpManualSearch')?.value||'');q('helpManualPage')?.scrollTo({top:0,behavior:'smooth'});
 }
 function init(){
   const search=q('helpManualSearch');if(!search)return;
-  if(search.dataset.ready==='1')return;
-  search.dataset.ready='1';search.addEventListener('input',()=>renderToc(search.value));renderToc();renderPage(sections[0]);
+  updateLanguageControls();
+  if(search.dataset.ready==='1'){renderToc(search.value);renderPage(sections.find(s=>s.id===currentId)||sections[0]);return;}
+  search.dataset.ready='1';
+  search.addEventListener('input',()=>renderToc(search.value));
+  q('helpLangEnglish')?.addEventListener('click',()=>setLanguage('en'));
+  q('helpLangTagalog')?.addEventListener('click',()=>setLanguage('tl'));
+  renderToc();renderPage(sections[0]);
 }
 window.openHelpManualTopic=function(id){const button=q('helpButton');if(button)button.click();setTimeout(()=>{init();selectSection(id);},0);};
 window.getHelpManualTopic=function(id){return sections.find(s=>s.id===id)||null;};
