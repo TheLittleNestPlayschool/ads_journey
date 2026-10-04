@@ -156,7 +156,7 @@ function titleCase(value){return String(value||'').replace(/_/g,' ').replace(/\b
 function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));}
 logoutButton.addEventListener('click',logout);
 function logout(){localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(USER_KEY);window.location.replace('index.html');}
-const journeyStyle=document.createElement('link');journeyStyle.rel='stylesheet';journeyStyle.href='journey_panel.css?v=20261004-1356';document.head.appendChild(journeyStyle);
+const journeyStyle=document.createElement('link');journeyStyle.rel='stylesheet';journeyStyle.href='journey_panel.css?v=20261004-1401';document.head.appendChild(journeyStyle);
 const journeyScript=document.createElement('script');journeyScript.src='journey_panel.js?v='+Date.now();document.body.appendChild(journeyScript);
 const inquiryStyle=document.createElement('link');inquiryStyle.rel='stylesheet';inquiryStyle.href='inquiry_modal.css?v=20261004-0604';document.head.appendChild(inquiryStyle);
 const inquiryScript=document.createElement('script');inquiryScript.src='inquiry_modal.js?v=20261003-1915';document.body.appendChild(inquiryScript);
