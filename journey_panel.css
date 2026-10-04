@@ -329,3 +329,111 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-history-scroll{position:relative;z-index:1}
 .journey-action-dock{position:relative;z-index:1}
 
+
+
+/*   compact desktop journey workspace*/
+@media(min-width:901px){
+  .journey-panel{
+    width:min(860px,calc(100vw - 48px));
+    height:min(610px,calc(100dvh - 48px));
+    grid-template-columns:minmax(0,1.75fr) minmax(260px,.9fr);
+    grid-template-rows:80px minmax(0,1fr) 56px;
+    border-radius:16px;
+  }
+  .journey-panel-head{
+    height:80px;
+    padding:12px 16px 10px;
+    gap:12px;
+  }
+  .journey-panel-head h2{margin:2px 0 1px;font-size:18px;line-height:1.1}
+  .journey-panel-head .section-kicker{font-size:7px}
+  .journey-subtitle{font-size:10px}
+  .journey-panel-head #closeJourneyPanel{
+    min-width:86px;
+    min-height:36px;
+    height:36px;
+    padding:7px 12px;
+    border-radius:9px;
+    font-size:10px;
+  }
+  .journey-quick-guide-button{
+    width:34px;height:34px;min-width:34px;
+    font-size:15px;
+  }
+  .journey-panel-scroll.journey-panel-main,
+  .journey-panel-scroll.journey-panel-main:has(#rescheduleForm:not([hidden]),#cancelAppointmentForm:not([hidden]),#enrolledForm:not([hidden]),#followUpLaterForm:not([hidden]),#notInterestedForm:not([hidden])){
+    padding:12px;
+    grid-template-rows:38px minmax(0,1fr);
+    gap:9px;
+  }
+  .journey-state-grid{height:38px;min-height:38px;gap:7px}
+  .journey-state{height:38px;padding:4px 8px;border-radius:9px}
+  .journey-state span{font-size:7px;margin-bottom:2px}
+  .journey-state strong{font-size:10px;line-height:1.15}
+  .journey-action-card:not([hidden]){padding:12px;border-radius:10px}
+  .journey-action-card>.journey-action-head{flex:0 0 36px;min-height:36px;margin-bottom:7px}
+  .journey-action-head{gap:8px}
+  .journey-action-head .section-kicker{font-size:7px}
+  .journey-action-head h3{margin:2px 0 0;font-size:13px}
+  .journey-action-badge{font-size:7px;padding:4px 7px}
+  .schedule-form{gap:7px}
+  .visit-type-control{gap:6px}
+  .visit-type-control span{padding:6px 7px;border-radius:8px;font-size:9px}
+  .schedule-grid{gap:6px}
+  .schedule-grid label,.schedule-note,.time-field,.age-field{gap:3px}
+  .schedule-grid label>span,.schedule-note>span,.age-label,.time-field>span{font-size:7px}
+  .schedule-grid input,.schedule-grid select,.schedule-note textarea{
+    border-radius:7px;
+    padding:6px 8px;
+    font-size:10px;
+  }
+  .time-selects{gap:4px}
+  .time-selects select{padding-left:5px;padding-right:5px}
+  .time-colon{font-size:11px}
+  .age-inputs{gap:5px}
+  .age-inputs label{gap:4px}
+  .age-inputs small{font-size:8px}
+  .message-help{font-size:8px}
+  .journey-primary{padding:7px 9px;border-radius:7px;font-size:9px}
+  .scheduled-summary{gap:7px;padding:6px 8px;border-radius:7px;margin-bottom:6px}
+  .scheduled-summary strong{font-size:10px}
+  .scheduled-summary span{font-size:9px}
+  .copy-message{border-radius:8px;padding:7px}
+  .copy-message pre{font-size:9px;line-height:1.35}
+  .handoff-actions{gap:6px;margin-top:6px}
+  .waiting-block{margin-top:7px;padding-top:7px}
+  .waiting-block span{font-size:7px}
+  .waiting-block strong{margin-top:2px;font-size:10px}
+  .waiting-block p{margin-top:3px;font-size:8px}
+  .journey-history-scroll{padding:12px 12px 12px 0}
+  .journey-timeline-section{padding:12px;border-radius:10px}
+  .journey-timeline-section>.journey-action-head{flex:0 0 36px;min-height:36px;margin-bottom:5px}
+  .timeline-item{grid-template-columns:9px 1fr;gap:7px;padding:5px 0}
+  .timeline-dot{width:6px;height:6px;margin-top:3px}
+  .timeline-item strong{font-size:9px}
+  .timeline-item p{margin:1px 0;font-size:8px;line-height:1.3}
+  .timeline-item small{font-size:7.5px}
+  .journey-action-dock{
+    height:56px;min-height:56px;
+    padding:7px 12px 9px;
+  }
+  .journey-dock-group{gap:7px}
+  .journey-action-dock button{
+    min-height:34px;
+    height:34px;
+    border-radius:7px;
+    font-size:9px;
+  }
+  .journey-quick-guide{
+    width:310px;
+    max-height:460px;
+    padding:10px 12px;
+    border-radius:10px;
+  }
+  .journey-quick-guide-head{gap:8px;margin-bottom:6px}
+  .journey-quick-guide-head h3{font-size:13px}
+  .journey-quick-guide-language{padding:4px 8px;font-size:8px}
+  .journey-quick-guide-close{font-size:18px}
+  .journey-quick-guide ul{gap:4px;padding-left:15px}
+  .journey-quick-guide li,.journey-quick-guide p{font-size:9px;line-height:1.35}
+}
