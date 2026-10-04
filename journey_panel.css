@@ -170,6 +170,33 @@ body:has(#journeyPanel.open){overflow:hidden}
   font-size:13px;
   font-weight:800;
 }
+.journey-panel-head-actions{display:flex;align-items:center;gap:10px}
+.journey-quick-guide-button{
+  width:42px;height:42px;min-width:42px;
+  border:1px solid var(--button-border);
+  border-radius:50%;
+  background:var(--soft);
+  color:var(--green-dark);
+  font:inherit;font-size:18px;font-weight:900;
+  cursor:pointer;
+}
+.journey-quick-guide-button:hover,.journey-quick-guide-button[aria-expanded="true"]{background:var(--button-hover)}
+.journey-quick-guide{
+  background:var(--soft);
+  border:1px solid rgba(109,133,114,.35);
+  border-radius:14px;
+  padding:14px 16px;
+}
+.journey-quick-guide[hidden]{display:none}
+.journey-quick-guide-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
+.journey-quick-guide-head h3{margin:3px 0 0;font-size:16px}
+.journey-quick-guide-close{
+  border:0;background:transparent;color:var(--muted);
+  font-size:22px;line-height:1;cursor:pointer;padding:0 2px;
+}
+.journey-quick-guide ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.journey-quick-guide li{font-size:11px;line-height:1.45;color:var(--text)}
+.journey-quick-guide p{margin:10px 0 0;padding-top:9px;border-top:1px solid rgba(109,133,114,.2);font-size:11px;line-height:1.45;color:var(--muted);font-weight:700}
 .journey-accordion-toggle{
   width:100%;
   min-height:44px;
