@@ -47,7 +47,7 @@ function saveSelection(){localStorage.setItem(FILTER_KEY,JSON.stringify([...sele
 function updateFilterLabel(){const total=franchises.length;const selected=selectedFranchiseIds.size;let text='Franchises: ';if(!total)text+='No Locations';else if(selected===total)text+=`All ${total}`;else if(selected===0)text+='None';else text+=`${selected} selected`;franchiseFilterButton.firstChild.textContent=`${text} `;}
 async function loadFranchiseJourneyStats(){if(!franchises.length){franchiseJourneyStats=new Map();renderFranchiseList();return;}try{const params=new URLSearchParams();franchises.forEach(item=>params.append('franchise_ids[]',String(Number(item.id))));const response=await fetch(`${API_BASE_URL}${BOARD_ENDPOINT}?${params.toString()}`,{cache:'no-store',headers:{Authorization:`Bearer ${token}`}});if(!response.ok)return;const data=await response.json();const journeys=Array.isArray(data.journeys)?data.journeys:[];const stats=new Map(franchises.map(item=>[Number(item.id),{scheduled:0,followup:0,enrollment:0}]));journeys.forEach(journey=>{const id=Number(journey.franchise_id)||0;if(!stats.has(id))return;const status=String(journey.current_status||'').toLowerCase();const nextAt=Number(journey.next_action_at)||0;if(status==='enrolled'&&nextAt&&nextAt<=Date.now())return;const stage=normalizeStage(journey.current_stage);const row=stats.get(id);if(stage==='scheduled')row.scheduled++;else if(stage==='followup')row.followup++;else if(stage==='enrollment')row.enrollment++;});franchiseJourneyStats=stats;renderFranchiseList();}catch(error){}}
 
-async function loadBoard(){clearBoard();await loadFranchiseJourneyStats();if(!selectedFranchiseIds.size){boardJourneys=[];updateSummaryCounts();return}try{const params=new URLSearchParams();[...selectedFranchiseIds].forEach(id=>params.append('franchise_ids[]',String(id)));const response=await fetch(`${API_BASE_URL}${BOARD_ENDPOINT}?${params.toString()}`,{cache:'no-store',headers:{Authorization:`Bearer ${token}`}});if(response.status===401){logout();return}if(!response.ok)throw new Error('BOARD_LOAD_FAILED');const data=await response.json();const journeys=Array.isArray(data.journeys)?data.journeys:[];await advanceDueScheduledJourneys(journeys);boardJourneys=journeys.filter(journey=>{const status=String(journey.current_status||'').toLowerCase();const nextAt=Number(journey.next_action_at)||0;return status!=='enrolled'||!nextAt||nextAt>Date.now();});renderBoard(boardJourneys);filterPopupRows(new Set(boardJourneys.map(journey=>journeyLocation(journey))));}catch(error){showBoardError();}}
+async function loadBoard(){await loadFranchiseJourneyStats();if(!selectedFranchiseIds.size){boardJourneys=[];clearBoard();updateSummaryCounts();return}try{const params=new URLSearchParams();[...selectedFranchiseIds].forEach(id=>params.append('franchise_ids[]',String(id)));const response=await fetch(`${API_BASE_URL}${BOARD_ENDPOINT}?${params.toString()}`,{cache:'no-store',headers:{Authorization:`Bearer ${token}`}});if(response.status===401){logout();return}if(!response.ok)throw new Error('BOARD_LOAD_FAILED');const data=await response.json();const journeys=Array.isArray(data.journeys)?data.journeys:[];await advanceDueScheduledJourneys(journeys);boardJourneys=journeys.filter(journey=>{const status=String(journey.current_status||'').toLowerCase();const nextAt=Number(journey.next_action_at)||0;return status!=='enrolled'||!nextAt||nextAt>Date.now();});renderBoard(boardJourneys);filterPopupRows(new Set(boardJourneys.map(journey=>journeyLocation(journey))));}catch(error){showBoardError();}}
 async function advanceDueScheduledJourneys(journeys){const candidates=journeys.filter(journey=>String(journey.current_stage||'').toLowerCase()==='scheduled'&&String(journey.current_status||'').toLowerCase()==='sent_to_franchise'&&(Number(journey.next_action_at)||0)>0&&Number(journey.next_action_at)<=Date.now());for(const journey of candidates){try{const response=await fetch(`${API_BASE_URL}${AWAITING_OUTCOME_ENDPOINT}`,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({journey_id:Number(journey.id)})});if(response.status===401){logout();return}if(!response.ok)continue;const data=await response.json().catch(()=>({}));if(data.updated_journey)Object.assign(journey,data.updated_journey);}catch(error){}}}
 async function fetchLatestJourneyEventId(){const response=await fetch(`${API_BASE_URL}${LATEST_EVENT_ENDPOINT}`,{cache:'no-store',headers:{Authorization:`Bearer ${token}`}});if(response.status===401){logout();return null}if(!response.ok)throw new Error('SYNC_LOAD_FAILED');const data=await response.json().catch(()=>0);if(typeof data==='number'||typeof data==='string')return Number(data)||0;const nestedId=data?.ad_journey_event?.items?.[0]?.id;return Number(data.latest_event_id??data.id??data.ad_journey_event_id??nestedId)||0;}
 async function initializeJourneySync(){try{currentEventId=await fetchLatestJourneyEventId();}catch(error){currentEventId=null;}if(journeySyncTimer)clearInterval(journeySyncTimer);journeySyncTimer=setInterval(checkJourneySync,5000);}
@@ -55,15 +55,29 @@ async function checkJourneySync(){if(journeySyncChecking||document.hidden)return
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkJourneySync();});
 function clearBoard(){document.querySelectorAll('.journey-column-list').forEach(list=>list.innerHTML='');document.querySelectorAll('.journey-column .column-count').forEach(count=>count.textContent='0');}
 function renderBoard(journeys){
-  clearBoard();
-  const grouped=new Map();
+  const grouped=new Map(),desiredIds=new Set(journeys.map(journey=>String(journey.id)));
   journeys.forEach(journey=>{const stage=normalizeStage(journey.current_stage);if(!grouped.has(stage))grouped.set(stage,[]);grouped.get(stage).push(journey);});
+  document.querySelectorAll('.journey-card[data-journey-id]').forEach(card=>{if(!desiredIds.has(card.dataset.journeyId))card.remove();});
   document.querySelectorAll('.journey-column').forEach(column=>{
     const stage=column.dataset.stage;
     const list=column.querySelector('.journey-column-list');
     const rows=(grouped.get(stage)||[]).sort((a,b)=>compareStageJourneys(stage,a,b));
-    rows.forEach(journey=>{const row=buildJourneyCard(journey);list.appendChild(row);window.dispatchEvent(new CustomEvent('journey-card-added',{detail:{row,journey}}));});
-    column.querySelector('.column-count').textContent=rows.length;
+    rows.forEach((journey,index)=>{
+      const id=String(journey.id);
+      let row=document.querySelector(`.journey-card[data-journey-id="${CSS.escape(id)}"]`);
+      const fresh=buildJourneyCard(journey);
+      const changed=!row||row.className!==fresh.className||row.innerHTML!==fresh.innerHTML||row.dataset.franchise!==fresh.dataset.franchise||row.dataset.status!==fresh.dataset.status||row.dataset.inquiryId!==fresh.dataset.inquiryId||row.dataset.franchiseId!==fresh.dataset.franchiseId;
+      if(changed){
+        if(row)row.replaceWith(fresh);
+        row=fresh;
+        window.dispatchEvent(new CustomEvent('journey-card-added',{detail:{row,journey}}));
+      }
+      const currentAtIndex=list.children[index];
+      if(row.parentElement!==list||currentAtIndex!==row)list.insertBefore(row,currentAtIndex||null);
+    });
+    [...list.querySelectorAll('.journey-card')].forEach(card=>{if(!desiredIds.has(card.dataset.journeyId))card.remove();});
+    const count=column.querySelector('.column-count');
+    if(count&&count.textContent!==String(rows.length))count.textContent=String(rows.length);
   });
   updateSummaryCounts();
 }
