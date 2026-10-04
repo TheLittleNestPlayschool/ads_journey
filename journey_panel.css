@@ -190,6 +190,17 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-quick-guide[hidden]{display:none}
 .journey-quick-guide-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px}
 .journey-quick-guide-head h3{margin:3px 0 0;font-size:16px}
+.journey-quick-guide-head-actions{display:flex;align-items:center;gap:8px}
+.journey-quick-guide-language{
+  border:1px solid rgba(109,133,114,.35);
+  border-radius:999px;
+  background:#fff;
+  color:var(--green-dark);
+  padding:6px 10px;
+  font:inherit;font-size:10px;font-weight:800;
+  cursor:pointer;
+}
+.journey-quick-guide-language:hover{background:var(--button-hover)}
 .journey-quick-guide-close{
   border:0;background:transparent;color:var(--muted);
   font-size:22px;line-height:1;cursor:pointer;padding:0 2px;
