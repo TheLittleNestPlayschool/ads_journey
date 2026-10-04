@@ -113,3 +113,11 @@
 .topbar-summary .summary-card:nth-child(5) .summary-value{color:#496650}
 .topbar-summary .summary-label{color:#5f5a53}
 .board-help{color:#625d55;font-size:10.5px}
+
+
+/*   journey card last update*/
+.card-updated{display:flex;justify-content:flex-end;align-items:center;gap:4px;margin-top:5px;font-size:8px;line-height:1.2;color:#7a746b;white-space:nowrap}
+.card-updated span{font-weight:700}
+.card-updated time{font-weight:600}
+.journey-column[data-stage="inquiry"] .journey-card{grid-template-rows:auto auto auto}
+.journey-column[data-stage="inquiry"] .card-updated{grid-column:1/-1;grid-row:3;justify-self:stretch}
