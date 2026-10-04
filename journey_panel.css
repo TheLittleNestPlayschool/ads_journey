@@ -136,6 +136,8 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-dock-grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .journey-dock-grid-6{grid-template-columns:repeat(6,minmax(0,1fr))}
 .journey-dock-slot{min-width:0;height:100%;display:flex;align-items:center}
+.journey-dock-slot[hidden],.journey-action-dock button[hidden]{display:none!important}
+#stage2DockActions{grid-template-rows:1fr}
 .journey-action-dock button{
   width:100%;
   min-width:0;
