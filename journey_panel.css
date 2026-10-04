@@ -33,14 +33,14 @@ body:has(#journeyPanel.open){overflow:hidden}
   grid-column:1;grid-row:2;
   padding:18px;
   display:grid;
-  grid-template-rows:82px minmax(0,1fr);
+  grid-template-rows:58px minmax(0,1fr);
   gap:14px;
   min-width:0;min-height:0;
   overflow:hidden;
   flex:none;max-height:none;
 }
-.journey-state-grid{height:82px;min-height:82px;gap:10px}
-.journey-state{box-sizing:border-box;height:82px;padding:12px 14px;overflow:hidden}
+.journey-state-grid{height:58px;min-height:58px;gap:10px}
+.journey-state{box-sizing:border-box;height:58px;padding:8px 12px;overflow:hidden}
 .journey-state strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .journey-action-card:not([hidden]){
   grid-row:2;
@@ -90,10 +90,10 @@ body:has(#journeyPanel.open){overflow:hidden}
   .journey-panel-head{grid-column:1;grid-row:1;height:104px;padding:14px 16px}
   .journey-panel-scroll.journey-panel-main,
   .journey-panel-scroll.journey-panel-main:has(#rescheduleForm:not([hidden]),#cancelAppointmentForm:not([hidden]),#enrolledForm:not([hidden]),#followUpLaterForm:not([hidden]),#notInterestedForm:not([hidden])){
-    grid-column:1;grid-row:2;padding:12px;grid-template-rows:74px minmax(0,1fr);gap:10px
+    grid-column:1;grid-row:2;padding:12px;grid-template-rows:58px minmax(0,1fr);gap:10px
   }
-  .journey-state-grid{height:74px;min-height:74px;grid-template-columns:1fr 1fr 1.4fr}
-  .journey-state{height:74px;padding:10px}
+  .journey-state-grid{height:58px;min-height:58px;grid-template-columns:1fr 1fr 1.4fr}
+  .journey-state{height:58px;padding:8px 10px}
   .journey-history-scroll{grid-column:1;grid-row:3;padding:0 12px 12px}
   .journey-timeline-section{padding:12px}
 }
@@ -147,6 +147,10 @@ body:has(#journeyPanel.open){overflow:hidden}
   justify-content:center;
   text-align:center;
   white-space:nowrap;
+  font-family:inherit;
+  font-size:11px;
+  font-weight:800;
+  line-height:1.2;
 }
 .journey-action-dock button:disabled{opacity:.45;cursor:default}
 #stage1DockActions{grid-template-columns:2fr 1fr}
