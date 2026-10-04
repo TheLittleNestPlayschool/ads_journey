@@ -315,3 +315,12 @@ body:has(#journeyPanel.open){overflow:hidden}
 .timeline-item p{font-size:10.25px;color:#625d55}
 .timeline-item small{font-size:9.5px;color:#6d675f}
 .timeline-dot{background:var(--panel-stage,var(--green))}
+
+
+/*   quick guide overlay above journey timeline*/
+.journey-panel-head{overflow:visible;z-index:60}
+.journey-panel-head-actions{z-index:61}
+.journey-quick-guide{z-index:1000}
+.journey-panel-scroll.journey-panel-main{position:relative;z-index:1}
+.journey-history-scroll{position:relative;z-index:1}
+.journey-action-dock{position:relative;z-index:1}
