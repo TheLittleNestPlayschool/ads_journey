@@ -84,7 +84,7 @@ async function initializeJourneySync(){try{currentEventId=await fetchLatestJourn
 async function checkJourneySync(){if(journeySyncChecking||document.hidden)return;journeySyncChecking=true;try{const latestEventId=await fetchLatestJourneyEventId();if(latestEventId===null)return;if(currentEventId===null){currentEventId=latestEventId;return;}if(latestEventId!==currentEventId){await loadBoard();currentEventId=latestEventId;window.dispatchEvent(new CustomEvent('journey-sync-refresh',{detail:{latestEventId}}));}}catch(error){}finally{journeySyncChecking=false;}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkJourneySync();});
 /*   refresh visible lock ownership even when journey history is unchanged*/
-setInterval(()=>{if(!document.hidden&&selectedFranchiseIds.size)loadBoard();},15000);
+setInterval(()=>{if(!document.hidden&&selectedFranchiseIds.size)loadBoard();},5000);
 function clearBoard(){document.querySelectorAll('.journey-column-list').forEach(list=>list.innerHTML='');document.querySelectorAll('.journey-column .column-count').forEach(count=>count.textContent='0');}
 function renderBoard(journeys){
   const grouped=new Map(),desiredIds=new Set(journeys.map(journey=>String(journey.id)));
