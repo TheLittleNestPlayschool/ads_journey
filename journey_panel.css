@@ -485,3 +485,7 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-lock-controls button[hidden]{display:none!important}
 .journey-panel[data-lock-owned="false"] .journey-panel-main,.journey-panel[data-lock-owned="false"] .journey-action-dock{opacity:.74}
 @media(max-width:1050px){.journey-lock-status{max-width:135px}.journey-lock-controls .secondary-button{padding:8px 10px;font-size:10px}}
+
+/*   automatic ownership: no manual lock buttons*/
+.journey-lock-controls #journeyTakeControl,.journey-lock-controls #journeyReleaseControl{display:none!important}
+.journey-lock-status{max-width:240px;white-space:normal;text-align:right;line-height:1.35}
