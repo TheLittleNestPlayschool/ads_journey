@@ -462,3 +462,17 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-right-view{min-height:0;flex:1;display:flex;flex-direction:column}
 .journey-right-view[hidden]{display:none!important}
 .journey-conversation-empty{display:flex;flex:1;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--muted);font-size:13px;line-height:1.6}
+
+/*   Messenger conversation bubbles and scrolling*/
+.journey-history-scroll{display:flex;flex-direction:column;gap:0}
+.journey-conversation-view{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.journey-conversation-list{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;padding:18px;display:flex;flex-direction:column;gap:12px}
+.journey-conversation-notice{margin:auto;color:var(--muted);font-size:12px;line-height:1.6;text-align:center;max-width:300px}
+.journey-message-row{display:flex;width:100%;min-width:0}
+.journey-message-row.incoming{justify-content:flex-start}
+.journey-message-row.outgoing{justify-content:flex-end}
+.journey-message-bubble{max-width:82%;min-width:0;padding:10px 13px;border:1px solid var(--line);border-radius:15px 15px 15px 5px;background:#f6f3ee}
+.journey-message-row.outgoing .journey-message-bubble{background:var(--soft);border-color:rgba(109,133,114,.35);border-radius:15px 15px 5px 15px}
+.journey-message-text{font-size:12px;line-height:1.55;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere}
+.journey-message-meta{font-size:9px;color:var(--muted);margin-top:6px;text-align:right}
+@media(min-width:901px){.journey-right-tabs{margin-bottom:10px}}
