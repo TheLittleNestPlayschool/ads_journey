@@ -162,7 +162,28 @@ function initJourneyPanel(){
     finally{if(generation===lockGeneration){lockPending=false;updateLockControls();}}
   });
   releaseControlButton.addEventListener('click',()=>{if(!lockPending)releaseHeldLock();});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&lockOwned)renewHeldLock(lockGeneration);});
+  /*   returning to an open panel must revalidate ownership before edits*/
+  async function revalidateVisibleLock(){
+    if(document.hidden||!panel.classList.contains('open')||!demo.journeyId||lockPending)return;
+    const id=Number(demo.journeyId),generation=++lockGeneration;
+    stopLockRenewal();lockOwned=false;lockJourneyId=0;lockPending=true;
+    lockMessage('Checking control…');updateLockControls();
+    try{
+      await lockApi('ad_journey_lock_acquire',id);
+      if(generation!==lockGeneration||!panel.classList.contains('open')||Number(demo.journeyId)!==id)return;
+      lockJourneyId=id;lockOwned=true;lockMessage('You have control');
+      lockTimer=setInterval(()=>renewHeldLock(generation),LOCK_RENEW_MS);
+    }catch(error){if(generation===lockGeneration)lockMessage('View only — '+(error.message||'Unable to confirm control.'));}
+    finally{if(generation===lockGeneration){lockPending=false;updateLockControls();}}
+  }
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden){
+      if(!panel.classList.contains('open'))return;
+      ++lockGeneration;stopLockRenewal();lockOwned=false;lockJourneyId=0;lockPending=false;
+      lockMessage('Control will be checked when you return');updateLockControls();
+    }else revalidateVisibleLock();
+  });
+  window.addEventListener('focus',()=>{if(!document.hidden)revalidateVisibleLock();});
   ['click','submit'].forEach(type=>panel.addEventListener(type,event=>{
     if(lockOwned)return;
     if(!event.target.closest('.journey-panel-main, .journey-action-dock'))return;
