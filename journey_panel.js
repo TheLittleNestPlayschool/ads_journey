@@ -16,6 +16,29 @@ function initJourneyPanel(){
   </div>
 </div><div class="journey-history-scroll"><section class="journey-timeline-section"><div class="journey-action-head"><div><p class="section-kicker">History</p><h3>Journey Timeline</h3></div></div><div id="journeyTimeline" class="journey-timeline"></div></section></div></aside>`;
   document.body.appendChild(host);
+  /*   conversation and journey history switcher*/
+  const rightColumn=document.querySelector('#journeyPanel .journey-history-scroll');
+  const historySection=rightColumn.querySelector('.journey-timeline-section');
+  const rightTabs=document.createElement('div');
+  rightTabs.className='journey-right-tabs';
+  rightTabs.setAttribute('role','tablist');
+  rightTabs.setAttribute('aria-label','Inquiry details view');
+  rightTabs.innerHTML='<button type="button" class="journey-right-tab" data-view="conversation" role="tab" aria-selected="true">Conversation</button><button type="button" class="journey-right-tab" data-view="history" role="tab" aria-selected="false">History</button>';
+  const conversationView=document.createElement('section');
+  conversationView.className='journey-right-view journey-conversation-view';
+  conversationView.setAttribute('role','tabpanel');
+  conversationView.innerHTML='<div class="journey-conversation-empty">Messenger conversation will appear here once the message API is connected.<br>Journey actions remain available on the left.</div>';
+  historySection.classList.add('journey-right-view');
+  historySection.setAttribute('role','tabpanel');
+  rightColumn.prepend(rightTabs,conversationView);
+  function setJourneyRightView(view){
+    const showHistory=view==='history';
+    conversationView.hidden=showHistory;
+    historySection.hidden=!showHistory;
+    rightTabs.querySelectorAll('[data-view]').forEach(button=>button.setAttribute('aria-selected',String(button.dataset.view===view)));
+  }
+  rightTabs.addEventListener('click',event=>{const button=event.target.closest('[data-view]');if(button)setJourneyRightView(button.dataset.view);});
+  setJourneyRightView('conversation');
   const panel=document.getElementById('journeyPanel'),backdrop=document.getElementById('journeyBackdrop');
   const actionDock=document.getElementById('journeyActionDock');
   setupActionDock();
