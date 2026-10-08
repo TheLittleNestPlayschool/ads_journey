@@ -489,3 +489,13 @@ body:has(#journeyPanel.open){overflow:hidden}
 /*   automatic ownership: no manual lock buttons*/
 .journey-lock-controls #journeyTakeControl,.journey-lock-controls #journeyReleaseControl{display:none!important}
 .journey-lock-status{max-width:240px;white-space:normal;text-align:right;line-height:1.35}
+
+/*   desktop Messenger reply composer*/
+.journey-reply-form{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-top:1px solid var(--line);background:var(--card)}
+.journey-reply-form>label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.journey-reply-form textarea{display:block;width:100%;min-height:66px;max-height:160px;resize:vertical;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;color:var(--text);font:inherit;font-size:12px;line-height:1.5}
+.journey-reply-form textarea:focus{outline:2px solid rgba(92,132,115,.34);outline-offset:1px}
+.journey-reply-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:34px}
+.journey-reply-footer span{font-size:11px;line-height:1.4;color:var(--muted);min-width:0}
+.journey-reply-footer button{flex-shrink:0;padding:9px 18px}
+.journey-reply-footer button:disabled{opacity:.6;cursor:wait}
