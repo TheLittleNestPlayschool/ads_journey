@@ -2,6 +2,7 @@ const API_BASE_URL='https://x58r-xped-p4y6.n7e.xano.io/api:0Ddhs4dT';
 const ME_ENDPOINT='/ad_journey_me';
 const FRANCHISE_ENDPOINT='/ad_franchises';
 const BOARD_ENDPOINT='/ad_journey_board';
+const LOCK_STATUS_ENDPOINT='/ad_journey_lock_status';
 const ADMIN_ACTIVITY_ENDPOINT='/ad_admin_activity';
 const SEARCH_ENDPOINT='/ad_journey_search';
 const DETAIL_ENDPOINT='/ad_journey_detail';
@@ -83,8 +84,37 @@ async function fetchLatestJourneyEventId(){const response=await fetch(`${API_BAS
 async function initializeJourneySync(){try{currentEventId=await fetchLatestJourneyEventId();}catch(error){currentEventId=null;}if(journeySyncTimer)clearInterval(journeySyncTimer);journeySyncTimer=setInterval(checkJourneySync,5000);}
 async function checkJourneySync(){if(journeySyncChecking||document.hidden)return;journeySyncChecking=true;try{const latestEventId=await fetchLatestJourneyEventId();if(latestEventId===null)return;if(currentEventId===null){currentEventId=latestEventId;return;}if(latestEventId!==currentEventId){await loadBoard();currentEventId=latestEventId;window.dispatchEvent(new CustomEvent('journey-sync-refresh',{detail:{latestEventId}}));}}catch(error){}finally{journeySyncChecking=false;}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkJourneySync();});
-/*   refresh visible lock ownership even when journey history is unchanged*/
-setInterval(()=>{if(!document.hidden&&selectedFranchiseIds.size)loadBoard();},5000);
+/*   lightweight lock polling updates badges without rebuilding journey cards*/
+let lockStatusLoading=false;
+async function refreshJourneyLocks(){
+  if(lockStatusLoading||document.hidden||!selectedFranchiseIds.size)return;
+  const selection=[...selectedFranchiseIds].map(Number).sort((a,b)=>a-b),selectionKey=selection.join(',');
+  lockStatusLoading=true;
+  try{
+    const params=new URLSearchParams();
+    selection.forEach(id=>params.append('franchise_ids[]',String(id)));
+    const response=await fetch(`${API_BASE_URL}${LOCK_STATUS_ENDPOINT}?${params.toString()}`,{cache:'no-store',headers:{Authorization:`Bearer ${token}`}});
+    if(response.status===401){logout();return;}
+    if(!response.ok)throw new Error('LOCK_STATUS_FAILED');
+    const data=await response.json();
+    if(!Array.isArray(data.journey_locks)||selectionKey!==[...selectedFranchiseIds].map(Number).sort((a,b)=>a-b).join(','))return;
+    const active=new Map(data.journey_locks.map(item=>[Number(item.id),item]));
+    boardJourneys.forEach(journey=>{
+      const lock=active.get(Number(journey.id));
+      journey.locked_by_ad_user_id=lock?Number(lock.locked_by_ad_user_id)||0:0;
+      journey.lock_expires_at=lock?Number(lock.lock_expires_at)||0:0;
+      journey._locked_by_ad_user=lock?lock._locked_by_ad_user||null:null;
+      const card=document.querySelector(`.journey-card[data-journey-id="${CSS.escape(String(journey.id))}"]`);
+      if(!card)return;
+      const label=journeyLockLabel(journey),badge=card.querySelector('.journey-card-lock');
+      if(!label){if(badge)badge.remove();return;}
+      if(badge){badge.textContent='🔒 '+label;badge.setAttribute('aria-label',label);}
+      else card.insertAdjacentHTML('beforeend',`<div class="journey-card-lock" aria-label="${escapeHtml(label)}">🔒 ${escapeHtml(label)}</div>`);
+    });
+  }catch(error){}finally{lockStatusLoading=false;}
+}
+setInterval(refreshJourneyLocks,2000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshJourneyLocks();});
 function clearBoard(){document.querySelectorAll('.journey-column-list').forEach(list=>list.innerHTML='');document.querySelectorAll('.journey-column .column-count').forEach(count=>count.textContent='0');}
 function renderBoard(journeys){
   const grouped=new Map(),desiredIds=new Set(journeys.map(journey=>String(journey.id)));
