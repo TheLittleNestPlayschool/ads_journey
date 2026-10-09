@@ -201,3 +201,64 @@ body{background:var(--bg)}
 .card-dates span{font-weight:600;color:#617169}
 .card-dates time{font-size:10.5px;font-weight:650;color:#34473e}
 .journey-column[data-stage="inquiry"] .card-dates{margin-top:7px}
+
+/*   navy night workspace — light cards, dark surroundings, no workflow changes*/
+:root{--bg:#0d2035;--shadow:0 10px 26px rgba(1,13,29,.22)}
+body{background:linear-gradient(145deg,#142d48 0%,#0a2039 52%,#0a1b2f 100%);color:#e4eff8}
+.topbar{background:linear-gradient(110deg,#0a1b30,#112c49);border-bottom:1px solid #2c4864;box-shadow:0 2px 14px rgba(0,8,23,.2)}
+.topbar h1{color:#f3f8fd;font-size:20px}
+.topbar .eyebrow{color:#9ec8e8;letter-spacing:.13em}
+.topbar .user-name{color:#c7d9e9}
+.topbar .secondary-button,.topbar .filter-button{background:#172e4a;border-color:#355674;color:#edf5fc;box-shadow:inset 0 1px rgba(255,255,255,.07)}
+.topbar .secondary-button:hover,.topbar .filter-button:hover{background:#254563;color:#fff;border-color:#567a9f}
+.topbar #newInquiryButton{background:#a5d5ff;border-color:#7fb8e8;color:#10233d;font-weight:800}
+.topbar #newInquiryButton:hover{background:#c0e4ff;color:#10233d}
+.topbar-summary .summary-card,.topbar-summary .summary-card:nth-child(n){background:#16324f;border:1px solid #345474;color:#e5f1fe;box-shadow:inset 0 1px rgba(255,255,255,.06)}
+.topbar-summary .summary-card:nth-child(1) .summary-value{color:#79dbe8}
+.topbar-summary .summary-card:nth-child(2) .summary-value{color:#a5c7ff}
+.topbar-summary .summary-card:nth-child(3) .summary-value{color:#f6c17e}
+.topbar-summary .summary-card:nth-child(4) .summary-value{color:#d0b2f4}
+.topbar-summary .summary-card:nth-child(5) .summary-value{color:#9bdab9}
+.topbar-summary .summary-label{color:#d0dfeb}
+.journey-board-shell{background:transparent;padding:10px 14px 14px}
+.journey-board-section{background:rgba(8,29,50,.42);border:1px solid #24415f;border-radius:16px;box-shadow:0 12px 34px rgba(0,10,25,.18);padding:10px 10px 12px}
+.board-heading{padding:1px 5px 9px}
+.board-heading .section-kicker,.board-heading .eyebrow,.board-help{color:#a6cce8}
+.journey-board{gap:10px}
+.journey-column{background:rgba(31,59,88,.54);border:1px solid #2b4d6d;border-radius:12px;box-shadow:inset 0 1px rgba(255,255,255,.045)}
+.journey-column[data-stage="inquiry"]{--stage-accent:#56b6e9;--stage-deep:#a3dffb}
+.journey-column[data-stage="inquiry-followup"]{--stage-accent:#69cdb0;--stage-deep:#a9eed8}
+.journey-column[data-stage="scheduled"]{--stage-accent:#6bb9f8;--stage-deep:#b2dfff}
+.journey-column[data-stage="awaiting-outcome"]{--stage-accent:#e6b367;--stage-deep:#ffe0a8}
+.journey-column[data-stage="followup"]{--stage-accent:#bd92e5;--stage-deep:#e4c7fc}
+.journey-column[data-stage="enrollment"]{--stage-accent:#75ce9a;--stage-deep:#b0ecca}
+.journey-column>header{background:linear-gradient(180deg,rgba(48,80,112,.40),rgba(23,50,78,.23));border-bottom:1px solid #365575;padding:13px 10px 12px}
+.journey-column>header:before{height:0}
+.journey-column h3{color:#f5f9fe;font-size:14px;text-shadow:0 1px 2px rgba(0,0,0,.15)}
+.column-kicker{color:var(--stage-deep);font-size:9px}
+.column-count{color:#eff8ff;background:#29486c;border:1px solid #496a8b}
+.column-header-actions .stage-quick-help-button{background:#1e4163;border-color:#456e94;color:#e5f4ff}
+.column-header-actions .stage-quick-help-button:hover{background:#315779}
+.journey-column-list{padding:9px 8px;gap:9px}
+.journey-card,.journey-column[data-stage="inquiry"] .journey-card{background:#fff;border:1px solid #dce5ee;border-left:3px solid var(--stage-accent);border-top:1px solid #dce5ee;padding:11px 10px;border-radius:10px;box-shadow:0 4px 12px rgba(0,10,26,.19);color:#25354a}
+.journey-card.franchise-accent{border-left:3px solid var(--franchise-accent)}
+.journey-card:hover{border-color:#9bbcd5;border-left-color:var(--stage-accent);border-top-color:#9bbcd5;box-shadow:0 6px 17px rgba(0,9,25,.3)}
+.journey-card.urgent{border:1px solid #efb6b4;border-left:3px solid #df8178;border-top:1px solid #efb6b4;background:#fffafa;box-shadow:0 4px 14px rgba(0,8,26,.19)}
+.journey-card.enrolled{border:1px solid #c2e0d0;border-left:3px solid #68c597;border-top:1px solid #c2e0d0;background:#fff}
+.card-top strong{color:#1c2d43}
+.journey-card p{color:#667a8c}
+.card-next{border-top-color:#e8eef3}
+.card-next span{color:#263a50}
+.card-next time,.card-dates time{color:#344e6a}
+.card-dates{border-top-color:#e8eef3}
+.card-dates span{color:#64788e}
+.priority.waiting-parent,.priority.waiting{background:#eaf1f8;color:#3d6083;border-color:#d7e4f0}
+.priority.quiet{background:#edf4f9;color:#3d607a;border-color:#d9e7ef}
+.priority.upcoming{background:#fff4df;color:#886225;border-color:#f0dfb8}
+.priority.due,.priority.overdue{background:#fce9e8;color:#a73d39;border-color:#f3d1ce}
+.priority.enrolled{background:#e6f4eb;color:#28734d;border-color:#cde6d7}
+.journey-card-lock{background:#fff2dc;border-color:#eed6a9;color:#7d5c2b}
+/*   dropdowns and dialogs remain light for clarity and legibility*/
+.filter-panel,.maintenance-menu,.dashboard-modal,.stage-quick-help{color:#293a41;background:#fffdfb}
+.filter-panel .section-kicker,.dashboard-modal .section-kicker{color:#4f766e}
+.filter-panel .secondary-button,.filter-panel .text-button,.maintenance-menu button{background:#e7f3fa;border-color:#9fc5d9;color:#1f2830}
