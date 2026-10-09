@@ -262,3 +262,16 @@ body{background:linear-gradient(145deg,#142d48 0%,#0a2039 52%,#0a1b2f 100%);colo
 .filter-panel,.maintenance-menu,.dashboard-modal,.stage-quick-help{color:#293a41;background:#fffdfb}
 .filter-panel .section-kicker,.dashboard-modal .section-kicker{color:#4f766e}
 .filter-panel .secondary-button,.filter-panel .text-button,.maintenance-menu button{background:#e7f3fa;border-color:#9fc5d9;color:#1f2830}
+
+/*   softer night workspace — open-feeling columns and restrained card detail*/
+.journey-board-section{background:rgba(8,25,45,.23);border-color:#23415d}
+.journey-column{background:rgba(19,43,70,.35);border:1px solid rgba(99,139,172,.19);box-shadow:none}
+.journey-column>header{background:rgba(30,60,90,.48);border-bottom:1px solid rgba(120,157,191,.23)}
+.journey-card,.journey-column[data-stage="inquiry"] .journey-card{border:1px solid #dfe8ef;border-left:3px solid color-mix(in srgb,var(--stage-accent) 70%,#fff);box-shadow:0 3px 10px rgba(0,12,28,.13)}
+.journey-card.franchise-accent{border-left-color:color-mix(in srgb,var(--franchise-accent) 72%,#fff)}
+.journey-card:hover{border-color:#a4c1d7;border-left-color:var(--stage-accent);box-shadow:0 5px 16px rgba(0,12,28,.21)}
+.journey-card.urgent{border:1px solid #eec6c1;border-left:3px solid #cf756c}
+.journey-card.enrolled{border:1px solid #cee4d8;border-left:3px solid #81c6a0}
+.card-dates time{font-weight:550}
+.card-dates span{font-weight:550}
+.topbar-actions{gap:10px;padding:0 10px}
