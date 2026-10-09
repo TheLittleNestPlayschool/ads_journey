@@ -222,6 +222,7 @@ function initJourneyPanel(){
   setupActionDock();
   function setupActionDock(){
     document.getElementById('stage1DockActions').appendChild(document.getElementById('saveScheduleButton'));
+    document.getElementById('scheduleActionCard').appendChild(document.getElementById('stage1DockActions'));
     document.getElementById('stage2DockCopy').appendChild(document.getElementById('copyFranchiseMessage'));
     document.getElementById('stage2DockSend').appendChild(document.getElementById('markFranchiseSent'));
     document.getElementById('stage2DockReschedule').appendChild(document.getElementById('rescheduleAppointment'));
