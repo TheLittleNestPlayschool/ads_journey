@@ -275,3 +275,31 @@ body{background:linear-gradient(145deg,#142d48 0%,#0a2039 52%,#0a1b2f 100%);colo
 .card-dates time{font-weight:550}
 .card-dates span{font-weight:550}
 .topbar-actions{gap:10px;padding:0 10px}
+
+/*   navy and warm stone palette across the working queue*/
+body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
+.topbar{background:linear-gradient(110deg,#101e30,#22394d);border-bottom-color:#496070}
+.topbar .eyebrow{color:#d5c7b5}
+.topbar-summary .summary-card,.topbar-summary .summary-card:nth-child(n){background:#2d465b;border-color:#567081}
+.topbar .secondary-button,.topbar .filter-button{background:#2d465b;border-color:#536d80;color:#f6f3ee}
+.topbar .secondary-button:hover,.topbar .filter-button:hover{background:#3d586b;border-color:#8198a7}
+.topbar #newInquiryButton{background:#c8d9e2;border-color:#a3bbc9;color:#20364a}
+.journey-board-section{background:rgba(16,30,48,.4);border-color:#4b5f70}
+.journey-column{background:rgba(45,70,91,.32);border-color:rgba(156,166,170,.23)}
+.journey-column>header{background:rgba(45,70,91,.55);border-bottom-color:rgba(165,156,145,.27)}
+.journey-column[data-stage="inquiry"]{--stage-accent:#8caab8;--stage-deep:#d1e4ec}
+.journey-column[data-stage="inquiry-followup"]{--stage-accent:#8ba9a5;--stage-deep:#d1e4df}
+.journey-column[data-stage="scheduled"]{--stage-accent:#8c9fb9;--stage-deep:#d6e1f2}
+.journey-column[data-stage="awaiting-outcome"]{--stage-accent:#c6a57b;--stage-deep:#e9d3b3}
+.journey-column[data-stage="followup"]{--stage-accent:#aa98b4;--stage-deep:#e0d2e8}
+.journey-column[data-stage="enrollment"]{--stage-accent:#8faf99;--stage-deep:#d8e9db}
+.journey-column-list{scrollbar-color:#8092a0 transparent}
+.journey-card,.journey-column[data-stage="inquiry"] .journey-card{background:#f9f7f3;border-color:#dfded9;border-left-color:var(--stage-accent);box-shadow:0 4px 13px rgba(3,14,28,.18)}
+.journey-card.franchise-accent{border-left-color:color-mix(in srgb,var(--franchise-accent) 48%,#d7cab6)}
+.journey-card.urgent{background:#fcf8f5;border-color:#e2b6ab;border-left-color:#c86c60}
+.journey-card.enrolled{background:#f9f7f3;border-color:#cbdccf;border-left-color:#82b18f}
+.journey-card p{color:#637585}
+.card-next{border-top-color:#e7e2da}
+.card-dates{border-top-color:#e7e2da}
+.card-dates span{color:#6d7881}
+.card-dates time{color:#354a5d}
