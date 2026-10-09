@@ -183,3 +183,21 @@ body{background:var(--bg)}
 .priority.due,.priority.overdue{background:#f9e8e5;color:#994f48;border:1px solid #ecc8c2}
 .priority.enrolled{background:#e9f2eb;color:#53765b;border:1px solid #d2e2d5}
 .journey-card-lock{background:#faf2e6;border-color:#eadac2;color:#80653e}
+
+/*   desktop readability: bigger type and more breathing room without changing the six columns*/
+.journey-column h3{font-size:15px;line-height:1.2}
+.column-kicker{font-size:10px;letter-spacing:.075em}
+.journey-column-list{padding:9px;gap:9px}
+.journey-card{padding:12px 11px}
+.journey-column[data-stage="inquiry"] .journey-card{padding:12px 11px;row-gap:6px}
+.card-top strong,.journey-column[data-stage="inquiry"] .card-top strong{font-size:13px;line-height:1.3;font-weight:750}
+.journey-card p{font-size:11px;line-height:1.4;margin:5px 0 9px;color:#586760}
+.journey-column[data-stage="inquiry"] .journey-card p{margin:1px 0 2px}
+.card-next{font-size:11px;line-height:1.35;padding-top:9px;gap:8px}
+.card-next time{font-size:10px}
+.priority{font-size:9px;padding:4px 7px;line-height:1.25;max-width:100%;white-space:normal;text-align:center}
+.card-dates{font-size:10.5px;line-height:1.4;gap:5px;padding-top:9px;margin-top:9px}
+.card-dates>div{gap:8px}
+.card-dates span{font-weight:600;color:#617169}
+.card-dates time{font-size:10.5px;font-weight:650;color:#34473e}
+.journey-column[data-stage="inquiry"] .card-dates{margin-top:7px}
