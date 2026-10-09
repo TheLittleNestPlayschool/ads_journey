@@ -499,3 +499,35 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-reply-footer span{font-size:11px;line-height:1.4;color:var(--muted);min-width:0}
 .journey-reply-footer button{flex-shrink:0;padding:9px 18px}
 .journey-reply-footer button:disabled{opacity:.6;cursor:wait}
+
+/*   keep parent journey readable above the navy dashboard*/
+.journey-panel{--bg:#f2f5f7;--card:#fff;--text:#243647;--muted:#617381;--line:#dce5eb;--soft:#edf3f5;--green:#4c7d75;--green-dark:#35655d;--button-bg:#e7f3fa;--button-border:#a4c6db;--button-hover:#d8eaf5;--button-text:#263849;background:#f2f5f7;color:#243647;border-color:#bdd0dd}
+.journey-panel-head{background:#fff;color:#23364a;border-bottom:1px solid #dce5eb}
+.journey-panel-head h2{color:#1d3145}
+.journey-panel-head .section-kicker{color:#467d81}
+.journey-panel .journey-subtitle{color:#657583}
+.journey-panel .journey-state{background:#fff;border-color:#dce5eb}
+.journey-panel .journey-state.next{background:#edf3f5}
+.journey-panel .journey-state span{color:#657781}
+.journey-panel .journey-state strong{color:#243647}
+.journey-panel .journey-action-card,.journey-panel .journey-timeline-section{background:#fff;border-color:#dce5eb;color:#273b49}
+.journey-panel .journey-action-head h3{color:#263947}
+.journey-panel .journey-action-head .section-kicker{color:#567b7d}
+.journey-panel .visit-type-control span{background:#fff;color:#334b5d;border-color:#d7e1e6}
+.journey-panel .visit-type-control input:checked+span{background:#e7f1ee;color:#2e655b;border-color:#95b9ae}
+.journey-panel .schedule-grid input,.journey-panel .schedule-grid select,.journey-panel .schedule-note textarea,.journey-panel .time-selects select{background:#fff;color:#263847;border-color:#d5e0e6}
+.journey-panel .schedule-grid label>span,.journey-panel .schedule-note>span,.journey-panel .age-label,.journey-panel .time-field>span{color:#637581}
+.journey-panel .journey-primary,.journey-panel .secondary-button{color:#213a4c}
+.journey-panel .journey-quick-guide,.journey-panel .journey-quick-guide p,.journey-panel .journey-quick-guide li{color:#293b47}
+/*   Stage 1 actions now belong to the Next Step card, not a detached bottom bar*/
+.journey-panel[data-stage="inquiry"],.journey-panel[data-stage="inquiry-followup"]{grid-template-rows:80px minmax(0,1fr)}
+.journey-panel[data-stage="inquiry"] .journey-action-dock,.journey-panel[data-stage="inquiry-followup"] .journey-action-dock{display:none}
+#scheduleActionCard #stage1DockActions{width:100%;height:auto;min-height:44px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px;align-items:stretch;margin-top:auto;padding-top:14px;border-top:1px solid #e7edf0}
+#scheduleActionCard #stage1DockActions[hidden]{display:none}
+#scheduleActionCard #stage1DockActions #saveScheduleButton{width:100%;min-height:37px;background:#dbeef9;border:1px solid #a4c9df;border-radius:8px;color:#203d52;white-space:normal}
+#scheduleActionCard #stage1DockActions #stage1NotInterestedAction{display:flex;min-width:0;margin:0}
+#scheduleActionCard #stage1DockActions #stage1NotInterestedAction[hidden]{display:none}
+#scheduleActionCard #stage1DockActions #stage1NotInterestedAction button{width:100%;min-height:37px;padding:7px 8px;white-space:normal;font-size:10px}
+#scheduleActionCard #stage1DockActions #saveScheduleButton[hidden]{display:none}
+#scheduleActionCard #stage1DockActions:has(#saveScheduleButton[hidden]){grid-template-columns:1fr}
+@media(max-width:900px){.journey-panel[data-stage="inquiry"],.journey-panel[data-stage="inquiry-followup"]{grid-template-rows:104px minmax(0,1fr) 240px}}
