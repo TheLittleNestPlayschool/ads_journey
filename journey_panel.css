@@ -531,3 +531,52 @@ body:has(#journeyPanel.open){overflow:hidden}
 #scheduleActionCard #stage1DockActions #saveScheduleButton[hidden]{display:none}
 #scheduleActionCard #stage1DockActions:has(#saveScheduleButton[hidden]){grid-template-columns:1fr}
 @media(max-width:900px){.journey-panel[data-stage="inquiry"],.journey-panel[data-stage="inquiry-followup"]{grid-template-rows:104px minmax(0,1fr) 240px}}
+
+/*   navy and warm stone — three-panel desktop workspace*/
+.journey-panel{--bg:#172a3d;--card:#fcfaf6;--text:#273a4d;--muted:#697781;--line:#dbdcd8;--soft:#eeeae3;--green:#57796f;--green-dark:#375f57;--button-bg:#e4edf2;--button-border:#b6c9d3;--button-hover:#d5e6ee;--button-text:#263e4e;background:#172a3d;border:1px solid #34516c;color:#263747}
+.journey-panel-head{background:#f8f6f1;border-bottom:1px solid #d9d5cd}
+.journey-panel-head h2{color:#1d3045}
+.journey-panel-head .section-kicker{color:#806c55}
+.journey-panel .journey-subtitle{color:#5b6b76}
+.journey-panel-scroll.journey-panel-main{background:transparent}
+.journey-panel .journey-state{background:#fbf9f5;border-color:#dcdedb}
+.journey-panel .journey-state.next{background:#eeeae3}
+.journey-panel .journey-state span{color:#607080}
+.journey-panel .journey-state strong{color:#263747}
+.journey-panel .journey-action-card,.journey-panel .journey-timeline-section,.journey-panel .journey-conversation-view{background:#fcfaf6;border-color:#dedbd5;color:#283848}
+.journey-panel .journey-action-head h3{color:#253749}
+.journey-panel .journey-action-head .section-kicker{color:#8a7460}
+.journey-panel .visit-type-control span{background:#fff;color:#33485b;border-color:#dddcd7}
+.journey-panel .visit-type-control input:checked+span{background:#e8e0d4;color:#514537;border-color:#bfb09b}
+.journey-panel .schedule-grid input,.journey-panel .schedule-grid select,.journey-panel .schedule-note textarea,.journey-panel .time-selects select{background:#fff;color:#263847;border-color:#dadcd8}
+.journey-panel .schedule-grid label>span,.journey-panel .schedule-note>span,.journey-panel .age-label,.journey-panel .time-field>span{color:#64717a}
+.journey-panel #scheduleActionCard #stage1DockActions{border-top-color:#e5e0d8}
+.journey-panel #scheduleActionCard #stage1DockActions #saveScheduleButton{background:#dce9f0;border-color:#acc4d2;color:#233d4d}
+.journey-panel .journey-right-tab[aria-selected="true"]{background:#e9e2d7;color:#4c514d;border-color:#b8ad9a}
+.journey-panel .journey-message-row.incoming .journey-message-bubble{background:#f3eee7;border-color:#e2dbd1}
+.journey-panel .journey-message-row.outgoing .journey-message-bubble{background:#e8edf0;border-color:#cdd8dd}
+.journey-panel .journey-reply-form{background:#fcfaf6;border-top-color:#dddcd7}
+.journey-panel .journey-reply-form textarea{background:#fff;color:#253747}
+.journey-panel .journey-assistance{display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden;background:#f8f6f1;border:1px solid #dedbd4;border-radius:11px;color:#263747}
+.journey-assistance-head{flex:0 0 auto;padding:15px 16px 13px;background:#ede7dc;border-bottom:1px solid #dcd3c6}
+.journey-assistance-head .section-kicker{font-size:9px;color:#8c755a;margin:0 0 4px}
+.journey-assistance-head h3{margin:0;font-size:15px;line-height:1.3;color:#253749}
+.journey-assistance-head>span{display:block;margin-top:5px;color:#68727a;font-size:10px}
+.journey-assistance-body{flex:1;min-height:0;overflow:auto;padding:13px;display:flex;flex-direction:column;gap:13px}
+.journey-assistance-section{padding-bottom:13px;border-bottom:1px solid #e2ded6}
+.journey-assistance-section:last-child{border:0}
+.journey-assistance-section h4{font-size:11px;color:#394c5c;margin:0 0 9px}
+.journey-assistance-placeholder{border:1px dashed #c2b6a5;border-radius:9px;background:#fffdf9;padding:13px 12px}
+.journey-assistance-placeholder p{margin:0 0 9px;font-size:11px;line-height:1.5;color:#4a5861}
+.journey-assistance-placeholder small,.journey-assistance-muted{font-size:10px;line-height:1.5;color:#6d7880}
+.journey-assistance-muted{margin:0}
+@media(min-width:901px){
+  .journey-panel{width:min(1500px,calc(100vw - 32px));height:min(760px,calc(100dvh - 36px));grid-template-columns:minmax(300px,1.04fr) minmax(320px,1.21fr) minmax(245px,.79fr);column-gap:0}
+  .journey-panel-head{grid-column:1/4}
+  .journey-panel-scroll.journey-panel-main{grid-column:1;grid-row:2}
+  .journey-history-scroll{grid-column:2;grid-row:2/4;padding:12px 10px}
+  .journey-panel .journey-assistance{grid-column:3;grid-row:2/4;margin:12px 12px 12px 0}
+  .journey-panel[data-stage="inquiry"] .journey-history-scroll,.journey-panel[data-stage="inquiry-followup"] .journey-history-scroll{grid-row:2}
+  .journey-panel[data-stage="inquiry"] .journey-assistance,.journey-panel[data-stage="inquiry-followup"] .journey-assistance{grid-row:2}
+}
+@media(max-width:900px){.journey-panel .journey-assistance{display:none}}
