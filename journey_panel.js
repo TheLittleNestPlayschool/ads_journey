@@ -16,6 +16,12 @@ function initJourneyPanel(){
   </div>
 </div><div class="journey-history-scroll"><section class="journey-timeline-section"><div class="journey-action-head"><div><p class="section-kicker">History</p><h3>Journey Timeline</h3></div></div><div id="journeyTimeline" class="journey-timeline"></div></section></div></aside>`;
   document.body.appendChild(host);
+  /*   reserved third workspace column for human-reviewed response suggestions*/
+  const assistance=document.createElement('aside');
+  assistance.className='journey-assistance';
+  assistance.setAttribute('aria-label','Reply assistance');
+  assistance.innerHTML='<div class="journey-assistance-head"><p class="section-kicker">The Little Nest</p><h3>Reply Assistance</h3><span>Prepared responses · Admin reviewed</span></div><div class="journey-assistance-body"><section class="journey-assistance-section"><h4>Suggested reply</h4><div class="journey-assistance-placeholder"><p>Suggested wording will appear here once the response library is connected.</p><small>Nothing is sent automatically. The admin always reviews and sends.</small></div></section><section class="journey-assistance-section"><h4>Conversation context</h4><p class="journey-assistance-muted">Known parent details and relevant questions will appear here after conversation analysis is connected.</p></section><section class="journey-assistance-section"><h4>School information</h4><p class="journey-assistance-muted">Verified branch details and response guidance will be shown here when applicable.</p></section></div>';
+  document.getElementById('journeyPanel').appendChild(assistance);
   /*   conversation and journey history switcher*/
   const rightColumn=document.querySelector('#journeyPanel .journey-history-scroll');
   const historySection=rightColumn.querySelector('.journey-timeline-section');
