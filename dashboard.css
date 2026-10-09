@@ -150,3 +150,36 @@
 .card-dates time{color:#5c5850;text-align:right;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums}
 .journey-column[data-stage="inquiry"] .journey-card{grid-template-rows:auto auto auto}
 .journey-column[data-stage="inquiry"] .card-dates{grid-column:1/-1;grid-row:3;margin-top:3px}
+
+/*   calm professional dashboard — quieter surfaces, clearer working priorities*/
+:root{--bg:#f3f4f1;--card:#ffffff;--text:#303b38;--muted:#6c7872;--line:#dfe4df;--green:#648a7f;--green-dark:#426f64;--soft:#edf3ef;--shadow:0 8px 24px rgba(38,53,46,.055)}
+body{background:var(--bg)}
+.topbar{background:rgba(255,255,255,.97);border-bottom-color:#e2e7e2}
+.topbar-summary .summary-card{box-shadow:none}
+.journey-board-section{background:#f9faf8;border-color:#e4e8e3;box-shadow:0 5px 22px rgba(38,53,46,.045)}
+.journey-column{background:#f5f7f5;border-color:#dfe5e0;box-shadow:none}
+.journey-column>header{background:#fbfcfa;border-bottom-color:#e2e7e2;padding:10px 10px 9px}
+.journey-column>header:before{height:3px;background:var(--stage-accent)}
+.journey-column h3{color:#2e3834;font-weight:800}
+.column-kicker{color:var(--stage-deep)}
+.column-count{background:color-mix(in srgb,var(--stage-accent) 9%,#fff);border-color:color-mix(in srgb,var(--stage-accent) 22%,#e4e8e3)}
+.journey-column-list{padding:8px;gap:8px}
+.journey-card{background:#fff;border:1px solid #e0e6df;border-top:2px solid color-mix(in srgb,var(--stage-accent) 72%,#fff);border-radius:10px;box-shadow:0 2px 7px rgba(38,53,46,.035);transition:box-shadow .16s ease,border-color .16s ease,transform .16s ease}
+.journey-card:hover{border-color:color-mix(in srgb,var(--stage-accent) 40%,#dfe5e0);border-top-color:var(--stage-accent);box-shadow:0 5px 15px rgba(38,53,46,.09)}
+.journey-card.urgent{background:#fffdfc;border-color:#e9c6c0;border-top:3px solid #bb6b62;box-shadow:0 2px 9px rgba(160,78,66,.085)}
+.journey-card.urgent:hover{box-shadow:0 5px 15px rgba(160,78,66,.13)}
+.journey-card.enrolled{border-color:#d1dfd3;border-top:2px solid #75967d;box-shadow:0 2px 7px rgba(52,91,63,.045)}
+.card-top strong{color:#2b3631}
+.journey-card p{color:#67716b}
+.card-next{border-top-color:#e7ebe6;color:#68726b}
+.card-next span{color:#37443e}
+.card-next time{color:#59645e}
+.card-dates{border-top-color:#edf0ec}
+.card-dates span{color:#69736e}
+.card-dates time{color:#44524a}
+.priority.quiet,.priority.waiting-parent{background:#eff2ef;color:#64726b;border:1px solid #e4e8e4}
+.priority.waiting{background:#f0f1ef;color:#68716c}
+.priority.upcoming{background:#f7f0e0;color:#876c3d;border:1px solid #e8dbc0}
+.priority.due,.priority.overdue{background:#f9e8e5;color:#994f48;border:1px solid #ecc8c2}
+.priority.enrolled{background:#e9f2eb;color:#53765b;border:1px solid #d2e2d5}
+.journey-card-lock{background:#faf2e6;border-color:#eadac2;color:#80653e}
