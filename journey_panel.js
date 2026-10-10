@@ -35,6 +35,7 @@ function initJourneyPanel(){
     changeDialog.classList.toggle('journey-change-success',success);
     changeDialog.hidden=false;confirmButton.focus();
   });
+  window.journeyShowChangeSuccess=(title)=>showChangeDialog(title,'The change has been recorded successfully.',true);
   function finishChangeDialog(value){if(!dialogResolver)return;const done=dialogResolver;dialogResolver=null;changeDialog.hidden=true;done(value);}
   changeDialog.querySelector('.journey-change-cancel').addEventListener('click',()=>finishChangeDialog(false));
   changeDialog.querySelector('.journey-change-confirm').addEventListener('click',()=>finishChangeDialog(true));
@@ -283,6 +284,7 @@ function initJourneyPanel(){
     cancelAppointmentForm:()=> 'ad_journey_cancel',
     followUpLaterForm:()=> 'ad_journey_follow_up_stage4',
     notInterestedForm:()=> 'ad_journey_not_interested',
+    stage1NotInterestedForm:()=> 'ad_journey_not_interested',
     journeyReplyForm:()=> 'ad_messenger_send'
   };
   panel.addEventListener('click',event=>{
