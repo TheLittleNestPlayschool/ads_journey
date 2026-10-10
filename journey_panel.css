@@ -580,3 +580,19 @@ body:has(#journeyPanel.open){overflow:hidden}
   .journey-panel[data-stage="inquiry"] .journey-assistance,.journey-panel[data-stage="inquiry-followup"] .journey-assistance{grid-row:2}
 }
 @media(max-width:900px){.journey-panel .journey-assistance{display:none}}
+
+/*   shared confirmation and saved-state dialogs — outside the panel stacking context*/
+.journey-change-overlay[hidden]{display:none!important}
+.journey-change-overlay{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(9,22,37,.60);backdrop-filter:blur(3px)}
+.journey-change-dialog{width:min(385px,calc(100vw - 36px));border:1px solid #d6d0c7;border-radius:15px;background:#fbf9f5;color:#263849;box-shadow:0 22px 70px rgba(0,8,20,.28);padding:24px 23px 20px}
+.journey-change-kicker{display:block;font-size:9px;font-weight:800;letter-spacing:.12em;color:#90765c;margin-bottom:9px}
+.journey-change-dialog h3{font:800 20px/1.25 Arial,Helvetica,sans-serif;color:#243950;margin:0 0 10px}
+.journey-change-dialog p{font-size:13px;line-height:1.6;color:#53616c;margin:0 0 22px}
+.journey-change-buttons{display:flex;justify-content:flex-end;gap:10px}
+.journey-change-buttons button{min-width:100px;min-height:39px;padding:9px 16px;border-radius:8px;cursor:pointer;font:700 12px Arial,Helvetica,sans-serif}
+.journey-change-cancel{background:#fff;border:1px solid #cdd4da;color:#40546a}
+.journey-change-confirm{background:#2d465b;border:1px solid #2d465b;color:#fff}
+.journey-change-confirm:hover{background:#3d6178}
+.journey-change-success .journey-change-dialog{border-top:4px solid #718e80}
+.journey-change-success .journey-change-cancel{display:none}
+.journey-change-success .journey-change-confirm{background:#506f68;border-color:#506f68}
