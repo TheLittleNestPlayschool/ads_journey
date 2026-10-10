@@ -3,6 +3,53 @@ function initJourneyPanel(){
   const demo={facebookName:'',location:'',franchiseId:null,journeyId:null,stage:'Inquiry',status:'New',next:'Continue conversation'};
   let stage2State=null;
   const journeyToken=localStorage.getItem('ads_journey_token');
+  /*   shared confirmation and success flow for changes made in the Journey workspace*/
+  const JOURNEY_MUTATIONS={
+    ad_journey_parent_message:['Continue Conversation','Move this inquiry to Continue Conversation?','Conversation updated'],
+    ad_journey_enrolled_stage1:['Confirm Enrollment','Move this parent to Stage 5 — Enrollment?','Enrollment Successful'],
+    ad_journey_enrolled_stage4:['Confirm Enrollment','Move this parent to Stage 5 — Enrollment?','Enrollment Successful'],
+    ad_journey_schedule:['Confirm Schedule','Save this visit or free trial schedule?','Schedule Saved'],
+    ad_journey_franchise_sent:['Confirm Franchise Handoff','Record that the details were sent to the franchise?','Franchise Handoff Saved'],
+    ad_journey_result_stage:['Confirm Franchise Result','Save this result and update the parent journey?','Franchise Result Saved'],
+    ad_journey_cancel:['Confirm Cancellation','Cancel this appointment?','Appointment Cancelled'],
+    ad_journey_reschedule:['Confirm Reschedule','Save the new appointment schedule?','Schedule Updated'],
+    ad_journey_follow_up_stage4:['Confirm Follow-up','Save this follow-up and update the journey?','Follow-up Saved'],
+    ad_journey_not_interested:['Confirm Closure','Close this journey as No Longer Interested?','Journey Closed'],
+    ad_journey_undo_enrollment:['Confirm Undo Enrollment','Undo the enrollment and return the parent to the previous stage?','Enrollment Reverted'],
+    ad_messenger_send:['Send Messenger Reply','Send this reply to the parent on Messenger?','Message Sent']
+  };
+  const changeDialog=document.createElement('div');
+  changeDialog.className='journey-change-overlay';
+  changeDialog.hidden=true;
+  changeDialog.innerHTML='<div class="journey-change-dialog" role="dialog" aria-modal="true" aria-labelledby="journeyChangeTitle" aria-describedby="journeyChangeDescription"><span class="journey-change-kicker">THE LITTLE NEST · ADS JOURNEY</span><h3 id="journeyChangeTitle"></h3><p id="journeyChangeDescription"></p><div class="journey-change-buttons"><button type="button" class="journey-change-cancel">Cancel</button><button type="button" class="journey-change-confirm">Confirm</button></div></div>';
+  document.body.appendChild(changeDialog);
+  let dialogResolver=null;
+  const showChangeDialog=(title,description,success=false)=>new Promise(resolve=>{
+    if(dialogResolver){resolve(false);return;}
+    dialogResolver=resolve;
+    changeDialog.querySelector('#journeyChangeTitle').textContent=title;
+    changeDialog.querySelector('#journeyChangeDescription').textContent=description;
+    changeDialog.querySelector('.journey-change-cancel').hidden=success;
+    const confirmButton=changeDialog.querySelector('.journey-change-confirm');
+    confirmButton.textContent=success?'Close':'Confirm';
+    changeDialog.classList.toggle('journey-change-success',success);
+    changeDialog.hidden=false;confirmButton.focus();
+  });
+  function finishChangeDialog(value){if(!dialogResolver)return;const done=dialogResolver;dialogResolver=null;changeDialog.hidden=true;done(value);}
+  changeDialog.querySelector('.journey-change-cancel').addEventListener('click',()=>finishChangeDialog(false));
+  changeDialog.querySelector('.journey-change-confirm').addEventListener('click',()=>finishChangeDialog(true));
+  changeDialog.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();if(!changeDialog.classList.contains('journey-change-success'))finishChangeDialog(false);}});
+  /*   Only workflow mutations are acknowledged; reads and ownership lease requests are untouched*/
+  const fetch=async (url,options={})=>{
+    const response=await window.fetch(url,options);
+    const endpoint=String(url).split('?')[0].split('/').pop();
+    const action=JOURNEY_MUTATIONS[endpoint];
+    if(action&&String(options.method||'GET').toUpperCase()==='POST'&&response.ok){
+      const result=await response.clone().json().catch(()=>null);
+      if(result?.success!==false&&!result?.code&&!result?.error)await showChangeDialog(action[2],'The change has been recorded successfully.',true);
+    }
+    return response;
+  };
   const host=document.createElement('div');
   host.innerHTML=`<div id="journeyBackdrop" class="journey-backdrop" hidden></div><aside id="journeyPanel" class="journey-panel" aria-hidden="true"><div class="journey-panel-head"><div><p class="section-kicker">Parent Journey</p><h2 id="journeyParentName">Parent</h2><p id="journeyLocation" class="journey-subtitle">Location</p><p id="journeyChildName" class="journey-subtitle" hidden></p></div><div class="journey-panel-head-actions"><button id="journeyQuickGuideButton" class="journey-quick-guide-button" type="button" aria-label="Quick guide" aria-expanded="false">?</button><button id="closeJourneyPanel" class="secondary-button" type="button">← Back</button><section id="journeyQuickGuide" class="journey-quick-guide" hidden><div class="journey-quick-guide-head"><div><p class="section-kicker">Quick Guide</p><h3 id="journeyQuickGuideTitle">Stage 1</h3></div><div class="journey-quick-guide-head-actions"><button id="journeyQuickGuideLanguage" class="journey-quick-guide-language" type="button">Tagalog</button><button id="closeJourneyQuickGuide" class="journey-quick-guide-close" type="button" aria-label="Close quick guide">×</button></div></div><div id="journeyQuickGuideBody"></div></section></div></div><div class="journey-panel-scroll journey-panel-main"><section class="journey-state-grid"><div class="journey-state"><span>Journey Stage</span><strong id="journeyStage">New Inquiry</strong></div><div class="journey-state"><span>Current Status</span><strong id="journeyStatus">New Inquiry</strong></div><div class="journey-state next"><span>Next Step</span><strong id="journeyNextAction">Continue Conversation</strong></div></section><section id="scheduleActionCard" class="journey-action-card"><div class="journey-action-head"><div><p class="section-kicker">Next Step</p><h3>Choose the next step</h3></div><span class="journey-action-badge">Action</span></div><form id="scheduleForm" class="schedule-form"><div class="visit-type-control"><label><input type="radio" name="visitType" value="trial" checked><span>Free Trial</span></label><label><input type="radio" name="visitType" value="visit"><span>Visit</span></label><label><input type="radio" name="visitType" value="message"><span>Continue Conversation</span></label><label><input type="radio" name="visitType" value="enroll"><span>Enroll</span></label></div><div id="scheduleAppointmentFields"><div class="schedule-grid"><label><span>Parent name</span><input id="scheduleParent" type="text" placeholder="Parent's real name" required></label><label><span>Session interested in</span><select id="scheduleSession" required><option value="0">None</option></select></label><label><span>Date</span><input id="scheduleDate" type="date" required></label><div class="time-field"><span>Time</span><div class="time-selects"><select id="scheduleHour" aria-label="Hour"></select><span class="time-colon">:</span><select id="scheduleMinute" aria-label="Minute"></select><select id="schedulePeriod" aria-label="AM or PM"><option value="AM">AM</option><option value="PM">PM</option></select></div></div><label><span>Child name</span><input id="scheduleChild" type="text" placeholder="Child name" required></label><div class="age-field"><span class="age-label">Age</span><div class="age-inputs"><label><input id="scheduleAgeYears" type="number" min="0" max="12" placeholder="0"><small>Years</small></label><label><input id="scheduleAgeMonths" type="number" min="0" max="11" placeholder="0"><small>Months</small></label></div></div></div><label class="schedule-note"><span>Notes</span><textarea id="scheduleNotes" rows="2" placeholder="Anything the franchise should know"></textarea></label></div><div id="parentMessageFields" hidden><label class="schedule-note"><span>Message note</span><textarea id="parentMessageNote" rows="4" placeholder="Optional note about the message sent"></textarea></label><p class="message-help">The journey will move to Stage 1A as an active conversation.</p></div><div id="directEnrollFields" hidden><label class="schedule-note"><span>Enrollment note</span><textarea id="directEnrollNote" rows="4" placeholder="Anything we should record about this enrollment?"></textarea></label><div id="directEnrollError" class="waiting-block" hidden></div><p class="message-help">This will move the parent directly to Stage 5 Enrollment.</p></div><button id="saveScheduleButton" class="journey-primary" type="submit" form="scheduleForm">Save Schedule</button></form></section><section id="handoffCard" class="journey-action-card" hidden><div class="journey-action-head"><div><p id="handoffKicker" class="section-kicker">Franchise Handoff</p><h3 id="handoffTitle">Free Trial Scheduled</h3></div><span id="handoffStatus" class="journey-action-badge">Ready to send</span></div><div class="scheduled-summary"><strong id="scheduledWhen"></strong><span id="scheduledWhere"></span></div><button id="handoffDetailsToggle" class="journey-accordion-toggle" type="button" aria-expanded="false" hidden><span id="handoffDetailsLabel">Free Trial Details</span><span class="journey-accordion-chevron">⌄</span></button><div id="copyMessageBlock" class="copy-message" hidden><pre id="franchiseMessage"></pre></div><div id="franchiseHandoffActions" class="handoff-actions"><button id="copyFranchiseMessage" class="secondary-button" type="button">Copy Message</button><button id="markFranchiseSent" class="journey-primary" type="button">Mark as Sent</button></div><div id="waitingBlock" class="waiting-block" hidden><span>Expected franchise update</span><strong id="expectedUpdateTime">—</strong><p>The journey stays Scheduled until the visit or trial has happened.</p></div><div id="franchiseResultBlock" class="waiting-block" hidden><span>Franchise result</span><strong>What happened with the visit / trial?</strong><label class="schedule-note"><span>Franchise note</span><textarea id="franchiseResultNote" rows="2" placeholder="What did the franchise report?"></textarea></label><div class="handoff-actions"><button class="journey-primary franchise-result-button" data-result="enrolled" type="button">Enroll</button><button class="secondary-button franchise-result-button" data-result="interested" type="button">Interested</button><button class="secondary-button franchise-result-button" data-result="no_show" type="button">No Show</button><button class="secondary-button franchise-result-button" data-result="cancelled" type="button">Cancelled</button><button class="secondary-button franchise-result-button" data-result="not_interested" type="button">Not Interested</button></div><div id="franchiseResultError" class="waiting-block" hidden></div></div><div id="stage2UpdateBlock" class="waiting-block"><span id="appointmentActionLabel">Update appointment</span><div class="handoff-actions"><button id="rescheduleAppointment" class="secondary-button" type="button">Reschedule</button><button id="cancelAppointment" class="secondary-button" type="button">Cancel Appointment</button></div><form id="rescheduleForm" class="schedule-form" hidden><div class="schedule-grid"><label><span>Session</span><select id="rescheduleSession" required><option value="0">None</option></select></label><label><span>Date</span><input id="rescheduleDate" type="date" required></label><div class="time-field"><span>Time</span><div class="time-selects"><select id="rescheduleHour" aria-label="Hour"></select><span class="time-colon">:</span><select id="rescheduleMinute" aria-label="Minute"></select><select id="reschedulePeriod" aria-label="AM or PM"><option value="AM">AM</option><option value="PM">PM</option></select></div></div></div><label class="schedule-note"><span>Note</span><textarea id="rescheduleNote" rows="2" placeholder="Reason or anything the franchise should know"></textarea></label><div class="handoff-actions"><button id="cancelReschedule" class="secondary-button" type="button">Cancel</button><button class="journey-primary" type="submit">Save New Schedule</button></div></form><form id="cancelAppointmentForm" class="schedule-form" hidden><label class="schedule-note"><span>Cancellation note</span><textarea id="cancelAppointmentNote" rows="2" placeholder="Why was the appointment cancelled?" required></textarea></label><div class="handoff-actions"><button id="backCancelAppointment" class="secondary-button" type="button">Back</button><button class="journey-primary" type="submit">Confirm Cancel</button></div></form><div id="notInterestedAction" class="handoff-actions" hidden><button id="stage4EnrolledButton" class="journey-primary" type="button">Enrolled</button><button id="stage4RescheduleButton" class="secondary-button" type="button">Reschedule</button><button id="followUpLaterButton" class="secondary-button" type="button">Follow Up Later</button><button id="notInterestedButton" class="secondary-button" type="button">No Longer Interested</button></div><form id="enrolledForm" class="schedule-form" hidden><label class="schedule-note"><span>Enrollment note</span><textarea id="enrolledNote" rows="2" placeholder="Anything we should record about this enrollment?"></textarea></label><div class="handoff-actions"><button id="backEnrolled" class="secondary-button" type="button">Back</button><button class="journey-primary" type="submit">Confirm Enrolled</button></div></form><form id="followUpLaterForm" class="schedule-form" hidden><div class="schedule-grid"><label><span>Follow-up date</span><input id="followUpDate" type="date" required></label><div class="time-field"><span>Time</span><div class="time-selects"><select id="followUpHour" aria-label="Hour"></select><span class="time-colon">:</span><select id="followUpMinute" aria-label="Minute"></select><select id="followUpPeriod" aria-label="AM or PM"><option value="AM">AM</option><option value="PM">PM</option></select></div></div></div><label class="schedule-note"><span>Note</span><textarea id="followUpNote" rows="2" placeholder="What should we remember for the follow-up?" required></textarea></label><div class="handoff-actions"><button id="backFollowUpLater" class="secondary-button" type="button">Back</button><button class="journey-primary" type="submit">Save Follow-up</button></div></form><form id="notInterestedForm" class="schedule-form" hidden><label class="schedule-note"><span>Note</span><textarea id="notInterestedNote" rows="2" placeholder="Why is the parent no longer interested?" required></textarea></label><div class="handoff-actions"><button id="backNotInterested" class="secondary-button" type="button">Back</button><button class="journey-primary" type="submit">Confirm No Longer Interested</button></div></form></div></section><section id="enrollmentActionCard" class="journey-action-card" hidden><div class="journey-action-head"><div><p class="section-kicker">Enrollment</p><h3>Enrolled</h3></div><span class="journey-action-badge">Stage 5</span></div><div class="scheduled-summary"><strong id="enrollmentReportedWhen">—</strong><span id="enrollmentReportedWhere"></span></div><div class="copy-message"><pre id="enrollmentReportedNote">—</pre></div><div class="handoff-actions"><button id="undoEnrollmentButton" class="secondary-button" type="button">Undo Enrollment</button></div><div id="undoEnrollmentConfirm" class="schedule-form" hidden><label class="schedule-note"><span>Reason for undo</span><textarea id="undoEnrollmentNote" rows="2" placeholder="Why is this enrollment being undone?" required></textarea></label><div id="undoEnrollmentError" class="waiting-block" hidden></div><div class="handoff-actions"><button id="cancelUndoEnrollment" class="secondary-button" type="button">Cancel</button><button id="confirmUndoEnrollment" class="journey-primary" type="button">Confirm Undo</button></div></div></section></div><div id="journeyActionDock" class="journey-action-dock" aria-label="Journey actions">
   <div id="stage1DockActions" class="journey-dock-group" data-stage="inquiry"></div>
@@ -224,6 +271,47 @@ function initJourneyPanel(){
     lockMessage('Take Control to edit this journey.');
   },true));
 
+  /*   ask permission before submitting any parent-facing or stage-changing action*/
+  const confirmedEvents=new WeakSet();
+  const actionClicks={
+    markFranchiseSent:'ad_journey_franchise_sent',confirmUndoEnrollment:'ad_journey_undo_enrollment'
+  };
+  const actionForms={
+    scheduleForm:()=>document.querySelector('input[name="visitType"]:checked')?.value==='enroll'?'ad_journey_enrolled_stage1':document.querySelector('input[name="visitType"]:checked')?.value==='message'?'ad_journey_parent_message':'ad_journey_schedule',
+    enrolledForm:()=> 'ad_journey_enrolled_stage4',
+    rescheduleForm:()=> 'ad_journey_reschedule',
+    cancelAppointmentForm:()=> 'ad_journey_cancel',
+    followUpLaterForm:()=> 'ad_journey_follow_up_stage4',
+    notInterestedForm:()=> 'ad_journey_not_interested',
+    journeyReplyForm:()=> 'ad_messenger_send'
+  };
+  panel.addEventListener('click',event=>{
+    const target=event.target.closest('button');
+    if(!target||confirmedEvents.has(target))return;
+    let action=actionClicks[target.id];
+    if(target.classList.contains('franchise-result-button'))action=target.dataset.result==='enrolled'?'ad_journey_enrolled_stage4':'ad_journey_result_stage';
+    if(!action||!JOURNEY_MUTATIONS[action]||target.disabled)return;
+    event.preventDefault();event.stopImmediatePropagation();
+    const [title,description]=JOURNEY_MUTATIONS[action];
+    showChangeDialog(title,description).then(approved=>{
+      if(!approved||!target.isConnected)return;
+      confirmedEvents.add(target);target.click();confirmedEvents.delete(target);
+    });
+  },true);
+  panel.addEventListener('submit',event=>{
+    const form=event.target;
+    if(confirmedEvents.has(form)||!actionForms[form.id])return;
+    const action=actionForms[form.id]();
+    if(!JOURNEY_MUTATIONS[action])return;
+    event.preventDefault();event.stopImmediatePropagation();
+    const submitter=event.submitter;
+    const [title,description]=JOURNEY_MUTATIONS[action];
+    showChangeDialog(title,description).then(approved=>{
+      if(!approved||!form.isConnected)return;
+      confirmedEvents.add(form);
+      try{form.requestSubmit(submitter&&submitter.isConnected?submitter:undefined);}finally{confirmedEvents.delete(form);}
+    });
+  },true);
   const actionDock=document.getElementById('journeyActionDock');
   setupActionDock();
   function setupActionDock(){
