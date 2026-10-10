@@ -103,7 +103,7 @@ function initJourneyPanel(){
   conversationList.className='journey-conversation-list';
   conversationView.replaceChildren(conversationList);
   /*   admin-approved Messenger reply composer*/
-  const replyForm=document.createElement('form');replyForm.className='journey-reply-form';
+  const replyForm=document.createElement('form');replyForm.id='journeyReplyForm';replyForm.className='journey-reply-form';
   replyForm.innerHTML='<label for="journeyReplyText">Reply to parent</label><textarea id="journeyReplyText" rows="3" maxlength="2000" placeholder="Write your reply…" aria-label="Message to parent"></textarea><div class="journey-reply-footer"><span id="journeyReplyStatus" role="status"></span><button id="journeyReplySend" class="journey-primary" type="submit">Send Reply</button></div>';
   conversationView.appendChild(replyForm);
   const replyText=document.getElementById('journeyReplyText'),replyStatus=document.getElementById('journeyReplyStatus'),replySend=document.getElementById('journeyReplySend');
