@@ -285,13 +285,15 @@ function initJourneyPanel(){
     followUpLaterForm:()=> 'ad_journey_follow_up_stage4',
     notInterestedForm:()=> 'ad_journey_not_interested',
     stage1NotInterestedForm:()=> 'ad_journey_not_interested',
-    journeyReplyForm:()=> 'ad_messenger_send'
+    journeyReplyForm:()=> 'ad_messenger_send',
+    stage3RescheduleForm:()=> 'ad_journey_reschedule'
   };
   panel.addEventListener('click',event=>{
     const target=event.target.closest('button');
     if(!target||confirmedEvents.has(target))return;
     let action=actionClicks[target.id];
     if(target.classList.contains('franchise-result-button'))action=target.dataset.result==='enrolled'?'ad_journey_enrolled_stage4':'ad_journey_result_stage';
+    if(target.classList.contains('stage3-result-button'))action=target.dataset.result==='enrolled'?'ad_journey_enrolled_stage4':'ad_journey_result_stage';
     if(!action||!JOURNEY_MUTATIONS[action]||target.disabled)return;
     event.preventDefault();event.stopImmediatePropagation();
     const [title,description]=JOURNEY_MUTATIONS[action];
