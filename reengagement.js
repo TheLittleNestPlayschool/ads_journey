@@ -4,7 +4,7 @@ const API='https://x58r-xped-p4y6.n7e.xano.io/api:0Ddhs4dT';
 const button=document.getElementById('reengagementButton'),badge=document.getElementById('reengagementDueBadge'),modal=document.getElementById('reengagementModal');
 if(!button||!modal)return;
 const body=document.getElementById('reengagementRecords'),daily=document.getElementById('reDaily');
-let records=[],tab='due',request=0;
+let records=[],request=0;
 const e=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const selected=()=>typeof selectedFranchiseIds!=='undefined'?[...selectedFranchiseIds]:[];
 const date=stamp=>stamp?new Date(Number(stamp)).toLocaleString('en-PH',{timeZone:'Asia/Manila',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
@@ -32,18 +32,21 @@ daily.innerHTML=Array.from({length:6},(_,i)=>'<div><small>'+keyDate(5-i)+'</smal
 renderList();
 }
 function renderList(){
-document.querySelectorAll('[data-re-tab]').forEach(b=>b.classList.toggle('selected',b.dataset.reTab===tab));
-const rows=records.filter(r=>classify(r)===tab).sort((a,b)=>Number(a.next_action_at)-Number(b.next_action_at));
-if(!rows.length){body.innerHTML='<div class="reengagement-empty">No '+(tab==='due'?'follow-ups due':tab==='scheduled'?'scheduled follow-ups':'parents awaiting replies')+'.</div>';return;}
+const priority={due:0,scheduled:1,awaiting:2};
+const rows=records.slice().sort((a,b)=>priority[classify(a)]-priority[classify(b)]||Number(a.next_action_at)-Number(b.next_action_at));
+const total=document.getElementById('reQueueTotal');if(total)total.textContent=rows.length+' '+(rows.length===1?'record':'records');
+if(!rows.length){body.innerHTML='<div class="reengagement-empty">No Re-engagement records for the selected franchises.</div>';return;}
 body.innerHTML=rows.map(r=>{
 const franchise=typeof franchises!=='undefined'?franchises.find(f=>Number(f.id)===Number(r.franchise_id)):null;
 const location=franchise?(franchise.location||franchise.name||franchise.branch_name):'Franchise #'+r.franchise_id;
-return '<div class="reengagement-item"><div><strong>Journey #'+e(r.id)+'</strong><p>'+e(location)+' · '+(tab==='awaiting'?'Reply deadline: ':'Follow-up: ')+e(date(r.next_action_at))+'</p></div><button type="button" data-re-id="'+e(r.id)+'">View Journey</button></div>';
+const status=classify(r),label=status==='due'?'Due now':status==='scheduled'?'Scheduled':'Awaiting Reply';
+const nextLabel=status==='awaiting'?'Reply deadline':'Follow Up With Parent';
+return '<div class="reengagement-item journey-card reengagement-card '+(status==='due'?'urgent':'')+'" data-re-id="'+e(r.id)+'" role="button" tabindex="0"><div class="card-top"><strong>'+e(r.parent_name||r.facebook_name||r.inquiry_name||'Journey #'+r.id)+'</strong><span class="priority '+(status==='due'?'overdue':status==='scheduled'?'upcoming':'waiting-parent')+'">'+label+'</span></div><p>'+e(location)+' · Re-engagement</p><div class="card-next"><span>'+nextLabel+'</span><time>'+e(date(r.next_action_at))+'</time></div></div>';
 }).join('');
 }
 button.addEventListener('click',async()=>{if(typeof openDashboardModal==='function')openDashboardModal('reengagementModal');else{modal.hidden=false;document.getElementById('dashboardModalBackdrop').hidden=false;}await refresh();});
-document.querySelectorAll('[data-re-tab]').forEach(b=>b.addEventListener('click',()=>{tab=b.dataset.reTab;renderList();}));
 body.addEventListener('click',event=>{const btn=event.target.closest('[data-re-id]');if(!btn)return;const record=records.find(r=>String(r.id)===btn.dataset.reId);if(!record)return;showRecord(record);});
+body.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&event.target.matches('.reengagement-card')){event.preventDefault();event.target.click();}});
 async function showRecord(record){
 const id=Number(record.id),token=localStorage.getItem('ads_journey_token');
 body.innerHTML='<div class="reengagement-empty">Loading journey...</div>';
