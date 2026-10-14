@@ -94,6 +94,20 @@ await loadConversation();await refresh();if(typeof loadBoard==='function')loadBo
 }catch(error){detail.innerHTML='<div class="reengagement-empty">'+e(error.message)+'</div><button type="button" id="reBackFallback">← Back</button>';detail.querySelector('#reBackFallback').addEventListener('click',()=>{modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();renderList();});}
 }
 document.addEventListener('click',event=>{if(event.target.closest('#franchiseCheckboxList')||event.target.closest('#selectAllFranchises')||event.target.closest('#clearAllFranchises'))setTimeout(refresh,450);});
+/*   Clear this queue when the normal Parent Journey workspace opens*/
+function dismissForOtherJourney(){
+if(modal.hidden)return;
+modal.hidden=true;modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;
+document.getElementById('dashboardModalBackdrop').hidden=true;
+}
+const normalJourneyPanel=document.getElementById('journeyPanel');
+if(normalJourneyPanel){
+const observer=new MutationObserver(()=>{if(normalJourneyPanel.classList.contains('open'))dismissForOtherJourney();});
+observer.observe(normalJourneyPanel,{attributes:true,attributeFilter:['class']});
+}
+document.addEventListener('click',event=>{
+if(event.target.closest('.journey-card[data-journey-id]')&&!event.target.closest('#reengagementModal'))dismissForOtherJourney();
+},true);
 window.addEventListener('journey-sync-refresh',refresh);
 refresh();
 })();
