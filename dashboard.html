@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ads Journey</title>
-<link rel="stylesheet" href="dashboard.css?v=20261010-warm-stone">
+<link rel="stylesheet" href="dashboard.css?v=20261014-stage5">
 <link rel="stylesheet" href="dashboard_filter.css?v=20261003-1925">
 <link rel="stylesheet" href="help_manual.css?v=20261004-1034">
 </head>
@@ -83,6 +83,12 @@
       <section class="journey-column" data-stage="enrollment">
         <header><div><span class="column-kicker">Stage 5</span><h3>Enrollment</h3></div><span class="column-count">0</span></header>
         <div class="journey-column-list"></div>
+        <div class="enrollment-performance" aria-label="Enrollment Performance">
+          <h4>Enrollment Performance</h4>
+          <div class="enrollment-performance-grid"><div><span>Today</span><strong data-enrollment-period="today">—</strong></div><div><span>Yesterday</span><strong data-enrollment-period="yesterday">—</strong></div><div><span>Last 7 days</span><strong data-enrollment-period="last7">—</strong></div><div><span>Previous 7 days</span><strong data-enrollment-period="previous7">—</strong></div></div>
+          <div class="enrollment-daily-title">Daily Enrollments · Last 7 Days</div>
+          <div class="enrollment-daily-days" id="enrollmentDailyDays"></div>
+        </div>
       </section>
     </div>
   </section>
@@ -117,7 +123,7 @@
 <section id="marketingPerformanceModal" class="dashboard-modal" hidden><div class="dashboard-modal-head"><div><p class="section-kicker">Ads</p><h2>Marketing Performance</h2></div><button class="secondary-button modal-close" type="button">← Back</button></div><div class="dashboard-modal-body"><div class="marketing-current"></div><button id="addMarketingSnapshotButton" class="secondary-button" type="button">+ Enter New Snapshot</button></div></section>
 <script src="usage_tracker.js"></script>
 <script src="franchise_cards.js"></script>
-<script src="dashboard.js?v=20261010-stage3-confirm"></script>
+<script src="dashboard.js?v=20261014-stage5"></script>
 <script src="help_manual.js?v=20261004-1950"></script>
 <script src="batch_import.js?v=20261003-2054"></script>
 <script src="stage1_not_interested.js?v=20261010-confirm-actions"></script>
