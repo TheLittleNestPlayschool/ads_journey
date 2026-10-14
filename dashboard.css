@@ -346,3 +346,6 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 .reengagement-item p{margin:5px 0 0;color:#647788;font-size:11px}
 .reengagement-item button{border:1px solid #abc2cf;background:#e7f3fa;color:#203b4e;border-radius:7px;padding:7px 11px;font-weight:750;font-size:11px;cursor:pointer}
 .reengagement-empty{padding:22px;text-align:center;color:#678093;font-size:12px}
+
+.re-detail{width:100%;color:#293f50}.re-detail-head{display:flex;align-items:center;justify-content:space-between;gap:14px}.re-detail-head h3{margin:0;font-size:18px}.re-detail-head button,.re-detail button[data-re-confirm]{border:1px solid #9cb7c7;background:#e7f3fa;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700;color:#203b4e}
+.re-detail-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:15px}.re-detail-cols section{background:#f6f8f9;border:1px solid #dce5e9;border-radius:11px;padding:14px;min-height:250px}.re-detail-cols h4{font-size:13px;margin:0 0 13px}.re-detail-cols p{font-size:12px;line-height:1.5}.re-detail-note{color:#71818e;font-size:11px!important}.re-detail-history{overflow:auto;max-height:46vh}.re-detail-event{padding:9px 0;border-bottom:1px solid #e0e7eb}.re-detail-event strong{display:block;font-size:11px}.re-detail-event small{color:#768b97}.re-detail-event p{margin:4px 0;font-size:11px}
