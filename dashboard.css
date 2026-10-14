@@ -495,3 +495,41 @@ body{background:#CFDBE5;color:#243746}
 .re-view-tabs button{background:#e1e9ee;color:#243746}
 .re-view-tabs button.selected,.re-view-body{background:#fdfaf5}
 .reengagement-modal[hidden]{display:none!important}
+
+/*   Warm Slate unified theme: 2026-10-15*/
+:root{--bg:#e6e9e7;--card:#f9f7f2;--text:#293941;--muted:#5c6b71;--line:#c5cfce;--button-bg:#e8eeed;--button-border:#aebfc2;--button-hover:#dce6e5;--button-text:#293941}
+body{background:#e6e9e7;color:#293941}
+.topbar{background:#e6e9e7;border-bottom-color:#bcc8c9;box-shadow:none}
+.topbar h1,.topbar .eyebrow,.topbar .user-name{color:#293941}
+.topbar-summary .summary-card,.topbar-summary .summary-card:nth-child(n){background:#f9f7f2;border-color:#c5cfce}
+.topbar-summary .summary-value,.topbar-summary .summary-label{color:#293941}
+.topbar .secondary-button,.topbar .filter-button{background:#e8eeed;border-color:#aebfc2;color:#293941;box-shadow:none}
+.topbar .secondary-button:hover,.topbar .filter-button:hover{background:#dce6e5;color:#293941}
+.journey-board-section{background:#e6e9e7;border-color:#c5cfce;box-shadow:none}
+.board-heading .section-kicker,.board-heading .eyebrow,.board-help{color:#425961}
+.journey-column{background:#dce3e1;border:1px solid #becbc9}
+.journey-column>header{background:#566e78;border-bottom:1px solid #455e69}
+.journey-column>header h3,.journey-column>header .column-kicker{color:#fff}
+.journey-column .column-count{background:#e8eeed;color:#293941;border-color:#b6c7ca}
+.journey-column .stage-help-button,.journey-column>header button{color:#fff}
+.journey-card,.journey-column[data-stage="inquiry"] .journey-card{background:#f9f7f2;color:#293941;border-top-color:#d9ddd8;border-right-color:#d9ddd8;border-bottom-color:#d9ddd8;box-shadow:0 2px 6px rgba(41,57,65,.08)}
+.journey-card .card-top strong,.journey-card .card-next span{color:#293941}
+.journey-card p,.journey-card .card-next{color:#5c6b71}
+.enrollment-performance,.enrollment-performance-panel,.enrollment-performance-section{background:#dce3e1;color:#293941;border-color:#becbc9}
+.enrollment-performance h3,.enrollment-performance-panel h3,.enrollment-performance-section h3{color:#293941}
+.reengagement-modal:not(.re-detail-mode){background:#dce3e1;border-color:#b6c5c7;color:#293941}
+.reengagement-modal:not(.re-detail-mode) .dashboard-modal-head{background:#566e78;border-bottom-color:#455e69}
+.reengagement-modal:not(.re-detail-mode) .dashboard-modal-head h2,.reengagement-modal:not(.re-detail-mode) .dashboard-modal-head .section-kicker{color:#fff}
+.reengagement-modal:not(.re-detail-mode) .dashboard-modal-body{background:#dce3e1;scrollbar-color:#8b9ea2 #dce3e1}
+.reengagement-modal:not(.re-detail-mode) .reengagement-summary>div,.reengagement-modal:not(.re-detail-mode) .reengagement-daily>div{background:#f0f2ef;border:1px solid #c5cfce}
+.reengagement-modal:not(.re-detail-mode) .reengagement-summary small,.reengagement-modal:not(.re-detail-mode) .reengagement-daily small{color:#5c6b71}
+.reengagement-modal:not(.re-detail-mode) .reengagement-summary strong,.reengagement-modal:not(.re-detail-mode) .reengagement-daily strong{color:#293941}
+.reengagement-modal:not(.re-detail-mode) .reengagement-subhead,.reengagement-modal:not(.re-detail-mode) .reengagement-queue-head h3,.reengagement-modal:not(.re-detail-mode) .reengagement-queue-head span{color:#293941}
+.reengagement-modal:not(.re-detail-mode) .reengagement-card{background:#f9f7f2}
+.reengagement-modal.re-detail-mode{background:#e6e9e7;border:8px solid #9aafb3}
+.reengagement-modal.re-detail-mode .re-journey-content{background:#e6e9e7}
+.reengagement-modal.re-detail-mode .re-journey-header,.reengagement-modal.re-detail-mode .re-action-card,.reengagement-modal.re-detail-mode .re-journey-middle,.reengagement-modal.re-detail-mode .re-action-dock,.reengagement-modal.re-detail-mode .re-journey-assistance{background:#f9f7f2;color:#293941}
+.reengagement-modal.re-detail-mode .re-view-tabs{background:#e6e9e7}
+.reengagement-modal.re-detail-mode .re-view-tabs button{background:#e7e4db;color:#293941}
+.reengagement-modal.re-detail-mode .re-view-tabs button.selected,.reengagement-modal.re-detail-mode .re-view-body{background:#f9f7f2}
+.reengagement-modal[hidden]{display:none!important}
