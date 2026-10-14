@@ -23,6 +23,7 @@
   </section>
   <div class="topbar-actions">
     <button id="newInquiryButton" class="secondary-button" type="button">+ New Inquiry</button>
+    <button id="reengagementButton" class="secondary-button reengagement-button" type="button">Re-engagement <span id="reengagementDueBadge" class="reengagement-due-badge" hidden>0</span></button>
     <button id="journeySearchButton" class="secondary-button" type="button">Search</button>
     <div class="filter-wrap">
       <button id="franchiseFilterButton" class="filter-button" type="button">Franchises: All Locations <span>▾</span></button>
@@ -93,6 +94,7 @@
     </div>
   </section>
 </main>
+<section id="reengagementModal" class="dashboard-modal reengagement-modal" hidden><div class="dashboard-modal-head"><div><p class="section-kicker">Stage 1B</p><h2>Re-engagement</h2></div><button class="secondary-button modal-close" type="button">← Back</button></div><div class="dashboard-modal-body"><div class="reengagement-summary"><div><small>Due now</small><strong id="reDue">—</strong></div><div><small>Scheduled</small><strong id="reScheduled">—</strong></div><div><small>Awaiting reply</small><strong id="reAwaiting">—</strong></div></div><h3 class="reengagement-subhead">Moved into Re-engagement</h3><div id="reDaily" class="reengagement-daily"></div><div class="reengagement-tabs"><button type="button" data-re-tab="due" class="selected">Due</button><button type="button" data-re-tab="scheduled">Scheduled</button><button type="button" data-re-tab="awaiting">Awaiting Reply</button></div><div id="reengagementRecords" class="reengagement-records"></div></div></section>
 <div id="dashboardModalBackdrop" class="dashboard-modal-backdrop" hidden></div>
 <section id="helpManualModal" class="dashboard-modal help-modal" hidden>
   <div class="dashboard-modal-head"><div><p class="section-kicker">Help</p><h2>Ads Journey Manual</h2></div><button class="secondary-button modal-close" type="button">← Back</button></div>
@@ -129,6 +131,7 @@
 <script src="stage1_not_interested.js?v=20261010-confirm-actions"></script>
 <script src="stage3_outcome.js?v=20261010-stage3-confirm"></script>
 <script src="admin_activity_rows.js"></script>
+<script src="reengagement.js?v=20261015-0151"></script>
 </body>
 </html>
 
