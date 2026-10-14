@@ -3,6 +3,10 @@
 const API='https://x58r-xped-p4y6.n7e.xano.io/api:0Ddhs4dT';
 const button=document.getElementById('reengagementButton'),badge=document.getElementById('reengagementDueBadge'),modal=document.getElementById('reengagementModal');
 if(!button||!modal)return;
+/*   Explicit inline visibility prevents a hidden queue from painting on reload*/
+modal.hidden=true;modal.style.display='none';
+const visibilityObserver=new MutationObserver(()=>{modal.style.display=modal.hidden?'none':'flex';});
+visibilityObserver.observe(modal,{attributes:true,attributeFilter:['hidden']});
 const body=document.getElementById('reengagementRecords'),daily=document.getElementById('reDaily'),queue=document.getElementById('reengagementQueueView'),detail=document.getElementById('reengagementDetailView');
 let records=[],request=0;
 const e=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
@@ -46,7 +50,7 @@ const nextLabel=status==='awaiting'?'Reply deadline':'Follow Up With Parent';
 return '<div class="reengagement-item journey-card reengagement-card '+(status==='due'?'urgent':'')+'" data-re-id="'+e(r.id)+'" role="button" tabindex="0"><div class="card-top"><strong>'+e(r.parent_name||r.facebook_name||r.inquiry_name||'Journey #'+r.id)+'</strong><span class="priority '+(status==='due'?'overdue':status==='scheduled'?'upcoming':'waiting-parent')+'">'+label+'</span></div><p>'+e(location)+' · Re-engagement</p><div class="card-next"><span>'+nextLabel+'</span><time>'+e(date(r.next_action_at))+'</time></div></div>';
 }).join('');
 }
-button.addEventListener('click',async()=>{modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();if(typeof openDashboardModal==='function')openDashboardModal('reengagementModal');else{modal.hidden=false;document.getElementById('dashboardModalBackdrop').hidden=false;}await refresh();});
+button.addEventListener('click',async()=>{modal.style.display='flex';modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();if(typeof openDashboardModal==='function')openDashboardModal('reengagementModal');else{modal.hidden=false;document.getElementById('dashboardModalBackdrop').hidden=false;}await refresh();});
 body.addEventListener('click',event=>{const btn=event.target.closest('[data-re-id]');if(!btn)return;const record=records.find(r=>String(r.id)===btn.dataset.reId);if(!record)return;showRecord(record);});
 body.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&event.target.matches('.reengagement-card')){event.preventDefault();event.target.click();}});
 async function showRecord(record){
@@ -97,7 +101,7 @@ document.addEventListener('click',event=>{if(event.target.closest('#franchiseChe
 /*   Clear this queue when the normal Parent Journey workspace opens*/
 function dismissForOtherJourney(){
 if(modal.hidden)return;
-modal.hidden=true;modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;
+modal.hidden=true;modal.style.display='none';modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;
 document.getElementById('dashboardModalBackdrop').hidden=true;
 }
 const normalJourneyPanel=document.getElementById('journeyPanel');
