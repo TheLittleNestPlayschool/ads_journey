@@ -349,3 +349,18 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 
 .re-detail{width:100%;color:#293f50}.re-detail-head{display:flex;align-items:center;justify-content:space-between;gap:14px}.re-detail-head h3{margin:0;font-size:18px}.re-detail-head button,.re-detail button[data-re-confirm]{border:1px solid #9cb7c7;background:#e7f3fa;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700;color:#203b4e}
 .re-detail-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:15px}.re-detail-cols section{background:#f6f8f9;border:1px solid #dce5e9;border-radius:11px;padding:14px;min-height:250px}.re-detail-cols h4{font-size:13px;margin:0 0 13px}.re-detail-cols p{font-size:12px;line-height:1.5}.re-detail-note{color:#71818e;font-size:11px!important}.re-detail-history{overflow:auto;max-height:46vh}.re-detail-event{padding:9px 0;border-bottom:1px solid #e0e7eb}.re-detail-event strong{display:block;font-size:11px}.re-detail-event small{color:#768b97}.re-detail-event p{margin:4px 0;font-size:11px}
+
+/*   Stage 1B unified journey cards*/
+.reengagement-queue-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:17px 0 10px}
+.reengagement-queue-head h3{font-size:13px;color:#30485a;margin:0}
+.reengagement-queue-head span{font-size:11px;color:#627a8b}
+.reengagement-records{max-height:44vh;min-height:80px;overflow-y:auto;gap:7px}
+.reengagement-records .reengagement-card{display:block;width:100%;padding:11px 13px;background:#fffdf9;border:1px solid #dfd9cd;text-align:left;cursor:pointer}
+.reengagement-card .card-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.reengagement-card .card-top strong{font-size:12px}
+.reengagement-card p{margin:6px 0 9px;font-size:10px}
+.reengagement-card .card-next{padding-top:9px;font-size:10px}
+.reengagement-card .card-next span{font-size:10px}
+.reengagement-card .card-next time{font-size:10px}
+.reengagement-card.urgent{border-left:3px solid #b84d43;background:#fff9f6}
+.reengagement-card:focus-visible{outline:3px solid #8bb4ca;outline-offset:2px}
