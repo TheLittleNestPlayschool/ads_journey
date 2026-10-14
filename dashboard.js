@@ -31,7 +31,8 @@ const journeySearchResults=document.getElementById('journeySearchResults');
 let franchises=[];
 let selectedFranchiseIds=new Set();
 let boardJourneys=[];
-let enrollmentDatesReady=false;
+let enrollmentSummary=null;
+let enrollmentSummaryRequest=0;
 let franchiseJourneyStats=new Map();
 let currentEventId=null;
 let journeySyncTimer=null;
@@ -79,44 +80,38 @@ function saveSelection(){localStorage.setItem(FILTER_KEY,JSON.stringify([...sele
 function updateFilterLabel(){const total=franchises.length;const selected=selectedFranchiseIds.size;let text='Franchises: ';if(!total)text+='No Locations';else if(selected===total)text+=`All ${total}`;else if(selected===0)text+='None';else text+=`${selected} selected`;franchiseFilterButton.firstChild.textContent=`${text} `;}
 async function loadFranchiseJourneyStats(){if(!franchises.length){franchiseJourneyStats=new Map();renderFranchiseList();return;}try{const params=new URLSearchParams();franchises.forEach(item=>params.append('franchise_ids[]',String(Number(item.id))));const response=await fetch(`${API_BASE_URL}${BOARD_ENDPOINT}?${params.toString()}`,{cache:'no-store',headers:{Authorization:`Bearer ${token}`}});if(!response.ok)return;const data=await response.json();const journeys=Array.isArray(data.journeys)?data.journeys:[];const stats=new Map(franchises.map(item=>[Number(item.id),{scheduled:0,followup:0,enrollment:0}]));journeys.forEach(journey=>{const id=Number(journey.franchise_id)||0;if(!stats.has(id))return;const status=String(journey.current_status||'').toLowerCase();const nextAt=Number(journey.next_action_at)||0;if(status==='enrolled'&&nextAt&&nextAt<=Date.now())return;const stage=normalizeStage(journey.current_stage);const row=stats.get(id);if(stage==='scheduled')row.scheduled++;else if(stage==='followup')row.followup++;else if(stage==='enrollment')row.enrollment++;});franchiseJourneyStats=stats;renderFranchiseList();}catch(error){}}
 
-async function loadBoard(){await loadFranchiseJourneyStats();if(!selectedFranchiseIds.size){boardJourneys=[];clearBoard();updateSummaryCounts();return}try{const params=new URLSearchParams();[...selectedFranchiseIds].forEach(id=>params.append('franchise_ids[]',String(id)));const response=await fetch(`${API_BASE_URL}${BOARD_ENDPOINT}?${params.toString()}`,{cache:'no-store',headers:{Authorization:`Bearer ${token}`}});if(response.status===401){logout();return}if(!response.ok)throw new Error('BOARD_LOAD_FAILED');const data=await response.json();const journeys=Array.isArray(data.journeys)?data.journeys:[];await advanceDueScheduledJourneys(journeys);boardJourneys=journeys.filter(journey=>{const status=String(journey.current_status||'').toLowerCase();const nextAt=Number(journey.next_action_at)||0;return status!=='enrolled'||!nextAt||nextAt>Date.now();});enrollmentDatesReady=false;renderEnrollmentPerformance();await loadEnrollmentDates(boardJourneys);renderBoard(boardJourneys);filterPopupRows(new Set(boardJourneys.map(journey=>journeyLocation(journey))));}catch(error){showBoardError();}}
-/*   Stage 5 enrollment timestamps come from recorded journey events, not general updates*/
-async function loadEnrollmentDates(journeys){
-  const enrolled=journeys.filter(j=>normalizeStage(j.current_stage)==='enrollment'&&String(j.current_status||'').toLowerCase()==='enrolled');
-  let failed=false;
-  for(let i=0;i<enrolled.length;i+=6){
-    const batch=enrolled.slice(i,i+6);
-    await Promise.all(batch.map(async journey=>{
-      const direct=Number(journey.enrolled_at||journey.enrollment_at)||0;
-      if(direct>0){journey._enrolled_at=direct;return;}
-      try{
-        const response=await fetch(`${API_BASE_URL}${DETAIL_ENDPOINT}?journey_id=${encodeURIComponent(journey.id)}`,{cache:'no-store',headers:{Authorization:`Bearer ${token}`}});
-        if(response.status===401){logout();failed=true;return;}
-        if(!response.ok)throw Error('ENROLLMENT_HISTORY_FAILED');
-        const data=await response.json();
-        const events=Array.isArray(data.ad_journey_events)?data.ad_journey_events:[];
-        const matching=events.filter(e=>['enrollment_processed','enrollment_reported','enrolled'].includes(String(e.event_type||'').toLowerCase()));
-        const processed=matching.filter(e=>String(e.event_type||'').toLowerCase()==='enrollment_processed');
-        const timestamps=(processed.length?processed:matching).map(e=>Number(e.event_at)||Number(e.created_at)||0).filter(t=>t>0);
-        journey._enrolled_at=timestamps.length?Math.max(...timestamps):0;
-      }catch(error){journey._enrolled_at=0;failed=true;}
-    }));
-  }
-  enrollmentDatesReady=!failed&&enrolled.every(j=>Number(j._enrolled_at)>0);
+async function loadBoard(){await loadFranchiseJourneyStats();if(!selectedFranchiseIds.size){boardJourneys=[];clearBoard();updateSummaryCounts();return}try{const params=new URLSearchParams();[...selectedFranchiseIds].forEach(id=>params.append('franchise_ids[]',String(id)));const response=await fetch(`${API_BASE_URL}${BOARD_ENDPOINT}?${params.toString()}`,{cache:'no-store',headers:{Authorization:`Bearer ${token}`}});if(response.status===401){logout();return}if(!response.ok)throw new Error('BOARD_LOAD_FAILED');const data=await response.json();const journeys=Array.isArray(data.journeys)?data.journeys:[];await advanceDueScheduledJourneys(journeys);boardJourneys=journeys.filter(journey=>{const status=String(journey.current_status||'').toLowerCase();const nextAt=Number(journey.next_action_at)||0;return status!=='enrolled'||!nextAt||nextAt>Date.now();});enrollmentSummary=null;renderBoard(boardJourneys);await loadEnrollmentSummary();filterPopupRows(new Set(boardJourneys.map(journey=>journeyLocation(journey))));}catch(error){showBoardError();}}
+/*   Stage 5 statistics use all enrolled records, independently of the working board*/
+async function loadEnrollmentSummary(){
+  const requestId=++enrollmentSummaryRequest;
+  if(!selectedFranchiseIds.size){enrollmentSummary={today_count:0,yesterday_count:0,last7_count:0,previous7_count:0,daily_counts:{}};renderEnrollmentPerformance();return;}
+  const params=new URLSearchParams();
+  [...selectedFranchiseIds].forEach(id=>params.append('franchise_ids[]',String(id)));
+  try{
+    const response=await fetch(`${API_BASE_URL}/ad_enrollment_summary?${params.toString()}`,{cache:'no-store',headers:{Authorization:`Bearer ${token}`}});
+    if(response.status===401){logout();return;}
+    if(!response.ok)throw Error('ENROLLMENT_SUMMARY_FAILED');
+    const data=await response.json();
+    if(requestId!==enrollmentSummaryRequest)return;
+    enrollmentSummary=data;
+  }catch(error){if(requestId!==enrollmentSummaryRequest)return;enrollmentSummary=null;}
+  renderEnrollmentPerformance();
 }
-function enrollmentDayKey(timestamp){const d=new Date(Number(timestamp));if(!Number.isFinite(d.getTime()))return'';return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function renderEnrollmentPerformance(){
   const panel=document.querySelector('.enrollment-performance');if(!panel)return;
-  const enrolled=boardJourneys.filter(j=>normalizeStage(j.current_stage)==='enrollment'&&String(j.current_status||'').toLowerCase()==='enrolled');
-  const today=new Date();today.setHours(0,0,0,0);
-  const dayKeys=Array.from({length:14},(_,i)=>{const day=new Date(today);day.setDate(day.getDate()-i);return enrollmentDayKey(day.getTime());});
-  const counts=new Map(dayKeys.map(key=>[key,0]));
-  enrolled.forEach(j=>{const key=enrollmentDayKey(j._enrolled_at);if(counts.has(key))counts.set(key,counts.get(key)+1);});
-  const available=enrollmentDatesReady||enrolled.length===0;
-  const values={today:counts.get(dayKeys[0]),yesterday:counts.get(dayKeys[1]),last7:dayKeys.slice(0,7).reduce((n,key)=>n+counts.get(key),0),previous7:dayKeys.slice(7,14).reduce((n,key)=>n+counts.get(key),0)};
-  Object.entries(values).forEach(([key,value])=>{const el=panel.querySelector(`[data-enrollment-period="${key}"]`);if(el)el.textContent=available?String(value):'—';});
+  const data=enrollmentSummary,available=!!data;
+  const values={today:data?.today_count,yesterday:data?.yesterday_count,last7:data?.last7_count,previous7:data?.previous7_count};
+  Object.entries(values).forEach(([key,value])=>{const el=panel.querySelector(`[data-enrollment-period="${key}"]`);if(el)el.textContent=available&&Number.isFinite(Number(value))?String(Number(value)):'—';});
   const daily=panel.querySelector('#enrollmentDailyDays');if(!daily)return;
-  daily.innerHTML=dayKeys.slice(0,7).reverse().map(key=>{const day=Number(key.slice(-2));return `<div class="enrollment-day"><strong>${available?counts.get(key):'—'}</strong><span>${day}</span></div>`;}).join('');
+  const raw=data?.daily_counts||{};
+  const today=new Date();
+  const philippineToday=new Date(today.toLocaleString('en-US',{timeZone:'Asia/Manila'}));philippineToday.setHours(12,0,0,0);
+  daily.innerHTML=Array.from({length:7},(_,i)=>{
+    const d=new Date(philippineToday);d.setDate(d.getDate()-6+i);
+    const value=raw[String(i)]??raw[i]??0;
+    const count=available&&Number.isFinite(Number(value))?String(Number(value)):'—';
+    return `<div class="enrollment-day"><strong>${count}</strong><span>${d.getDate()}</span></div>`;
+  }).join('');
 }
 async function advanceDueScheduledJourneys(journeys){const candidates=journeys.filter(journey=>String(journey.current_stage||'').toLowerCase()==='scheduled'&&String(journey.current_status||'').toLowerCase()==='sent_to_franchise'&&(Number(journey.next_action_at)||0)>0&&Number(journey.next_action_at)<=Date.now());for(const journey of candidates){try{const response=await fetch(`${API_BASE_URL}${AWAITING_OUTCOME_ENDPOINT}`,{method:'POST',cache:'no-store',headers:{'Content-Type':'application/json',Authorization:`Bearer ${token}`},body:JSON.stringify({journey_id:Number(journey.id)})});if(response.status===401){logout();return}if(!response.ok)continue;const data=await response.json().catch(()=>({}));if(data.updated_journey)Object.assign(journey,data.updated_journey);}catch(error){}}}
 async function fetchLatestJourneyEventId(){const response=await fetch(`${API_BASE_URL}${LATEST_EVENT_ENDPOINT}`,{cache:'no-store',headers:{Authorization:`Bearer ${token}`}});if(response.status===401){logout();return null}if(!response.ok)throw new Error('SYNC_LOAD_FAILED');const data=await response.json().catch(()=>0);if(typeof data==='number'||typeof data==='string')return Number(data)||0;const nestedId=data?.ad_journey_event?.items?.[0]?.id;return Number(data.latest_event_id??data.id??data.ad_journey_event_id??nestedId)||0;}
@@ -154,7 +149,7 @@ async function refreshJourneyLocks(){
 }
 setInterval(refreshJourneyLocks,2000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshJourneyLocks();});
-function clearBoard(){document.querySelectorAll('.journey-column-list').forEach(list=>list.innerHTML='');document.querySelectorAll('.journey-column .column-count').forEach(count=>count.textContent='0');enrollmentDatesReady=true;renderEnrollmentPerformance();}
+function clearBoard(){document.querySelectorAll('.journey-column-list').forEach(list=>list.innerHTML='');document.querySelectorAll('.journey-column .column-count').forEach(count=>count.textContent='0');enrollmentSummary=null;enrollmentSummaryRequest++;renderEnrollmentPerformance();}
 function renderBoard(journeys){
   const grouped=new Map(),desiredIds=new Set(journeys.map(journey=>String(journey.id)));
   journeys.forEach(journey=>{const stage=normalizeStage(journey.current_stage);if(!grouped.has(stage))grouped.set(stage,[]);grouped.get(stage).push(journey);});
@@ -181,7 +176,6 @@ function renderBoard(journeys){
     if(count&&count.textContent!==String(rows.length))count.textContent=String(rows.length);
   });
   updateSummaryCounts();
-  renderEnrollmentPerformance();
 }
 function compareStageJourneys(stage,a,b){
   const inquiryA=a._ad_inquiry||{},inquiryB=b._ad_inquiry||{};
@@ -198,7 +192,7 @@ function compareStageJourneys(stage,a,b){
     return soonestFirst(firstPositive(a.next_action_at),firstPositive(b.next_action_at));
   }
   if(stage==='enrollment'){
-    return newestFirst(firstPositive(a._enrolled_at,a.last_activity_at,a.updated_at,a.created_at),firstPositive(b._enrolled_at,b.last_activity_at,b.updated_at,b.created_at));
+    return newestFirst(firstPositive(a.enrolled_at,a.last_activity_at,a.updated_at,a.created_at),firstPositive(b.enrolled_at,b.last_activity_at,b.updated_at,b.created_at));
   }
   return 0;
 }
@@ -210,7 +204,7 @@ function journeyLockLabel(journey){
   const display=admin.name||admin.full_name||(admin.first_name?[admin.first_name,admin.last_name].filter(Boolean).join(' '):'')||('Admin #'+holder);
   return 'In use · '+display;
 }
-function buildJourneyCard(journey){const inquiry=journey._ad_inquiry||{};const location=journeyLocation(journey);const stage=normalizeStage(journey.current_stage);const status=String(journey.current_status||'active');const enrolled=status.toLowerCase()==='enrolled';const nextAt=Number(journey.next_action_at)||0;const urgent=stage!=='scheduled'&&!enrolled&&nextAt>0&&nextAt<=Date.now();const updated=lastUpdateTimestamp(journey);const originalAt=Number(inquiry.first_message_at)||Number(inquiry.created_at)||0;const article=document.createElement('article');article.className=`journey-card work-row${urgent?' urgent':''}${enrolled?' enrolled':''}`;article.dataset.franchise=location;article.dataset.status=status;article.dataset.journeyId=String(journey.id);article.dataset.inquiryId=String(journey.ad_inquiry_id||'');article.dataset.franchiseId=String(journey.franchise_id||'');const badgeClass=urgent?'overdue':badgeClassFor(status);const badgeText=urgent?'Due now':badgeTextFor(status);const datesHtml=`<div class="card-dates"><div><span>Original inquiry</span><time>${escapeHtml(formatCardTimestamp(originalAt))}</time></div><div><span>Last updated</span><time>${escapeHtml(formatCardTimestamp(updated))}</time></div></div>`;const lockText=journeyLockLabel(journey);const lockHtml=lockText?`<div class="journey-card-lock" aria-label="${escapeHtml(lockText)}">🔒 ${escapeHtml(lockText)}</div>`:'';if(stage==='enrollment'){article.innerHTML=`<div class="enrollment-card-name"><strong>${escapeHtml(inquiry.facebook_name||`Journey #${journey.id}`)}</strong><span aria-label="Enrolled">✓</span></div><div class="enrollment-card-meta"><span>${escapeHtml(location)}</span><time>${escapeHtml(formatCardTimestamp(journey._enrolled_at||0))}</time></div>`;}else if(stage==='inquiry'){article.innerHTML=`<div class="card-top"><strong>${escapeHtml(inquiry.facebook_name||`Journey #${journey.id}`)}</strong></div><p>${escapeHtml(cardDescription(journey,location))}</p>${datesHtml}`;}else{article.innerHTML=`<div class="card-top"><strong>${escapeHtml(inquiry.facebook_name||`Journey #${journey.id}`)}</strong><span class="priority ${badgeClass}">${escapeHtml(badgeText)}</span></div><p>${escapeHtml(cardDescription(journey,location))}</p>${stage==='inquiry-followup'?'':`<div class="card-next"><span>${escapeHtml(nextActionText(journey))}</span>${nextTimeText(journey)?`<time>${escapeHtml(nextTimeText(journey))}</time>`:''}</div>`}${datesHtml}`;}if(lockHtml)article.insertAdjacentHTML('beforeend',lockHtml);return article;}
+function buildJourneyCard(journey){const inquiry=journey._ad_inquiry||{};const location=journeyLocation(journey);const stage=normalizeStage(journey.current_stage);const status=String(journey.current_status||'active');const enrolled=status.toLowerCase()==='enrolled';const nextAt=Number(journey.next_action_at)||0;const urgent=stage!=='scheduled'&&!enrolled&&nextAt>0&&nextAt<=Date.now();const updated=lastUpdateTimestamp(journey);const originalAt=Number(inquiry.first_message_at)||Number(inquiry.created_at)||0;const article=document.createElement('article');article.className=`journey-card work-row${urgent?' urgent':''}${enrolled?' enrolled':''}`;article.dataset.franchise=location;article.dataset.status=status;article.dataset.journeyId=String(journey.id);article.dataset.inquiryId=String(journey.ad_inquiry_id||'');article.dataset.franchiseId=String(journey.franchise_id||'');const badgeClass=urgent?'overdue':badgeClassFor(status);const badgeText=urgent?'Due now':badgeTextFor(status);const datesHtml=`<div class="card-dates"><div><span>Original inquiry</span><time>${escapeHtml(formatCardTimestamp(originalAt))}</time></div><div><span>Last updated</span><time>${escapeHtml(formatCardTimestamp(updated))}</time></div></div>`;const lockText=journeyLockLabel(journey);const lockHtml=lockText?`<div class="journey-card-lock" aria-label="${escapeHtml(lockText)}">🔒 ${escapeHtml(lockText)}</div>`:'';if(stage==='enrollment'){article.innerHTML=`<div class="enrollment-card-name"><strong>${escapeHtml(inquiry.facebook_name||`Journey #${journey.id}`)}</strong><span aria-label="Enrolled">✓</span></div><div class="enrollment-card-meta"><span>${escapeHtml(location)}</span><time>${escapeHtml(formatCardTimestamp(journey.enrolled_at||0))}</time></div>`;}else if(stage==='inquiry'){article.innerHTML=`<div class="card-top"><strong>${escapeHtml(inquiry.facebook_name||`Journey #${journey.id}`)}</strong></div><p>${escapeHtml(cardDescription(journey,location))}</p>${datesHtml}`;}else{article.innerHTML=`<div class="card-top"><strong>${escapeHtml(inquiry.facebook_name||`Journey #${journey.id}`)}</strong><span class="priority ${badgeClass}">${escapeHtml(badgeText)}</span></div><p>${escapeHtml(cardDescription(journey,location))}</p>${stage==='inquiry-followup'?'':`<div class="card-next"><span>${escapeHtml(nextActionText(journey))}</span>${nextTimeText(journey)?`<time>${escapeHtml(nextTimeText(journey))}</time>`:''}</div>`}${datesHtml}`;}if(lockHtml)article.insertAdjacentHTML('beforeend',lockHtml);return article;}
 function normalizeStage(stage){const value=String(stage||'inquiry').toLowerCase();if(value==='inquiry_follow_up')return'inquiry-followup';if(value==='awaiting_outcome')return'awaiting-outcome';if(value==='follow_up')return'followup';return value;}
 function journeyLocation(journey){const franchise=journey._franchise||{};return franchise.location||franchise.name||franchise.branch_name||franchiseName(franchises.find(item=>Number(item.id)===Number(journey.franchise_id))||{id:journey.franchise_id});}
 function cardDescription(journey,location){return`${location} · ${friendlyStatus(journey.current_status)}`;}
