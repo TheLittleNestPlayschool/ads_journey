@@ -323,3 +323,26 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 .enrollment-day{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
 .enrollment-day strong{width:100%;border-radius:4px;background:#59778d;text-align:center;padding:7px 0;font-size:12px;font-weight:650;color:#fff}
 .enrollment-day span{font-size:9px;color:#d4e1ea}
+
+/*   Stage 1B Re-engagement workspace*/
+.reengagement-button{display:inline-flex;align-items:center;justify-content:center;gap:7px;white-space:nowrap}
+.reengagement-due-badge{background:#b86d45;color:#fff;padding:3px 7px;border-radius:999px;font-size:10px;font-weight:800;min-width:22px;text-align:center}
+.reengagement-due-badge[hidden]{display:none}
+.reengagement-modal{width:min(880px,92vw)}
+.reengagement-modal .dashboard-modal-body{overflow:auto}
+.reengagement-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.reengagement-summary>div{background:#e9eef0;border:1px solid #dbe4e7;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:7px}
+.reengagement-summary small{font-size:11px;color:#637887}.reengagement-summary strong{font-size:23px;color:#263f52}
+.reengagement-subhead{font-size:13px;margin:20px 0 10px;color:#30485a}
+.reengagement-daily{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+.reengagement-daily>div{border:1px solid #dde6e9;border-radius:9px;background:#f5f7f7;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:7px}
+.reengagement-daily small{font-size:10px;color:#647988}.reengagement-daily strong{font-size:17px;color:#324d61}
+.reengagement-tabs{display:flex;gap:7px;margin:18px 0 11px;border-bottom:1px solid #dce5e8;padding-bottom:9px}
+.reengagement-tabs button{border:1px solid #d4e0e5;background:#eef3f5;border-radius:7px;padding:8px 13px;font-size:11px;font-weight:700;cursor:pointer;color:#425b6e}
+.reengagement-tabs button.selected{background:#294960;color:#fff;border-color:#294960}
+.reengagement-records{display:flex;flex-direction:column;gap:9px;max-height:46vh;overflow:auto}
+.reengagement-item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border:1px solid #dfe5e9;border-radius:10px;background:#fafbfc}
+.reengagement-item strong{display:block;font-size:12px;color:#273f52}
+.reengagement-item p{margin:5px 0 0;color:#647788;font-size:11px}
+.reengagement-item button{border:1px solid #abc2cf;background:#e7f3fa;color:#203b4e;border-radius:7px;padding:7px 11px;font-weight:750;font-size:11px;cursor:pointer}
+.reengagement-empty{padding:22px;text-align:center;color:#678093;font-size:12px}
