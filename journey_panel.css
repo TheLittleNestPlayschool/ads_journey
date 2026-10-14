@@ -605,3 +605,13 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel #followUpLaterForm .follow-up-day-buttons button{flex:1 1 0;min-width:54px;min-height:30px;padding:6px 8px;border:1px solid #b9cbd7;border-radius:7px;background:#e9f1f5;color:#294355;font:inherit;font-size:10px;font-weight:650;cursor:pointer}
 .journey-panel #followUpLaterForm .follow-up-day-buttons button.is-selected{background:#d7e7ed;border-color:#688fa3;color:#183b4b;box-shadow:inset 0 0 0 1px #688fa3}
 .journey-panel #followUpLaterForm .follow-up-day-buttons button:focus-visible{outline:2px solid #557f98;outline-offset:2px}
+
+/*   Accessible light slate blue Parent Journey frame*/
+.journey-panel{--bg:#CFDBE5;--card:#fdfaf5;--text:#243746;--muted:#526474;--line:#bac8d1;--button-bg:#e6edf2;--button-border:#aabcc9;--button-hover:#d9e5ed;--button-text:#243746;background:#CFDBE5;color:#243746;border:8px solid #9eb5c5;box-sizing:border-box}
+.journey-panel-head{background:#fdfaf5;color:#243746}
+.journey-panel-head h2,.journey-panel-head .section-kicker,.journey-panel .journey-subtitle{color:#243746}
+.journey-panel .journey-state,.journey-panel .journey-panel-scroll .journey-card,.journey-panel .journey-stage-card,.journey-panel .journey-history-scroll,.journey-panel .journey-assistance{color:#243746}
+.journey-panel .journey-assistance{background:#fdfaf5}
+.journey-panel .journey-assistance-head{background:#e6e2d9}
+.journey-panel .journey-reply-form{background:#fdfaf5}
+@media(min-width:901px){.journey-panel{width:min(1500px,calc(100vw - 32px));height:min(760px,calc(100dvh - 36px))}}
