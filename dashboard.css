@@ -303,3 +303,23 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 .card-dates{border-top-color:#e7e2da}
 .card-dates span{color:#6d7881}
 .card-dates time{color:#354a5d}
+
+/*   Stage 5 compact enrollment history and fixed performance summary*/
+.journey-column[data-stage="enrollment"] .journey-column-list{flex:1 1 auto;min-height:0;overflow-y:auto;gap:8px}
+.journey-column[data-stage="enrollment"] .journey-card{padding:12px 9px;min-height:62px;display:flex;flex-direction:column;justify-content:space-between;gap:10px}
+.enrollment-card-name,.enrollment-card-meta{display:flex;align-items:center;justify-content:space-between;gap:6px;min-width:0}
+.enrollment-card-name strong{font-size:11px;line-height:1.2;font-weight:650;color:#23374a;overflow-wrap:anywhere}
+.enrollment-card-name>span{font-size:12px;color:#569779;border:1px solid #79ae92;border-radius:50%;width:14px;height:14px;line-height:12px;text-align:center;flex-shrink:0}
+.enrollment-card-meta{font-size:9.5px;color:#667a8a}
+.enrollment-card-meta time{font-size:9px;white-space:nowrap;color:#53697b}
+.enrollment-performance{flex:0 0 auto;margin:0 8px 8px;padding:12px 10px 10px;border-radius:9px;background:#284054;color:#f3f6f8}
+.enrollment-performance h4{margin:0 0 9px;font-size:12px;font-weight:750;color:#f5f7f9}
+.enrollment-performance-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.enrollment-performance-grid>div{background:#3a556b;border-radius:5px;min-height:54px;padding:8px;display:flex;flex-direction:column;justify-content:space-between;gap:7px}
+.enrollment-performance-grid span{font-size:9px;color:#d6e2eb}
+.enrollment-performance-grid strong{font-size:18px;line-height:1;font-weight:650;color:#fff}
+.enrollment-daily-title{border-top:1px solid rgba(221,233,242,.2);margin-top:13px;padding-top:13px;margin-bottom:7px;color:#d7e4ed;font-size:9px;font-weight:750;text-transform:uppercase;letter-spacing:.015em}
+.enrollment-daily-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.enrollment-day{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.enrollment-day strong{width:100%;border-radius:4px;background:#59778d;text-align:center;padding:7px 0;font-size:12px;font-weight:650;color:#fff}
+.enrollment-day span{font-size:9px;color:#d4e1ea}
