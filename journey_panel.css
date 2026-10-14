@@ -615,3 +615,12 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel .journey-assistance-head{background:#e6e2d9}
 .journey-panel .journey-reply-form{background:#fdfaf5}
 @media(min-width:901px){.journey-panel{width:min(1500px,calc(100vw - 32px));height:min(760px,calc(100dvh - 36px))}}
+
+/*   Warm Slate Parent Journey theme*/
+.journey-panel{--bg:#e6e9e7;--card:#f9f7f2;--text:#293941;--muted:#5c6b71;--line:#c5cfce;--button-bg:#e8eeed;--button-border:#aebfc2;--button-hover:#dce6e5;--button-text:#293941;background:#e6e9e7;color:#293941;border:8px solid #9aafb3}
+.journey-panel-head{background:#f9f7f2;color:#293941;border-bottom-color:#c5cfce}
+.journey-panel-head h2,.journey-panel-head .section-kicker,.journey-panel .journey-subtitle{color:#293941}
+.journey-panel .journey-state,.journey-panel .journey-assistance,.journey-panel .journey-reply-form{background:#f9f7f2;color:#293941}
+.journey-panel .journey-assistance-head{background:#e8e5dc;color:#293941}
+.journey-panel .journey-message-row.incoming .journey-message-bubble{background:#eeeae2}
+.journey-panel .journey-message-row.outgoing .journey-message-bubble{background:#e5edec}
