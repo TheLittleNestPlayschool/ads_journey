@@ -596,3 +596,12 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-change-success .journey-change-dialog{border-top:4px solid #718e80}
 .journey-change-success .journey-change-cancel{display:none}
 .journey-change-success .journey-change-confirm{background:#506f68;border-color:#506f68}
+
+/*   Stage 4 status and quick follow-up day choices*/
+.journey-panel #followUpLaterForm #followUpDecisionStatus{width:100%;min-height:34px;box-sizing:border-box;padding:7px 9px;border:1px solid #dadcd8;border-radius:7px;background:#fff;color:#263847;font:inherit;font-size:11px;font-weight:500}
+.journey-panel #followUpLaterForm .follow-up-day-choices{display:flex;flex-direction:column;gap:5px}
+.journey-panel #followUpLaterForm .follow-up-day-choices>span{color:#64717a;font-size:8px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.journey-panel #followUpLaterForm .follow-up-day-buttons{display:flex;flex-wrap:wrap;gap:5px}
+.journey-panel #followUpLaterForm .follow-up-day-buttons button{flex:1 1 0;min-width:54px;min-height:30px;padding:6px 8px;border:1px solid #b9cbd7;border-radius:7px;background:#e9f1f5;color:#294355;font:inherit;font-size:10px;font-weight:650;cursor:pointer}
+.journey-panel #followUpLaterForm .follow-up-day-buttons button.is-selected{background:#d7e7ed;border-color:#688fa3;color:#183b4b;box-shadow:inset 0 0 0 1px #688fa3}
+.journey-panel #followUpLaterForm .follow-up-day-buttons button:focus-visible{outline:2px solid #557f98;outline-offset:2px}
