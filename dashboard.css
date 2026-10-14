@@ -451,3 +451,11 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 .re-assist-body>p{color:#6d7880;font-size:10px;line-height:1.5;border-bottom:1px solid #e2ded6;padding-bottom:13px;margin:0 0 14px}
 .re-assist-placeholder{background:#fffdf9;border:1px dashed #c2b6a5;border-radius:9px;padding:12px;font-size:11px;line-height:1.5;color:#4a5861;margin-bottom:14px}
 .re-assist-placeholder p{font-size:10px;color:#6d7880}
+
+/*   Final Stage 1B visual spacing refinements*/
+.reengagement-modal.re-detail-mode .re-journey-content{height:calc(100% - 63px);padding:10px 10px 17px;box-sizing:border-box}
+.reengagement-modal.re-detail-mode .re-journey-actions,.reengagement-modal.re-detail-mode .re-journey-middle,.reengagement-modal.re-detail-mode .re-journey-assistance{min-height:0;margin-bottom:0}
+.reengagement-modal.re-detail-mode .re-action-dock{padding:11px 10px;min-height:49px}
+.reengagement-modal.re-detail-mode .re-send-form{padding:11px 12px 13px}
+.reengagement-modal:not(.re-detail-mode) .dashboard-modal-head{background:#263d50;border-radius:10px 10px 0 0;padding:9px 10px}
+.reengagement-modal:not(.re-detail-mode) .dashboard-modal-body{padding-bottom:18px}
