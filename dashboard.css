@@ -424,3 +424,6 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 .re-message>div{background:#f3eee7;border:1px solid #e2dbd1;padding:9px 12px;border-radius:9px;font-size:12px;max-width:80%;white-space:pre-wrap;line-height:1.45}
 .re-message.outgoing>div{background:#e8edf0;border-color:#cdd8dd}
 .re-message small{display:block;margin-top:7px;font-size:9px;color:#6e7c87}
+
+/*   Hidden state must override the Stage 1B layout display rules*/
+.reengagement-modal[hidden]{display:none!important}
