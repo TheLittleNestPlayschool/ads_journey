@@ -481,3 +481,10 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 .journey-column-list>.location-divider:first-child{margin-top:2px}
 .reengagement-modal:not(.re-detail-mode) .location-divider{color:#3a5369;margin:17px 0 7px}
 .reengagement-modal:not(.re-detail-mode) .location-divider:before,.reengagement-modal:not(.re-detail-mode) .location-divider:after{background:#a5bdcb}
+
+/*   Dedicated Stage 1B header counter; preserve existing stage color identities*/
+.topbar-summary .summary-card:nth-child(2) .summary-value{color:#8fd5cc}
+.topbar-summary .summary-card:nth-child(3) .summary-value{color:#a5c7ff}
+.topbar-summary .summary-card:nth-child(4) .summary-value{color:#f6c17e}
+.topbar-summary .summary-card:nth-child(5) .summary-value{color:#d0b2f4}
+.topbar-summary .summary-card:nth-child(6) .summary-value{color:#9bdab9}
