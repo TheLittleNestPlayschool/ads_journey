@@ -533,3 +533,9 @@ body{background:#e6e9e7;color:#293941}
 .reengagement-modal.re-detail-mode .re-view-tabs button{background:#e7e4db;color:#293941}
 .reengagement-modal.re-detail-mode .re-view-tabs button.selected,.reengagement-modal.re-detail-mode .re-view-body{background:#f9f7f2}
 .reengagement-modal[hidden]{display:none!important}
+
+/*   Re-engagement record ownership*/
+.re-card-lock{font-size:9px;font-weight:750;color:#6a4b2e;background:#f4e8d6;border:1px solid #d9bfa0;border-radius:6px;padding:3px 5px;margin-left:auto}
+.re-lock-status{font-size:11px;font-weight:700;color:#425b64;margin:12px 0}
+.re-action-card [data-re-take-control]{font-size:11px;font-weight:750;padding:8px 12px;border:1px solid #9cb3b8;background:#e4eeed;color:#293941;border-radius:7px;cursor:pointer}
+.re-journey-content button:disabled{opacity:.55;cursor:not-allowed}
