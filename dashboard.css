@@ -539,3 +539,8 @@ body{background:#e6e9e7;color:#293941}
 .re-lock-status{font-size:11px;font-weight:700;color:#425b64;margin:12px 0}
 .re-action-card [data-re-take-control]{font-size:11px;font-weight:750;padding:8px 12px;border:1px solid #9cb3b8;background:#e4eeed;color:#293941;border-radius:7px;cursor:pointer}
 .re-journey-content button:disabled{opacity:.55;cursor:not-allowed}
+
+/*   Independent Stage 1B follow-up confirmation notes*/
+.re-followup-label{display:block;margin:19px 0 6px;color:#566971;font-size:9px;font-weight:750;letter-spacing:.06em}
+.re-followup-note{display:block;width:100%;min-height:100px;resize:vertical;background:#fffdfa;border:1px solid #bcc9c9;border-radius:7px;padding:10px;color:#293941;font:inherit;font-size:12px;line-height:1.45}
+.re-followup-note:focus{outline:2px solid #829ba7;outline-offset:1px}
