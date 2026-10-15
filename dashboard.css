@@ -544,3 +544,7 @@ body{background:#e6e9e7;color:#293941}
 .re-followup-label{display:block;margin:19px 0 6px;color:#566971;font-size:9px;font-weight:750;letter-spacing:.06em}
 .re-followup-note{display:block;width:100%;min-height:100px;resize:vertical;background:#fffdfa;border:1px solid #bcc9c9;border-radius:7px;padding:10px;color:#293941;font:inherit;font-size:12px;line-height:1.45}
 .re-followup-note:focus{outline:2px solid #829ba7;outline-offset:1px}
+
+/*   Stage 1B lock status in Parent Journey header*/
+.re-header-controls{display:flex;align-items:center;gap:14px}
+.re-header-lock{font-size:11px;font-weight:750;color:#35675e;white-space:nowrap}
