@@ -8,7 +8,7 @@ modal.hidden=true;modal.style.display='none';
 const visibilityObserver=new MutationObserver(()=>{modal.style.display=modal.hidden?'none':'flex';});
 visibilityObserver.observe(modal,{attributes:true,attributeFilter:['hidden']});
 const body=document.getElementById('reengagementRecords'),daily=document.getElementById('reDaily'),queue=document.getElementById('reengagementQueueView'),detail=document.getElementById('reengagementDetailView');
-let records=[],request=0,lockId=0,lockOwned=false,lockTimer=null,lockSeq=0;
+let records=[],lockMap=new Map(),request=0,lockId=0,lockOwned=false,lockTimer=null,lockSeq=0;
 const LOCK_RENEW_MS=60000;
 async function lockCall(endpoint,id){const res=await fetch(API+'/'+endpoint,{method:'POST',headers:{Authorization:'Bearer '+localStorage.getItem('ads_journey_token'),'Content-Type':'application/json'},body:JSON.stringify({ad_journey_id:id})});const data=await res.json().catch(()=>({}));if(!res.ok||data.success!==true)throw Error(data.message||data.error||'Record lock unavailable');return data;}
 function stopRenewal(){if(lockTimer!==null){clearInterval(lockTimer);lockTimer=null;}}
@@ -18,6 +18,8 @@ async function takeLock(id){const seq=++lockSeq;stopRenewal();lockOwned=false;lo
 
 const e=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const selected=()=>typeof selectedFranchiseIds!=='undefined'?[...selectedFranchiseIds]:[];
+const viewerId=()=>{try{return Number(JSON.parse(localStorage.getItem('ads_journey_user')||'{}').id)||0;}catch(_){return 0;}};
+const lockLabel=r=>{const lock=lockMap.get(Number(r.id));if(!lock)return '';const holder=Number(lock.locked_by_ad_user_id)||0,expires=Number(lock.lock_expires_at)||0;if(!holder||expires<=Date.now()||holder===viewerId())return '';const admin=lock._locked_by_ad_user||{};return 'In use · '+(admin.name||admin.full_name||(admin.first_name?[admin.first_name,admin.last_name].filter(Boolean).join(' '):'')||('Admin #'+holder));};
 const date=stamp=>stamp?new Date(Number(stamp)).toLocaleString('en-PH',{timeZone:'Asia/Manila',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
 const classify=r=>r.current_status==='follow_up_sent'?'awaiting':Number(r.next_action_at)<=Date.now()?'due':'scheduled';
 const keyDate=offset=>{const d=new Date(Date.now()+28800000);d.setUTCDate(d.getUTCDate()-offset);return d.toLocaleDateString('en-US',{timeZone:'UTC',month:'short',day:'numeric'});};
@@ -31,7 +33,9 @@ const params=new URLSearchParams();ids.forEach(x=>params.append('franchise_ids[]
 const response=await fetch(API+'/ad_journey_stage1b?'+params,{cache:'no-store',headers:{Authorization:'Bearer '+localStorage.getItem('ads_journey_token')}});
 if(!response.ok)throw Error('Unable to load Stage 1B ('+response.status+')');
 const data=await response.json();if(id!==request)return;
-records=Array.isArray(data.stage1b_records)?data.stage1b_records:[];draw(data);
+records=Array.isArray(data.stage1b_records)?data.stage1b_records:[];
+try{const lockRes=await fetch(API+'/ad_journey_lock_status?'+params,{cache:'no-store',headers:{Authorization:'Bearer '+localStorage.getItem('ads_journey_token')}});if(!lockRes.ok)throw Error('Lock status unavailable');const lockData=await lockRes.json();if(id!==request)return;lockMap=new Map((Array.isArray(lockData.journey_locks)?lockData.journey_locks:[]).map(item=>[Number(item.id),item]));}catch(_error){if(id!==request)return;lockMap=new Map();}
+draw(data);
 }catch(err){if(id!==request)return;badge.hidden=true;if(!modal.hidden)body.innerHTML='<div class="reengagement-empty">'+e(err.message)+'</div>';}
 }
 function draw(data){
@@ -52,10 +56,10 @@ if(!rows.length){body.innerHTML='<div class="reengagement-empty">No Re-engagemen
 body.innerHTML=rows.map(r=>{
 const franchise=typeof franchises!=='undefined'?franchises.find(f=>Number(f.id)===Number(r.franchise_id)):null;
 const location=franchise?(franchise.location||franchise.name||franchise.branch_name):'Franchise #'+r.franchise_id;
-const locked=Number(r.locked_by_ad_user_id)>0&&Number(r.lock_expires_at)>Date.now();
+const lockedLabel=lockLabel(r);
 const status=classify(r),label=status==='due'?'Due now':status==='scheduled'?'Scheduled':'Awaiting Reply';
 const nextLabel=status==='awaiting'?'Reply deadline':'Follow Up With Parent';
-return '<div class="reengagement-item journey-card reengagement-card '+(status==='due'?'urgent':'')+'" data-re-id="'+e(r.id)+'" role="button" tabindex="0"><div class="card-top"><strong>'+e(r.parent_name||r.facebook_name||r.inquiry_name||'Journey #'+r.id)+'</strong>'+(locked?'<span class="re-card-lock">🔒 In use</span>':'')+'<span class="priority '+(status==='due'?'overdue':status==='scheduled'?'upcoming':'waiting-parent')+'">'+label+'</span></div><p>'+e(location)+' · Re-engagement</p><div class="card-next"><span>'+nextLabel+'</span><time>'+e(date(r.next_action_at))+'</time></div></div>';
+return '<div class="reengagement-item journey-card reengagement-card '+(status==='due'?'urgent':'')+'" data-re-id="'+e(r.id)+'" role="button" tabindex="0"><div class="card-top"><strong>'+e(r.parent_name||r.facebook_name||r.inquiry_name||'Journey #'+r.id)+'</strong>'+(lockedLabel?'<span class="re-card-lock">🔒 '+e(lockedLabel)+'</span>':'')+'<span class="priority '+(status==='due'?'overdue':status==='scheduled'?'upcoming':'waiting-parent')+'">'+label+'</span></div><p>'+e(location)+' · Re-engagement</p><div class="card-next"><span>'+nextLabel+'</span><time>'+e(date(r.next_action_at))+'</time></div></div>';
 }).join('');
 }
 button.addEventListener('click',async()=>{await releaseLock();modal.style.display='flex';modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();if(typeof openDashboardModal==='function')openDashboardModal('reengagementModal');else{modal.hidden=false;document.getElementById('dashboardModalBackdrop').hidden=false;}await refresh();});
@@ -92,7 +96,7 @@ status.textContent='Follow-up recorded as sent.';detail.querySelector('#reFollow
 await refresh();if(typeof loadBoard==='function')loadBoard();
 }catch(error){status.textContent=error.message;}finally{btn.disabled=!lockOwned;}
 });
-back.addEventListener('click',async()=>{await releaseLock();modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();renderList();});
+back.addEventListener('click',async()=>{await releaseLock();modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();refresh();});
 detail.querySelectorAll('[data-re-view]').forEach(tab=>tab.addEventListener('click',()=>{detail.querySelectorAll('[data-re-view]').forEach(t=>t.classList.toggle('selected',t===tab));detail.querySelector('#reConversation').hidden=tab.dataset.reView!=='conversation';detail.querySelector('#reHistory').hidden=tab.dataset.reView!=='history';}));
 async function loadConversation(){
 const target=detail.querySelector('#reConversation'),inquiryId=Number(journey.ad_inquiry_id||record.ad_inquiry_id);
