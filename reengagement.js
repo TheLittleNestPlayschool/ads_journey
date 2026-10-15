@@ -8,7 +8,14 @@ modal.hidden=true;modal.style.display='none';
 const visibilityObserver=new MutationObserver(()=>{modal.style.display=modal.hidden?'none':'flex';});
 visibilityObserver.observe(modal,{attributes:true,attributeFilter:['hidden']});
 const body=document.getElementById('reengagementRecords'),daily=document.getElementById('reDaily'),queue=document.getElementById('reengagementQueueView'),detail=document.getElementById('reengagementDetailView');
-let records=[],request=0;
+let records=[],request=0,lockId=0,lockOwned=false,lockTimer=null,lockSeq=0;
+const LOCK_RENEW_MS=60000;
+async function lockCall(endpoint,id){const res=await fetch(API+'/'+endpoint,{method:'POST',headers:{Authorization:'Bearer '+localStorage.getItem('ads_journey_token'),'Content-Type':'application/json'},body:JSON.stringify({ad_journey_id:id})});const data=await res.json().catch(()=>({}));if(!res.ok||data.success!==true)throw Error(data.message||data.error||'Record lock unavailable');return data;}
+function stopRenewal(){if(lockTimer!==null){clearInterval(lockTimer);lockTimer=null;}}
+async function releaseLock(){const id=lockOwned?lockId:0;++lockSeq;stopRenewal();lockId=0;lockOwned=false;if(id)try{await lockCall('ad_journey_lock_release',id);}catch(_error){}}
+function lockUI(message){const status=detail.querySelector('#reLockStatus'),send=detail.querySelector('#reSendForm button[type=submit]'),dock=detail.querySelector('[data-re-send-shortcut]');if(status)status.textContent=message;if(send)send.disabled=!lockOwned;if(dock)dock.disabled=!lockOwned;}
+async function takeLock(id){const seq=++lockSeq;stopRenewal();lockOwned=false;lockId=0;lockUI('Checking record control…');try{await lockCall('ad_journey_lock_acquire',id);if(seq!==lockSeq||modal.hidden||!modal.classList.contains('re-detail-mode')){try{await lockCall('ad_journey_lock_release',id)}catch(_error){}return;}lockId=id;lockOwned=true;lockUI('You have control');lockTimer=setInterval(async()=>{if(document.hidden||!lockOwned)return;try{await lockCall('ad_journey_lock_acquire',id)}catch(error){if(lockId===id){lockOwned=false;stopRenewal();lockUI('Control lost — view only');}}},LOCK_RENEW_MS);}catch(error){if(seq===lockSeq)lockUI('View only — '+error.message);}}
+
 const e=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const selected=()=>typeof selectedFranchiseIds!=='undefined'?[...selectedFranchiseIds]:[];
 const date=stamp=>stamp?new Date(Number(stamp)).toLocaleString('en-PH',{timeZone:'Asia/Manila',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):'—';
@@ -45,15 +52,17 @@ if(!rows.length){body.innerHTML='<div class="reengagement-empty">No Re-engagemen
 body.innerHTML=rows.map(r=>{
 const franchise=typeof franchises!=='undefined'?franchises.find(f=>Number(f.id)===Number(r.franchise_id)):null;
 const location=franchise?(franchise.location||franchise.name||franchise.branch_name):'Franchise #'+r.franchise_id;
+const locked=Number(r.locked_by_ad_user_id)>0&&Number(r.lock_expires_at)>Date.now();
 const status=classify(r),label=status==='due'?'Due now':status==='scheduled'?'Scheduled':'Awaiting Reply';
 const nextLabel=status==='awaiting'?'Reply deadline':'Follow Up With Parent';
-return '<div class="reengagement-item journey-card reengagement-card '+(status==='due'?'urgent':'')+'" data-re-id="'+e(r.id)+'" role="button" tabindex="0"><div class="card-top"><strong>'+e(r.parent_name||r.facebook_name||r.inquiry_name||'Journey #'+r.id)+'</strong><span class="priority '+(status==='due'?'overdue':status==='scheduled'?'upcoming':'waiting-parent')+'">'+label+'</span></div><p>'+e(location)+' · Re-engagement</p><div class="card-next"><span>'+nextLabel+'</span><time>'+e(date(r.next_action_at))+'</time></div></div>';
+return '<div class="reengagement-item journey-card reengagement-card '+(status==='due'?'urgent':'')+'" data-re-id="'+e(r.id)+'" role="button" tabindex="0"><div class="card-top"><strong>'+e(r.parent_name||r.facebook_name||r.inquiry_name||'Journey #'+r.id)+'</strong>'+(locked?'<span class="re-card-lock">🔒 In use</span>':'')+'<span class="priority '+(status==='due'?'overdue':status==='scheduled'?'upcoming':'waiting-parent')+'">'+label+'</span></div><p>'+e(location)+' · Re-engagement</p><div class="card-next"><span>'+nextLabel+'</span><time>'+e(date(r.next_action_at))+'</time></div></div>';
 }).join('');
 }
-button.addEventListener('click',async()=>{modal.style.display='flex';modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();if(typeof openDashboardModal==='function')openDashboardModal('reengagementModal');else{modal.hidden=false;document.getElementById('dashboardModalBackdrop').hidden=false;}await refresh();});
+button.addEventListener('click',async()=>{await releaseLock();modal.style.display='flex';modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();if(typeof openDashboardModal==='function')openDashboardModal('reengagementModal');else{modal.hidden=false;document.getElementById('dashboardModalBackdrop').hidden=false;}await refresh();});
 body.addEventListener('click',event=>{const btn=event.target.closest('[data-re-id]');if(!btn)return;const record=records.find(r=>String(r.id)===btn.dataset.reId);if(!record)return;showRecord(record);});
 body.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&event.target.matches('.reengagement-card')){event.preventDefault();event.target.click();}});
 async function showRecord(record){
+await releaseLock();
 const id=Number(record.id),token=localStorage.getItem('ads_journey_token'),auth={Authorization:'Bearer '+token};
 queue.hidden=true;detail.hidden=false;modal.classList.add('re-detail-mode');
 detail.innerHTML='<div class="reengagement-empty">Loading Parent Journey…</div>';
@@ -66,10 +75,13 @@ const name=inquiry.facebook_name||inquiry.parent_name||'Journey #'+id,location=t
 const branch=location.location||location.name||location.branch_name||'Franchise #'+record.franchise_id;
 const events=Array.isArray(data.ad_journey_events)?data.ad_journey_events:[];
 const history=events.slice().sort((a,b)=>Number(b.event_at||b.created_at)-Number(a.event_at||a.created_at)).map(ev=>'<div class="re-timeline-entry"><strong>'+e(ev.event_type?.replaceAll('_',' ')||'Journey update')+'</strong><p>'+e(ev.note||'')+'</p><small>'+e(date(ev.event_at||ev.created_at))+'</small></div>').join('');
-detail.innerHTML='<div class="re-journey-header"><div><small>PARENT JOURNEY</small><h2>'+e(name)+'</h2><p>'+e(branch)+' · Facebook: '+e(name)+'</p></div><button class="secondary-button" type="button" data-re-back>← Back</button></div><div class="re-journey-content"><section class="re-journey-actions"><div class="re-status-strip"><span><small>JOURNEY STAGE</small>Re-engagement</span><span><small>CURRENT STATUS</small>'+e(classify(record)==='due'?'Follow-up Due':classify(record)==='awaiting'?'Awaiting Parent Reply':'Scheduled')+'</span><span><small>NEXT STEP</small>'+e(classify(record)==='awaiting'?'Wait for Parent':'Message Parent')+'</span></div><div class="re-action-card"><small>NEXT STEP</small><h3>Send Message to Parent</h3><p>'+e(classify(record)==='scheduled'?'Follow-up scheduled for '+date(record.next_action_at):classify(record)==='awaiting'?'Follow-up already sent. Waiting for a reply.':'Follow-up due '+date(record.next_action_at))+'</p><p id="reSendStatus" class="re-send-status" role="status"></p></div><div class="re-action-dock"><button type="button" data-re-send-shortcut>Send Message to Parent</button></div></section><section class="re-journey-middle"><div class="re-view-tabs"><button class="selected" type="button" data-re-view="conversation">Conversation</button><button type="button" data-re-view="history">History</button></div><div class="re-view-body" id="reConversation"><div class="reengagement-empty">Loading conversation…</div></div><div class="re-view-body" id="reHistory" hidden>'+ (history||'<div class="reengagement-empty">No journey history.</div>')+'</div><form id="reSendForm" class="re-send-form"><label for="reMessageText">REPLY TO PARENT</label><textarea id="reMessageText" placeholder="Write your reply…" required></textarea><button type="submit">Send Message to Parent</button></form></section><aside class="re-journey-assistance"><div class="re-assist-head"><small>THE LITTLE NEST</small><h3>Reply Assistance</h3><p>Prepared responses · Admin reviewed</p></div><div class="re-assist-body"><h4>Suggested reply</h4><div class="re-assist-placeholder">Suggested wording will appear here once the response library is connected.<p>Nothing is sent automatically. The admin always reviews and sends.</p></div><h4>Conversation context</h4><p>Known parent details and relevant questions will appear here after conversation analysis is connected.</p><h4>School information</h4><p>Verified branch details and response guidance will be shown here when applicable.</p></div></aside></div>';
+detail.innerHTML='<div class="re-journey-header"><div><small>PARENT JOURNEY</small><h2>'+e(name)+'</h2><p>'+e(branch)+' · Facebook: '+e(name)+'</p></div><button class="secondary-button" type="button" data-re-back>← Back</button></div><div class="re-journey-content"><section class="re-journey-actions"><div class="re-status-strip"><span><small>JOURNEY STAGE</small>Re-engagement</span><span><small>CURRENT STATUS</small>'+e(classify(record)==='due'?'Follow-up Due':classify(record)==='awaiting'?'Awaiting Parent Reply':'Scheduled')+'</span><span><small>NEXT STEP</small>'+e(classify(record)==='awaiting'?'Wait for Parent':'Message Parent')+'</span></div><div class="re-action-card"><small>NEXT STEP</small><h3>Send Message to Parent</h3><p>'+e(classify(record)==='scheduled'?'Follow-up scheduled for '+date(record.next_action_at):classify(record)==='awaiting'?'Follow-up already sent. Waiting for a reply.':'Follow-up due '+date(record.next_action_at))+'</p><p id="reLockStatus" class="re-lock-status" role="status">Checking record control…</p><button type="button" data-re-take-control>Take Control</button><p id="reSendStatus" class="re-send-status" role="status"></p></div><div class="re-action-dock"><button type="button" data-re-send-shortcut>Send Message to Parent</button></div></section><section class="re-journey-middle"><div class="re-view-tabs"><button class="selected" type="button" data-re-view="conversation">Conversation</button><button type="button" data-re-view="history">History</button></div><div class="re-view-body" id="reConversation"><div class="reengagement-empty">Loading conversation…</div></div><div class="re-view-body" id="reHistory" hidden>'+ (history||'<div class="reengagement-empty">No journey history.</div>')+'</div><form id="reSendForm" class="re-send-form"><label for="reMessageText">REPLY TO PARENT</label><textarea id="reMessageText" placeholder="Write your reply…" required></textarea><button type="submit">Send Message to Parent</button></form></section><aside class="re-journey-assistance"><div class="re-assist-head"><small>THE LITTLE NEST</small><h3>Reply Assistance</h3><p>Prepared responses · Admin reviewed</p></div><div class="re-assist-body"><h4>Suggested reply</h4><div class="re-assist-placeholder">Suggested wording will appear here once the response library is connected.<p>Nothing is sent automatically. The admin always reviews and sends.</p></div><h4>Conversation context</h4><p>Known parent details and relevant questions will appear here after conversation analysis is connected.</p><h4>School information</h4><p>Verified branch details and response guidance will be shown here when applicable.</p></div></aside></div>';
 const back=detail.querySelector('[data-re-back]'),send=detail.querySelector('#reSendForm');
+detail.querySelector('[data-re-take-control]').dataset.journeyId=String(id);
+detail.querySelector('[data-re-take-control]').addEventListener('click',()=>takeLock(id));
+await takeLock(id);
 detail.querySelector('[data-re-send-shortcut]').addEventListener('click',()=>{const field=detail.querySelector('#reMessageText');if(!field.value.trim()){field.focus();return;}detail.querySelector('#reSendForm').requestSubmit();});
-back.addEventListener('click',()=>{modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();renderList();});
+back.addEventListener('click',async()=>{await releaseLock();modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();renderList();});
 detail.querySelectorAll('[data-re-view]').forEach(tab=>tab.addEventListener('click',()=>{detail.querySelectorAll('[data-re-view]').forEach(t=>t.classList.toggle('selected',t===tab));detail.querySelector('#reConversation').hidden=tab.dataset.reView!=='conversation';detail.querySelector('#reHistory').hidden=tab.dataset.reView!=='history';}));
 async function loadConversation(){
 const target=detail.querySelector('#reConversation'),inquiryId=Number(journey.ad_inquiry_id||record.ad_inquiry_id);
@@ -83,6 +95,7 @@ await loadConversation();
 send.addEventListener('submit',async ev=>{
 ev.preventDefault();const text=detail.querySelector('#reMessageText').value.trim(),status=detail.querySelector('#reSendStatus'),submit=send.querySelector('[type=submit]');
 if(!text)return;
+if(!lockOwned||lockId!==id){status.textContent='Take Control before sending.';return;}
 if(!window.confirm('Send this message to the parent on Messenger?'))return;
 submit.disabled=true;status.textContent='Sending message…';
 try{
@@ -96,12 +109,13 @@ if(!conf.ok)status.textContent='Message sent. Follow-up confirmation needs atten
 await loadConversation();await refresh();if(typeof loadBoard==='function')loadBoard();
 }catch(error){status.textContent=error.message||'Could not send message.';}finally{submit.disabled=false;}
 });
-}catch(error){detail.innerHTML='<div class="reengagement-empty">'+e(error.message)+'</div><button type="button" id="reBackFallback">← Back</button>';detail.querySelector('#reBackFallback').addEventListener('click',()=>{modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();renderList();});}
+}catch(error){detail.innerHTML='<div class="reengagement-empty">'+e(error.message)+'</div><button type="button" id="reBackFallback">← Back</button>';detail.querySelector('#reBackFallback').addEventListener('click',async()=>{await releaseLock();modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();renderList();});}
 }
 document.addEventListener('click',event=>{if(event.target.closest('#franchiseCheckboxList')||event.target.closest('#selectAllFranchises')||event.target.closest('#clearAllFranchises'))setTimeout(refresh,450);});
 /*   Clear this queue when the normal Parent Journey workspace opens*/
 function dismissForOtherJourney(){
 if(modal.hidden)return;
+releaseLock();
 modal.hidden=true;modal.style.display='none';modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;
 document.getElementById('dashboardModalBackdrop').hidden=true;
 }
@@ -113,6 +127,8 @@ observer.observe(normalJourneyPanel,{attributes:true,attributeFilter:['class']})
 document.addEventListener('click',event=>{
 if(event.target.closest('.journey-card[data-journey-id]')&&!event.target.closest('#reengagementModal'))dismissForOtherJourney();
 },true);
+document.querySelector('#reengagementModal .modal-close')?.addEventListener('click',()=>releaseLock());
+document.addEventListener('visibilitychange',()=>{if(document.hidden){++lockSeq;stopRenewal();lockOwned=false;lockId=0;if(!detail.hidden)lockUI('Control must be checked when you return');}else if(!modal.hidden&&!detail.hidden){const id=Number(detail.querySelector('[data-re-take-control]')?.dataset.journeyId);if(id)takeLock(id);}});
 window.addEventListener('journey-sync-refresh',refresh);
 refresh();
 })();
