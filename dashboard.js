@@ -157,7 +157,11 @@ function renderBoard(journeys){
   document.querySelectorAll('.journey-column').forEach(column=>{
     const stage=column.dataset.stage;
     const list=column.querySelector('.journey-column-list');
-    const rows=(grouped.get(stage)||[]).sort((a,b)=>compareStageJourneys(stage,a,b));
+    const rows=grouped.get(stage)||[];
+    const locationName=journey=>String(journeyLocation(journey)||'Unknown location').trim()||'Unknown location';
+    rows.sort((a,b)=>locationName(a).localeCompare(locationName(b),undefined,{sensitivity:'base',numeric:true})||compareStageJourneys(stage,a,b));
+    list.querySelectorAll('.location-divider').forEach(divider=>divider.remove());
+    let previousLocation='';
     rows.forEach((journey,index)=>{
       const id=String(journey.id);
       let row=document.querySelector(`.journey-card[data-journey-id="${CSS.escape(id)}"]`);
@@ -168,8 +172,12 @@ function renderBoard(journeys){
         row=fresh;
         window.dispatchEvent(new CustomEvent('journey-card-added',{detail:{row,journey}}));
       }
-      const currentAtIndex=list.children[index];
-      if(row.parentElement!==list||currentAtIndex!==row)list.insertBefore(row,currentAtIndex||null);
+      const location=locationName(journey);
+      if(index===0||location.toLocaleLowerCase()!==previousLocation.toLocaleLowerCase()){
+        const divider=document.createElement('div');divider.className='location-divider';divider.textContent=location;divider.setAttribute('aria-label','Location: '+location);list.appendChild(divider);
+      }
+      list.appendChild(row);
+      previousLocation=location;
     });
     [...list.querySelectorAll('.journey-card')].forEach(card=>{if(!desiredIds.has(card.dataset.journeyId))card.remove();});
     const count=column.querySelector('.column-count');
