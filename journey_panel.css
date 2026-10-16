@@ -500,14 +500,6 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-manual-message-footer button{flex-shrink:0;padding:8px 12px;font-size:11px}
 .journey-manual-message-footer button:disabled{opacity:.6;cursor:wait}
 /*   desktop Messenger reply composer*/
-.journey-reply-form{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-top:1px solid var(--line);background:var(--card)}
-.journey-reply-form>label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
-.journey-reply-form textarea{display:block;width:100%;min-height:66px;max-height:160px;resize:vertical;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;color:var(--text);font:inherit;font-size:12px;line-height:1.5}
-.journey-reply-form textarea:focus{outline:2px solid rgba(92,132,115,.34);outline-offset:1px}
-.journey-reply-footer{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:34px}
-.journey-reply-footer span{font-size:11px;line-height:1.4;color:var(--muted);min-width:0}
-.journey-reply-footer button{flex-shrink:0;padding:9px 18px}
-.journey-reply-footer button:disabled{opacity:.6;cursor:wait}
 
 /*   keep parent journey readable above the navy dashboard*/
 .journey-panel{--bg:#f2f5f7;--card:#fff;--text:#243647;--muted:#617381;--line:#dce5eb;--soft:#edf3f5;--green:#4c7d75;--green-dark:#35655d;--button-bg:#e7f3fa;--button-border:#a4c6db;--button-hover:#d8eaf5;--button-text:#263849;background:#f2f5f7;color:#243647;border-color:#bdd0dd}
@@ -564,8 +556,6 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel .journey-right-tab[aria-selected="true"]{background:#e9e2d7;color:#4c514d;border-color:#b8ad9a}
 .journey-panel .journey-message-row.incoming .journey-message-bubble{background:#f3eee7;border-color:#e2dbd1}
 .journey-panel .journey-message-row.outgoing .journey-message-bubble{background:#e8edf0;border-color:#cdd8dd}
-.journey-panel .journey-reply-form{background:#fcfaf6;border-top-color:#dddcd7}
-.journey-panel .journey-reply-form textarea{background:#fff;color:#253747}
 .journey-panel .journey-assistance{display:flex;flex-direction:column;min-height:0;min-width:0;overflow:hidden;background:#f8f6f1;border:1px solid #dedbd4;border-radius:11px;color:#263747}
 .journey-assistance-head{flex:0 0 auto;padding:15px 16px 13px;background:#ede7dc;border-bottom:1px solid #dcd3c6}
 .journey-assistance-head .section-kicker{font-size:9px;color:#8c755a;margin:0 0 4px}
@@ -622,14 +612,32 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel .journey-state,.journey-panel .journey-panel-scroll .journey-card,.journey-panel .journey-stage-card,.journey-panel .journey-history-scroll,.journey-panel .journey-assistance{color:#243746}
 .journey-panel .journey-assistance{background:#fdfaf5}
 .journey-panel .journey-assistance-head{background:#e6e2d9}
-.journey-panel .journey-reply-form{background:#fdfaf5}
 @media(min-width:901px){.journey-panel{width:min(1500px,calc(100vw - 32px));height:min(760px,calc(100dvh - 36px))}}
 
 /*   Warm Slate Parent Journey theme*/
 .journey-panel{--bg:#e6e9e7;--card:#f9f7f2;--text:#293941;--muted:#5c6b71;--line:#c5cfce;--button-bg:#e8eeed;--button-border:#aebfc2;--button-hover:#dce6e5;--button-text:#293941;background:#e6e9e7;color:#293941;border:8px solid #9aafb3}
 .journey-panel-head{background:#f9f7f2;color:#293941;border-bottom-color:#c5cfce}
 .journey-panel-head h2,.journey-panel-head .section-kicker,.journey-panel .journey-subtitle{color:#293941}
-.journey-panel .journey-state,.journey-panel .journey-assistance,.journey-panel .journey-reply-form{background:#f9f7f2;color:#293941}
+.journey-panel .journey-state,.journey-panel .journey-assistance{background:#f9f7f2;color:#293941}
 .journey-panel .journey-assistance-head{background:#e8e5dc;color:#293941}
 .journey-panel .journey-message-row.incoming .journey-message-bubble{background:#eeeae2}
 .journey-panel .journey-message-row.outgoing .journey-message-bubble{background:#e5edec}
+
+/*   reply assistance: edit, choose, and copy + record*/
+.journey-reply-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px}
+.journey-reply-heading h4{margin:0}
+.journey-reply-heading label{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:#68747b}
+.journey-reply-heading select{max-width:100px;min-height:30px;padding:4px 6px;border:1px solid #d4cec2;border-radius:7px;background:#fff;color:#263747;font:inherit;font-size:11px}
+.journey-reply-match-label{margin:0 0 9px;color:#6b776f;font-size:11px;line-height:1.5}
+#journeyAssistanceReplyText{display:block;box-sizing:border-box;width:100%;min-height:165px;max-height:340px;resize:vertical;padding:11px 12px;border:1px solid #d7d2c7;border-radius:9px;background:#fff;color:#263747;font:inherit;font-size:12px;line-height:1.55}
+#journeyAssistanceReplyText:focus,.journey-reply-search:focus,.journey-reply-heading select:focus{outline:2px solid rgba(92,132,115,.4);outline-offset:1px}
+.journey-panel .journey-reply-copy-record{width:100%;margin-top:10px;padding:12px 8px;font-size:12px;font-weight:700;min-height:40px}
+.journey-panel .journey-reply-copy-record:disabled{opacity:.5;cursor:not-allowed}
+.journey-reply-assist-status{min-height:16px;margin:8px 0 3px;color:#406b58;font-size:11px;line-height:1.5}
+.journey-reply-guidance{margin:0;color:#697680;font-size:10px;line-height:1.5}
+.journey-reply-search{display:block;box-sizing:border-box;width:100%;padding:9px 10px;border:1px solid #d7d2c7;border-radius:8px;background:#fff;color:#263747;font:inherit;font-size:11px}
+.journey-reply-options{display:flex;flex-direction:column;gap:6px}
+.journey-reply-search+.journey-reply-options{margin-top:8px}
+.journey-reply-choice{width:100%;text-align:left;white-space:normal;line-height:1.45;padding:9px 10px;border:1px solid #dedad2;border-radius:8px;background:#fff;color:#3c4e5a;font:inherit;font-size:11px;cursor:pointer;transition:background .15s,border-color .15s}
+.journey-reply-choice:hover,.journey-reply-choice:focus-visible{background:#eef3ed;border-color:#91b2a0}
+.journey-reply-choice.selected{background:#e9f1eb;border-color:#8caf9d;font-weight:700}
