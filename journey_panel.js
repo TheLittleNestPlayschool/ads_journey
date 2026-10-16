@@ -69,7 +69,20 @@ function initJourneyPanel(){
   const assistance=document.createElement('aside');
   assistance.className='journey-assistance';
   assistance.setAttribute('aria-label','Reply assistance');
-  assistance.innerHTML='<div class="journey-assistance-head"><p class="section-kicker">The Little Nest</p><h3>Reply Assistance</h3><span>Prepared responses · Admin reviewed</span></div><div class="journey-assistance-body"><section class="journey-assistance-section"><h4>Suggested reply</h4><div class="journey-assistance-placeholder"><p>Suggested wording will appear here once the response library is connected.</p><small>Nothing is sent automatically. The admin always reviews and sends.</small></div></section><section class="journey-assistance-section"><h4>Conversation context</h4><p class="journey-assistance-muted">Known parent details and relevant questions will appear here after conversation analysis is connected.</p></section><section class="journey-assistance-section"><h4>School information</h4><p class="journey-assistance-muted">Verified branch details and response guidance will be shown here when applicable.</p></section></div>';
+  assistance.innerHTML=`<div class="journey-assistance-head"><p class="section-kicker">The Little Nest</p><h3>Reply Assistance</h3><span>Prepared responses · Admin reviewed</span></div>
+  <div class="journey-assistance-body">
+    <section class="journey-assistance-section journey-assistance-editor-section">
+      <div class="journey-reply-heading"><h4>Suggested reply</h4><label for="journeyReplyLanguage">Language <select id="journeyReplyLanguage"><option value="taglish">Taglish</option><option value="english">English</option></select></label></div>
+      <p id="journeyReplyMatchLabel" class="journey-reply-match-label">Select a response below, or save a parent message to get a suggestion</p>
+      <textarea id="journeyAssistanceReplyText" rows="8" maxlength="3000" placeholder="Select an approved reply to prepare an editable message…" aria-label="Editable reply to parent"></textarea>
+      <button id="journeyReplyCopyRecord" class="journey-primary journey-reply-copy-record" type="button" disabled>Copy &amp; Record Sent</button>
+      <p id="journeyReplyAssistStatus" class="journey-reply-assist-status" role="status"></p>
+      <p class="journey-reply-guidance">Copies the reply and records it in this conversation. Paste it into Facebook Messenger and send it to the parent.</p>
+    </section>
+    <section class="journey-assistance-section"><h4>Other matching replies</h4><div id="journeyReplyAlternatives" class="journey-reply-options"><span class="journey-assistance-muted">Save a parent message to see matching replies</span></div></section>
+    <section class="journey-assistance-section"><h4>Find an approved reply</h4><input id="journeyReplySearch" class="journey-reply-search" type="search" placeholder="Search questions or keywords…" aria-label="Search approved replies"><div id="journeyReplySearchResults" class="journey-reply-options"><span class="journey-assistance-muted">Loading reply library…</span></div></section>
+    <section class="journey-assistance-section"><h4>Conversation context</h4><p class="journey-assistance-muted">Parent details and related conversation insights will appear here as we expand the engine.</p></section>
+  </div>`;
   document.getElementById('journeyPanel').appendChild(assistance);
   /*   conversation and journey history switcher*/
   const rightColumn=document.querySelector('#journeyPanel .journey-history-scroll');
@@ -124,37 +137,100 @@ function initJourneyPanel(){
       const result=await response.json().catch(()=>({}));
       if(!response.ok||!result.message?.id)throw new Error(result.message?.message||result.error||'Unable to save the parent message');
       if(conversationInquiryId===inquiryId&&Number(demo.journeyId)===journeyId){
-        manualText.value='';manualStatus.textContent='Parent message recorded';
+        manualText.value='';manualStatus.textContent='Parent message recorded';applyResponseMatches(result.response_matches);
         conversationFingerprint='';await loadMessengerConversation(inquiryId,false);
       }
     }catch(error){manualStatus.textContent=error.message||'Unable to save the parent message';}
     finally{manualSaving=false;manualSave.disabled=false;manualSave.textContent='Save Parent Message';}
   });
-  /*   admin-approved Messenger reply composer*/
-  const replyForm=document.createElement('form');replyForm.id='journeyReplyForm';replyForm.className='journey-reply-form';
-  replyForm.innerHTML='<label for="journeyReplyText">Reply to parent</label><textarea id="journeyReplyText" rows="3" maxlength="2000" placeholder="Write your reply…" aria-label="Message to parent"></textarea><div class="journey-reply-footer"><span id="journeyReplyStatus" role="status"></span><button id="journeyReplySend" class="journey-primary" type="submit">Send Reply</button></div>';
-  conversationView.appendChild(replyForm);
-  const replyText=document.getElementById('journeyReplyText'),replyStatus=document.getElementById('journeyReplyStatus'),replySend=document.getElementById('journeyReplySend');
-  let replySending=false;
-  function resetReplyComposer(){replyText.value='';replyStatus.textContent='';replySending=false;replySend.disabled=false;replySend.textContent='Send Reply';}
-  replyForm.addEventListener('submit',async event=>{
-    event.preventDefault();
-    const message=replyText.value.trim(),journeyId=Number(demo.journeyId)||0,inquiryId=conversationInquiryId;
-    if(replySending||!message||!journeyId||!inquiryId)return;
-    if(!lockOwned||lockPending||lockJourneyId!==journeyId){replyStatus.textContent='You must have control to send a reply.';return;}
-    replySending=true;replySend.disabled=true;replySend.textContent='Sending…';replyStatus.textContent='';
+  /*   reply assistance: approved matches, editable draft, and one-action copy + record*/
+  const replyEditor=document.getElementById('journeyAssistanceReplyText'),replyStatus=document.getElementById('journeyReplyAssistStatus'),replyCopyRecord=document.getElementById('journeyReplyCopyRecord'),replyMatchLabel=document.getElementById('journeyReplyMatchLabel'),replyLanguage=document.getElementById('journeyReplyLanguage'),replyAlternatives=document.getElementById('journeyReplyAlternatives'),replySearch=document.getElementById('journeyReplySearch'),replySearchResults=document.getElementById('journeyReplySearchResults');
+  let replyQuestionId=0,replyMatches=[],replyQuestions=[],replyQuestionsLoaded=false,replyQuestionsLoading=false,replySending=false,replyPreviewRequest=0,replySession=0;
+  function replyPlainText(value){return String(value||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<\/p\s*>/gi,'\n').replace(/<[^>]*>/g,'').replace(/&nbsp;/gi,' ').trim();}
+  function updateReplyButton(){replyCopyRecord.disabled=replySending||!replyQuestionId||!replyEditor.value.trim();}
+  function resetReplyAssistance(){
+    replySession++;replyPreviewRequest++;replyQuestionId=0;replyMatches=[];replySending=false;replyEditor.value='';replyLanguage.value='taglish';replyMatchLabel.textContent='Select a response below, or save a parent message to get a suggestion';replyStatus.textContent='';replyCopyRecord.textContent='Copy & Record Sent';replySearch.value='';renderReplyOptions();renderReplySearch();updateReplyButton();
+  }
+  function createReplyChoice(question){
+    const button=document.createElement('button');button.type='button';button.className='journey-reply-choice';button.textContent=question.question_label||('Reply #'+question.id);
+    if(Number(question.id)===replyQuestionId)button.classList.add('selected');
+    button.addEventListener('click',()=>selectReplyQuestion(question));return button;
+  }
+  function renderReplyOptions(){
+    replyAlternatives.replaceChildren();
+    const alternatives=replyMatches.filter(q=>Number(q.id)!==replyQuestionId).slice(0,6);
+    if(!alternatives.length){const p=document.createElement('span');p.className='journey-assistance-muted';p.textContent=replyMatches.length?'No other matching replies':'Save a parent message to see matching replies';replyAlternatives.appendChild(p);return;}
+    alternatives.forEach(q=>replyAlternatives.appendChild(createReplyChoice(q)));
+  }
+  function renderReplySearch(){
+    replySearchResults.replaceChildren();
+    if(!replyQuestionsLoaded){const p=document.createElement('span');p.className='journey-assistance-muted';p.textContent=replyQuestionsLoading?'Loading reply library…':'Reply library not loaded';replySearchResults.appendChild(p);return;}
+    const query=replySearch.value.trim().toLowerCase();
+    const matched=replyQuestions.filter(q=>!query||String(q.question_label||'').toLowerCase().includes(query)||String(q.search_keywords||'').toLowerCase().includes(query)).slice(0,8);
+    if(!matched.length){const p=document.createElement('span');p.className='journey-assistance-muted';p.textContent='No matching approved replies';replySearchResults.appendChild(p);return;}
+    matched.forEach(q=>replySearchResults.appendChild(createReplyChoice(q)));
+  }
+  async function loadReplyQuestions(){
+    if(replyQuestionsLoaded||replyQuestionsLoading)return;
+    replyQuestionsLoading=true;renderReplySearch();
     try{
-      const response=await fetch(API+'/ad_messenger_send',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({journey_id:journeyId,message_text:message})});
+      const res=await fetch(API+'/nf_questions',{headers:{Authorization:'Bearer '+journeyToken}});
+      const data=await res.json().catch(()=>({}));
+      if(!res.ok)throw new Error('Could not load reply library');
+      const raw=Array.isArray(data)?data:(Array.isArray(data.questions)?data.questions:(Array.isArray(data.questions?.items)?data.questions.items:(Array.isArray(data.items)?data.items:[])));
+      replyQuestions=raw.filter(q=>q&&q.is_active!==false);
+      replyQuestionsLoaded=true;
+    }catch(error){replyQuestionsLoaded=false;replySearchResults.textContent=error.message||'Could not load reply library';}
+    finally{replyQuestionsLoading=false;renderReplySearch();}
+  }
+  async function loadReplyPreview(question){
+    const id=Number(question?.id)||0,journeyId=Number(demo.journeyId)||0,inquiryId=conversationInquiryId,request=++replyPreviewRequest;
+    replyQuestionId=id;replyEditor.value='';replyMatchLabel.textContent=question?.question_label||('Reply #'+id);replyStatus.textContent='Preparing reply…';updateReplyButton();renderReplyOptions();renderReplySearch();
+    if(!id||!demo.franchiseId){replyStatus.textContent='Branch information is required to prepare this reply';return;}
+    try{
+      const response=await fetch(API+'/nf_response_preview',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({question_id:id,franchise_id:Number(demo.franchiseId),language:replyLanguage.value})});
+      const data=await response.json().catch(()=>({}));
+      if(request!==replyPreviewRequest||journeyId!==Number(demo.journeyId)||inquiryId!==conversationInquiryId)return;
+      if(!response.ok||!data.response_text)throw new Error(data.message||data.error||'Unable to prepare this reply');
+      replyEditor.value=replyPlainText(data.response_text);replyStatus.textContent='Review and edit before copying';updateReplyButton();
+    }catch(error){if(request===replyPreviewRequest){replyStatus.textContent=error.message||'Unable to prepare reply';updateReplyButton();}}
+  }
+  function selectReplyQuestion(question){if(!question?.id)return;loadReplyPreview(question);}
+  function applyResponseMatches(data){
+    replySession++;replyPreviewRequest++;replyMatches=Array.isArray(data?.matches)?data.matches:[];
+    const preferred=data?.preferred_match;
+    if(preferred?.id){
+      replyQuestionId=Number(preferred.id);replyLanguage.value='taglish';replyMatchLabel.textContent=preferred.question_label||('Reply #'+preferred.id);
+      replyEditor.value=replyPlainText(data.response_text);
+      replyStatus.textContent='Suggested from the parent message · Review and edit';
+    }else{replyQuestionId=0;replyEditor.value='';replyMatchLabel.textContent='No automatic match · Search an approved reply below';replyStatus.textContent='';}
+    renderReplyOptions();renderReplySearch();updateReplyButton();
+  }
+  replyEditor.addEventListener('input',updateReplyButton);
+  replySearch.addEventListener('input',renderReplySearch);
+  replyLanguage.addEventListener('change',()=>{if(replyQuestionId){const selected=replyMatches.concat(replyQuestions).find(q=>Number(q.id)===replyQuestionId)||{id:replyQuestionId,question_label:replyMatchLabel.textContent};loadReplyPreview(selected);}});
+  replyCopyRecord.addEventListener('click',async()=>{
+    const message=replyEditor.value.trim(),questionId=replyQuestionId,language=replyLanguage.value,journeyId=Number(demo.journeyId)||0,inquiryId=conversationInquiryId;
+    if(replySending||!message||!questionId||!journeyId||!inquiryId)return;
+    if(!lockOwned||lockPending||lockJourneyId!==journeyId){replyStatus.textContent='Take Control before recording replies';return;}
+    const session=++replySession;replySending=true;replyCopyRecord.textContent='Copying…';replyStatus.textContent='';updateReplyButton();
+    try{
+      /*   clipboard write must happen during the user click, before network requests*/
+      if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(message);
+      else{replyEditor.focus();replyEditor.select();if(!document.execCommand('copy'))throw new Error('Clipboard access is unavailable');}
+    }catch(error){if(session===replySession){replyStatus.textContent='Could not copy. Allow clipboard access and try again';replySending=false;replyCopyRecord.textContent='Copy & Record Sent';updateReplyButton();}return;}
+    try{
+      if(session!==replySession||journeyId!==Number(demo.journeyId)||inquiryId!==conversationInquiryId)return;
+      replyCopyRecord.textContent='Recording…';
+      const response=await fetch(API+'/ad_reply_record_sent',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:journeyId,ad_inquiry_id:inquiryId,response_text:message,question_id:questionId,language})});
       const result=await response.json().catch(()=>({}));
-      if(!response.ok||result.success!==true||!result.outgoing_message?.id)throw new Error(result.message||result.error||'Could not confirm the message was saved.');
-      if(Number(demo.journeyId)===journeyId&&conversationInquiryId===inquiryId){
-        if(replyText.value.trim()===message)replyText.value='';
-        replyStatus.textContent='Sent';
-        conversationFingerprint='';await loadMessengerConversation(inquiryId,false);
-        conversationList.scrollTop=conversationList.scrollHeight;
+      if(!response.ok||!result.message?.id)throw new Error(result.error||result.message?.message||'Could not record the reply');
+      if(session===replySession&&journeyId===Number(demo.journeyId)&&inquiryId===conversationInquiryId){
+        replyEditor.value='';replyQuestionId=0;replyMatchLabel.textContent='Reply recorded · Select another approved reply when needed';replyStatus.textContent='Copied & recorded. Paste and send it in Facebook Messenger';renderReplyOptions();renderReplySearch();updateReplyButton();
+        conversationFingerprint='';await loadMessengerConversation(inquiryId,false);conversationList.scrollTop=conversationList.scrollHeight;
       }
-    }catch(error){replyStatus.textContent=error.message||'Unable to send message. Please try again.';}
-    finally{replySending=false;replySend.disabled=false;replySend.textContent='Send Reply';}
+    }catch(error){if(session===replySession)replyStatus.textContent='Copied, but recording was not confirmed. Check Conversation before retrying. '+(error.message||'');}
+    finally{if(session===replySession){replySending=false;replyCopyRecord.textContent='Copy & Record Sent';updateReplyButton();}}
   });
   function conversationNotice(message){
     const notice=document.createElement('p');notice.className='journey-conversation-notice';notice.textContent=message;conversationList.replaceChildren(notice);
@@ -312,7 +388,6 @@ function initJourneyPanel(){
     followUpLaterForm:()=> 'ad_journey_parent_deciding',
     notInterestedForm:()=> 'ad_journey_not_interested',
     stage1NotInterestedForm:()=> 'ad_journey_not_interested',
-    journeyReplyForm:()=> 'ad_messenger_send',
     stage3RescheduleForm:()=> 'ad_journey_reschedule'
   };
   panel.addEventListener('click',event=>{
@@ -400,7 +475,7 @@ function initJourneyPanel(){
     document.getElementById('directEnrollError').hidden=true;
     const saveButton=document.getElementById('saveScheduleButton');saveButton.textContent=isMessage?'Save to Stage 1A':isEnroll?'Confirm Enrolled':'Save Schedule';saveButton.dataset.action=isMessage?'saveParentMessageButton':isEnroll?'confirmEnrollmentButton':'saveScheduleButton';
   }
-  async function open(row){if(lockOwned&&lockJourneyId!==Number(row.dataset.journeyId))await releaseHeldLock();if(!lockOwned){lockMessage('Checking availability…');updateLockControls();}resetReplyComposer();resetManualComposer();demo.facebookName=row.querySelector('.card-top strong')?.textContent.trim()||'Parent';demo.location=row.dataset.franchise||'';demo.franchiseId=Number(row.dataset.franchiseId)||null;demo.journeyId=Number(row.dataset.journeyId)||null;updateLockControls();demo.stage=row.closest('.journey-column')?.querySelector('h3')?.textContent.trim()||'Inquiry';panel.dataset.stage=row.closest('.journey-column')?.dataset.stage||'inquiry';setActionDockStage(panel.dataset.stage);setQuickGuide(panel.dataset.stage);demo.status=row.querySelector('.priority')?.textContent.trim()||'Active';demo.next=row.querySelector('.card-next span')?.textContent.trim()||'None';stage2State=null;document.getElementById('journeyParentName').textContent=demo.facebookName;document.getElementById('journeyLocation').textContent=`${demo.location} · Facebook: ${demo.facebookName}`;document.getElementById('journeyChildName').textContent='';document.getElementById('journeyChildName').hidden=true;document.getElementById('journeyStage').textContent=friendlyStage(panel.dataset.stage||demo.stage);document.getElementById('journeyStatus').textContent=friendlyStatus(demo.status);document.getElementById('journeyNextAction').textContent=friendlyNext(demo.next,panel.dataset.stage||demo.stage);document.getElementById('scheduledWhere').textContent=demo.location;document.getElementById('scheduleActionCard').hidden=!['inquiry','inquiry-followup'].includes(panel.dataset.stage);document.getElementById('handoffCard').hidden=true;document.getElementById('enrollmentActionCard').hidden=true;document.getElementById('undoEnrollmentConfirm').hidden=true;document.getElementById('undoEnrollmentConfirm').style.display='none';document.getElementById('undoEnrollmentError').hidden=true;document.getElementById('undoEnrollmentNote').value='';document.getElementById('undoEnrollmentButton').hidden=false;document.getElementById('undoEnrollmentButton').disabled=false;document.getElementById('waitingBlock').hidden=true;document.getElementById('franchiseResultBlock').hidden=true;document.getElementById('franchiseResultNote').value='';document.getElementById('franchiseResultError').hidden=true;document.getElementById('stage2UpdateBlock').hidden=true;document.getElementById('rescheduleForm').hidden=true;document.getElementById('rescheduleForm').style.display='none';document.getElementById('cancelAppointmentForm').hidden=true;document.getElementById('cancelAppointmentForm').style.display='none';document.getElementById('cancelAppointmentNote').value='';setStage4DockDisabled(true);document.getElementById('enrolledForm').hidden=true;document.getElementById('enrolledForm').style.display='none';document.getElementById('enrolledNote').value='';document.getElementById('followUpLaterForm').hidden=true;document.getElementById('followUpLaterForm').style.display='none';document.getElementById('followUpNote').value='';document.getElementById('notInterestedForm').hidden=true;document.getElementById('notInterestedForm').style.display='none';document.getElementById('notInterestedNote').value='';setFollowUpDefaults();document.getElementById('markFranchiseSent').hidden=false;document.getElementById('cancelAppointment').hidden=false;document.getElementById('rescheduleAppointment').hidden=false;document.getElementById('cancelReschedule').hidden=false;document.querySelector('#rescheduleForm button[type="submit"]').textContent='Save New Schedule';document.getElementById('handoffDetailsToggle').hidden=true;document.getElementById('handoffDetailsToggle').setAttribute('aria-expanded','false');document.getElementById('copyMessageBlock').hidden=true;document.getElementById('franchiseHandoffActions').hidden=false;document.getElementById('copyFranchiseMessage').hidden=false;document.getElementById('handoffStatus').hidden=false;document.getElementById('handoffKicker').textContent='Franchise Handoff';document.getElementById('appointmentActionLabel').textContent='Update appointment';document.getElementById('handoffStatus').textContent='Ready to send';document.getElementById('scheduleForm').reset();document.getElementById('parentMessageNote').value='';document.getElementById('directEnrollNote').value='';document.getElementById('directEnrollError').hidden=true;setScheduleDefaults();setScheduleMode('trial');buildInitialTimeline(row);panel.classList.add('open');startConversationRefresh(Number(row.dataset.inquiryId)||0);panel.setAttribute('aria-hidden','false');backdrop.hidden=false;if(!lockOwned&&!lockPending)takeControlButton.click();if(['inquiry','inquiry-followup'].includes(panel.dataset.stage)){if(!demo.franchiseId)demo.franchiseId=await resolveFranchiseId(demo.location);if(demo.franchiseId)loadSessions(demo.franchiseId);else document.getElementById('scheduleSession').innerHTML='<option value="0">None</option>';await loadInquiryDetail();}else if(demo.stage==='Scheduled'){await loadStage2Detail();}else if(demo.stage==='Follow-up / Decision'){await loadFollowUpDetail();}else if(demo.stage==='Enrollment'){await loadEnrollmentDetail();}usageEvent('journey_opened',{module:'journey_panel',action:'open',target:'journey',journey_id:demo.journeyId,franchise_id:demo.franchiseId||0,stage:demo.stage,status:demo.status});}
+  async function open(row){if(lockOwned&&lockJourneyId!==Number(row.dataset.journeyId))await releaseHeldLock();if(!lockOwned){lockMessage('Checking availability…');updateLockControls();}resetReplyAssistance();resetManualComposer();loadReplyQuestions();demo.facebookName=row.querySelector('.card-top strong')?.textContent.trim()||'Parent';demo.location=row.dataset.franchise||'';demo.franchiseId=Number(row.dataset.franchiseId)||null;demo.journeyId=Number(row.dataset.journeyId)||null;updateLockControls();demo.stage=row.closest('.journey-column')?.querySelector('h3')?.textContent.trim()||'Inquiry';panel.dataset.stage=row.closest('.journey-column')?.dataset.stage||'inquiry';setActionDockStage(panel.dataset.stage);setQuickGuide(panel.dataset.stage);demo.status=row.querySelector('.priority')?.textContent.trim()||'Active';demo.next=row.querySelector('.card-next span')?.textContent.trim()||'None';stage2State=null;document.getElementById('journeyParentName').textContent=demo.facebookName;document.getElementById('journeyLocation').textContent=`${demo.location} · Facebook: ${demo.facebookName}`;document.getElementById('journeyChildName').textContent='';document.getElementById('journeyChildName').hidden=true;document.getElementById('journeyStage').textContent=friendlyStage(panel.dataset.stage||demo.stage);document.getElementById('journeyStatus').textContent=friendlyStatus(demo.status);document.getElementById('journeyNextAction').textContent=friendlyNext(demo.next,panel.dataset.stage||demo.stage);document.getElementById('scheduledWhere').textContent=demo.location;document.getElementById('scheduleActionCard').hidden=!['inquiry','inquiry-followup'].includes(panel.dataset.stage);document.getElementById('handoffCard').hidden=true;document.getElementById('enrollmentActionCard').hidden=true;document.getElementById('undoEnrollmentConfirm').hidden=true;document.getElementById('undoEnrollmentConfirm').style.display='none';document.getElementById('undoEnrollmentError').hidden=true;document.getElementById('undoEnrollmentNote').value='';document.getElementById('undoEnrollmentButton').hidden=false;document.getElementById('undoEnrollmentButton').disabled=false;document.getElementById('waitingBlock').hidden=true;document.getElementById('franchiseResultBlock').hidden=true;document.getElementById('franchiseResultNote').value='';document.getElementById('franchiseResultError').hidden=true;document.getElementById('stage2UpdateBlock').hidden=true;document.getElementById('rescheduleForm').hidden=true;document.getElementById('rescheduleForm').style.display='none';document.getElementById('cancelAppointmentForm').hidden=true;document.getElementById('cancelAppointmentForm').style.display='none';document.getElementById('cancelAppointmentNote').value='';setStage4DockDisabled(true);document.getElementById('enrolledForm').hidden=true;document.getElementById('enrolledForm').style.display='none';document.getElementById('enrolledNote').value='';document.getElementById('followUpLaterForm').hidden=true;document.getElementById('followUpLaterForm').style.display='none';document.getElementById('followUpNote').value='';document.getElementById('notInterestedForm').hidden=true;document.getElementById('notInterestedForm').style.display='none';document.getElementById('notInterestedNote').value='';setFollowUpDefaults();document.getElementById('markFranchiseSent').hidden=false;document.getElementById('cancelAppointment').hidden=false;document.getElementById('rescheduleAppointment').hidden=false;document.getElementById('cancelReschedule').hidden=false;document.querySelector('#rescheduleForm button[type="submit"]').textContent='Save New Schedule';document.getElementById('handoffDetailsToggle').hidden=true;document.getElementById('handoffDetailsToggle').setAttribute('aria-expanded','false');document.getElementById('copyMessageBlock').hidden=true;document.getElementById('franchiseHandoffActions').hidden=false;document.getElementById('copyFranchiseMessage').hidden=false;document.getElementById('handoffStatus').hidden=false;document.getElementById('handoffKicker').textContent='Franchise Handoff';document.getElementById('appointmentActionLabel').textContent='Update appointment';document.getElementById('handoffStatus').textContent='Ready to send';document.getElementById('scheduleForm').reset();document.getElementById('parentMessageNote').value='';document.getElementById('directEnrollNote').value='';document.getElementById('directEnrollError').hidden=true;setScheduleDefaults();setScheduleMode('trial');buildInitialTimeline(row);panel.classList.add('open');startConversationRefresh(Number(row.dataset.inquiryId)||0);panel.setAttribute('aria-hidden','false');backdrop.hidden=false;if(!lockOwned&&!lockPending)takeControlButton.click();if(['inquiry','inquiry-followup'].includes(panel.dataset.stage)){if(!demo.franchiseId)demo.franchiseId=await resolveFranchiseId(demo.location);if(demo.franchiseId)loadSessions(demo.franchiseId);else document.getElementById('scheduleSession').innerHTML='<option value="0">None</option>';await loadInquiryDetail();}else if(demo.stage==='Scheduled'){await loadStage2Detail();}else if(demo.stage==='Follow-up / Decision'){await loadFollowUpDetail();}else if(demo.stage==='Enrollment'){await loadEnrollmentDetail();}usageEvent('journey_opened',{module:'journey_panel',action:'open',target:'journey',journey_id:demo.journeyId,franchise_id:demo.franchiseId||0,stage:demo.stage,status:demo.status});}
   function close(){if(lockOwned)releaseHeldLock();else {++lockGeneration;stopLockRenewal();}stopConversationRefresh();panel.classList.remove('open');panel.setAttribute('aria-hidden','true');backdrop.hidden=true;}
   function bindJourneyCard(row){if(!row||row.dataset.journeyBound==='true')return;row.dataset.journeyBound='true';row.style.cursor='pointer';row.addEventListener('click',()=>open(row));}
   document.querySelectorAll('.work-row').forEach(bindJourneyCard);
