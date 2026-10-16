@@ -641,3 +641,20 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-reply-choice{width:100%;text-align:left;white-space:normal;line-height:1.45;padding:9px 10px;border:1px solid #dedad2;border-radius:8px;background:#fff;color:#3c4e5a;font:inherit;font-size:11px;cursor:pointer;transition:background .15s,border-color .15s}
 .journey-reply-choice:hover,.journey-reply-choice:focus-visible{background:#eef3ed;border-color:#91b2a0}
 .journey-reply-choice.selected{background:#e9f1eb;border-color:#8caf9d;font-weight:700}
+
+/*   compact parent header and distinct non-interactive Reply Assistance label*/
+@media(min-width:901px){
+  .journey-panel{grid-template-rows:66px minmax(0,1fr) 56px}
+  .journey-panel[data-stage="inquiry"],.journey-panel[data-stage="inquiry-followup"]{grid-template-rows:66px minmax(0,1fr)}
+  .journey-panel-head{height:66px;padding:8px 14px 7px;gap:9px}
+  .journey-panel-head h2{font-size:16px;line-height:1.1;margin:2px 0 1px}
+  .journey-panel-head .section-kicker{font-size:7px;line-height:1.1}
+  .journey-panel .journey-subtitle{font-size:9px;line-height:1.2}
+  .journey-panel-head #closeJourneyPanel{height:32px;min-height:32px;min-width:78px;padding:6px 10px}
+  .journey-lock-controls .secondary-button{min-height:32px;padding:6px 10px}
+}
+.journey-panel .journey-assistance{border-color:#cbd8d6;background:#fbfaf7}
+.journey-panel .journey-assistance-head{box-sizing:border-box;height:36px;min-height:36px;padding:0 12px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid #b8cbcb;background:#d5e4e4;color:#2c525b}
+.journey-panel .journey-assistance-head h3{margin:0;font-size:12px;line-height:1.25;font-weight:800;color:#2c525b}
+.journey-panel .journey-assistance-body{padding:12px}
+.journey-panel .journey-reply-options .journey-assistance-muted{display:block;padding:3px 0}
