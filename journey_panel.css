@@ -490,6 +490,15 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-lock-controls #journeyTakeControl,.journey-lock-controls #journeyReleaseControl{display:none!important}
 .journey-lock-status{max-width:240px;white-space:normal;text-align:right;line-height:1.35}
 
+/*   manually pasted parent Messenger messages*/
+.journey-manual-message-form{display:flex;flex-direction:column;gap:7px;padding:11px 14px;border-top:1px solid var(--line);background:#fcfaf6}
+.journey-manual-message-form>label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.journey-manual-message-form textarea{display:block;width:100%;min-height:48px;max-height:130px;resize:vertical;box-sizing:border-box;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:#fff;color:#253747;font:inherit;font-size:12px;line-height:1.45}
+.journey-manual-message-form textarea:focus{outline:2px solid rgba(92,132,115,.34);outline-offset:1px}
+.journey-manual-message-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:32px}
+.journey-manual-message-footer span{font-size:11px;line-height:1.4;color:var(--muted)}
+.journey-manual-message-footer button{flex-shrink:0;padding:8px 12px;font-size:11px}
+.journey-manual-message-footer button:disabled{opacity:.6;cursor:wait}
 /*   desktop Messenger reply composer*/
 .journey-reply-form{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-top:1px solid var(--line);background:var(--card)}
 .journey-reply-form>label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
