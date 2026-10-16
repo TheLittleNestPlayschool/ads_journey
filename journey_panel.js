@@ -68,7 +68,7 @@ function initJourneyPanel(){
   const assistance=document.createElement('aside');
   assistance.className='journey-assistance';
   assistance.setAttribute('aria-label','Reply assistance');
-  assistance.innerHTML=`<div class="journey-assistance-head"><p class="section-kicker">The Little Nest</p><h3>Reply Assistance</h3><span>Prepared responses · Admin reviewed</span></div>
+  assistance.innerHTML=`<div class="journey-assistance-head"><h3>Reply Assistance</h3></div>
   <div class="journey-assistance-body">
     <section class="journey-assistance-section journey-assistance-editor-section">
       <div class="journey-reply-heading"><h4>Suggested reply</h4><label for="journeyReplyLanguage">Language <select id="journeyReplyLanguage"><option value="taglish">Taglish</option><option value="english">English</option></select></label></div>
@@ -79,8 +79,7 @@ function initJourneyPanel(){
       <p class="journey-reply-guidance">Copies the reply and records it in this conversation. Paste it into Facebook Messenger and send it to the parent.</p>
     </section>
     <section class="journey-assistance-section"><h4>Other matching replies</h4><div id="journeyReplyAlternatives" class="journey-reply-options"><span class="journey-assistance-muted">Save a parent message to see matching replies</span></div></section>
-    <section class="journey-assistance-section"><h4>Find an approved reply</h4><input id="journeyReplySearch" class="journey-reply-search" type="search" placeholder="Search questions or keywords…" aria-label="Search approved replies"><div id="journeyReplySearchResults" class="journey-reply-options"><span class="journey-assistance-muted">Loading reply library…</span></div></section>
-    <section class="journey-assistance-section"><h4>Conversation context</h4><p class="journey-assistance-muted">Parent details and related conversation insights will appear here as we expand the engine.</p></section>
+    <section class="journey-assistance-section"><h4>Search saved replies</h4><input id="journeyReplySearch" class="journey-reply-search" type="search" placeholder="Type a question or keyword…" aria-label="Search approved replies"><div id="journeyReplySearchResults" class="journey-reply-options"><span class="journey-assistance-muted">Type to search the reply library</span></div></section>
   </div>`;
   document.getElementById('journeyPanel').appendChild(assistance);
   /*   conversation and journey history switcher*/
@@ -165,7 +164,8 @@ function initJourneyPanel(){
     replySearchResults.replaceChildren();
     if(!replyQuestionsLoaded){const p=document.createElement('span');p.className='journey-assistance-muted';p.textContent=replyQuestionsLoading?'Loading reply library…':'Reply library not loaded';replySearchResults.appendChild(p);return;}
     const query=replySearch.value.trim().toLowerCase();
-    const matched=replyQuestions.filter(q=>!query||String(q.question_label||'').toLowerCase().includes(query)||String(q.search_keywords||'').toLowerCase().includes(query)).slice(0,8);
+    if(!query){const p=document.createElement('span');p.className='journey-assistance-muted';p.textContent='Type a question or keyword to browse approved replies';replySearchResults.appendChild(p);return;}
+    const matched=replyQuestions.filter(q=>String(q.question_label||'').toLowerCase().includes(query)||String(q.search_keywords||'').toLowerCase().includes(query)).slice(0,7);
     if(!matched.length){const p=document.createElement('span');p.className='journey-assistance-muted';p.textContent='No matching approved replies';replySearchResults.appendChild(p);return;}
     matched.forEach(q=>replySearchResults.appendChild(createReplyChoice(q)));
   }
@@ -179,7 +179,7 @@ function initJourneyPanel(){
       const raw=Array.isArray(data)?data:(Array.isArray(data.questions)?data.questions:(Array.isArray(data.questions?.items)?data.questions.items:(Array.isArray(data.items)?data.items:[])));
       replyQuestions=raw.filter(q=>q&&q.is_active!==false);
       replyQuestionsLoaded=true;
-    }catch(error){replyQuestionsLoaded=false;replySearchResults.textContent=error.message||'Could not load reply library';}
+    }catch(error){replyQuestionsLoaded=false;replyStatus.textContent=error.message||'Could not load reply library';}
     finally{replyQuestionsLoading=false;renderReplySearch();}
   }
   async function loadReplyPreview(question){
@@ -223,7 +223,11 @@ function initJourneyPanel(){
       replyCopyRecord.textContent='Recording…';
       const response=await fetch(API+'/ad_reply_record_sent',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:journeyId,ad_inquiry_id:inquiryId,response_text:message,question_id:questionId,language})});
       const result=await response.json().catch(()=>({}));
-      if(!response.ok||!result.message?.id)throw new Error(result.error||result.message?.message||'Could not record the reply');
+      if(!response.ok||!result.message?.id){
+        const details=typeof result.message==='string'?result.message:(typeof result.error==='string'?result.error:(typeof result.error?.message==='string'?result.error.message:(typeof result.code==='string'?result.code:'Server did not return a saved message')));
+        console.warn('Reply recording failed:',response.status,result.code||'',details);
+        throw new Error('Recording failed (HTTP '+response.status+'): '+details);
+      }
       if(session===replySession&&journeyId===Number(demo.journeyId)&&inquiryId===conversationInquiryId){
         replyEditor.value='';replyQuestionId=0;replyMatchLabel.textContent='Reply recorded · Select another approved reply when needed';replyStatus.textContent='Copied & recorded. Paste and send it in Facebook Messenger';renderReplyOptions();renderReplySearch();updateReplyButton();
         conversationFingerprint='';await loadMessengerConversation(inquiryId,false);conversationList.scrollTop=conversationList.scrollHeight;
