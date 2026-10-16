@@ -658,3 +658,9 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel .journey-assistance-head h3{margin:0;font-size:12px;line-height:1.25;font-weight:800;color:#2c525b}
 .journey-panel .journey-assistance-body{padding:12px}
 .journey-panel .journey-reply-options .journey-assistance-muted{display:block;padding:3px 0}
+
+/*   write-your-own reply toggle, using the existing send-record action*/
+.journey-reply-heading-main{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.journey-reply-own-toggle{padding:0;border:0;background:none;color:#356b75;text-decoration:underline;text-underline-offset:2px;font:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap}
+.journey-reply-own-toggle:hover,.journey-reply-own-toggle:focus-visible{color:#1e4b59}
+.journey-reply-own-toggle:focus-visible{outline:2px solid #6297a5;outline-offset:3px;border-radius:3px}
