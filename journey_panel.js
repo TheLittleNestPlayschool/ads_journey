@@ -16,8 +16,7 @@ function initJourneyPanel(){
     ad_journey_follow_up_stage4:['Confirm Follow-up','Save this follow-up and update the journey?','Follow-up Saved'],
     ad_journey_parent_deciding:['Confirm Parent Status','Save the parent’s decision status and next follow-up?','Parent Status Saved'],
     ad_journey_not_interested:['Confirm Closure','Close this journey as No Longer Interested?','Journey Closed'],
-    ad_journey_undo_enrollment:['Confirm Undo Enrollment','Undo the enrollment and return the parent to the previous stage?','Enrollment Reverted'],
-    ad_messenger_send:['Send Messenger Reply','Send this reply to the parent on Messenger?','Message Sent']
+    ad_journey_undo_enrollment:['Confirm Undo Enrollment','Undo the enrollment and return the parent to the previous stage?','Enrollment Reverted']
   };
   const changeDialog=document.createElement('div');
   changeDialog.className='journey-change-overlay';
