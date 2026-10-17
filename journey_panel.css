@@ -689,3 +689,15 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel .journey-assistance-head h3{margin:0;font-size:12px;line-height:1.25;font-weight:800;color:#4c514d}
 .journey-panel .journey-assistance-body{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;border:1px solid #dedbd5;border-radius:14px;background:#fcfaf6;padding:12px}
 .journey-reply-match-label:empty{display:none}
+
+/*   five-emoji picker between reply mode and language controls*/
+.journey-reply-heading{position:relative;z-index:5}
+.journey-reply-emoji-wrap{position:relative;display:inline-flex;flex:0 0 auto;align-items:center}
+.journey-panel .journey-reply-emoji-toggle{display:inline-flex;align-items:center;justify-content:center;gap:3px;min-height:29px;padding:5px 7px;border:1px solid #bfd0cf;border-radius:8px;background:#fff;color:#34545b;font:inherit;font-size:13px;line-height:1.2;cursor:pointer;white-space:nowrap}
+.journey-reply-emoji-toggle span{font-size:10px;color:#60777d}
+.journey-panel .journey-reply-emoji-toggle:hover,.journey-panel .journey-reply-emoji-toggle[aria-expanded="true"]{background:#e5f0ee;border-color:#8fb3af}
+.journey-panel .journey-reply-emoji-toggle:focus-visible,.journey-panel .journey-reply-emoji-menu button:focus-visible{outline:2px solid #629ba0;outline-offset:2px}
+.journey-panel .journey-reply-emoji-menu{position:absolute;right:-66px;top:calc(100% + 7px);z-index:20;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;gap:4px;width:237px;box-sizing:border-box;padding:7px;border:1px solid #c4d1cd;border-radius:11px;background:#fffefa;box-shadow:0 8px 22px rgba(30,51,61,.17)}
+.journey-panel .journey-reply-emoji-menu[hidden]{display:none!important}
+.journey-panel .journey-reply-emoji-menu button{display:flex;align-items:center;justify-content:center;min-width:0;min-height:36px;padding:4px;border:0;border-radius:7px;background:transparent;font:inherit;font-size:22px;cursor:pointer}
+.journey-panel .journey-reply-emoji-menu button:hover{background:#e7f0ed}
