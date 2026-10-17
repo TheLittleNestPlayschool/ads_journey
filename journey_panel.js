@@ -72,11 +72,10 @@ function initJourneyPanel(){
   <div class="journey-assistance-body">
     <section class="journey-assistance-section journey-assistance-editor-section">
       <div class="journey-reply-heading"><div class="journey-reply-heading-main"><h4 id="journeyReplyModeLabel">Suggested reply</h4><button id="journeyReplyWriteOwn" class="journey-reply-own-toggle journey-reply-toggle" type="button" aria-pressed="false">Write my own</button></div><button id="journeyReplyLanguage" class="journey-reply-toggle journey-reply-language-toggle" type="button" value="taglish">Taglish</button></div>
-      <p id="journeyReplyMatchLabel" class="journey-reply-match-label">Select a response below, or save a parent message to get a suggestion</p>
-      <textarea id="journeyAssistanceReplyText" rows="8" maxlength="3000" placeholder="Select an approved reply to prepare an editable message…" aria-label="Editable reply to parent"></textarea>
+      <p id="journeyReplyMatchLabel" class="journey-reply-match-label"></p>
+      <textarea id="journeyAssistanceReplyText" rows="8" maxlength="3000" placeholder="" aria-label="Editable reply to parent"></textarea>
       <button id="journeyReplyCopyRecord" class="journey-primary journey-reply-copy-record" type="button" disabled>Copy &amp; Record Sent</button>
       <p id="journeyReplyAssistStatus" class="journey-reply-assist-status" role="status"></p>
-      <p class="journey-reply-guidance">Copies the reply and records it in this conversation. Paste it into Facebook Messenger and send it to the parent.</p>
     </section>
     <section class="journey-reply-hidden-alternatives" hidden><div id="journeyReplyAlternatives"></div></section>
     <section class="journey-assistance-section journey-reply-library"><div class="journey-reply-library-title"><h4>Search saved replies</h4><span id="journeyReplySearchCount"></span></div><input id="journeyReplySearch" class="journey-reply-search" type="search" placeholder="Search tuition, schedule, location…" aria-label="Search saved replies"><div id="journeyReplyTopics" class="journey-reply-topics"><button type="button" data-topic="tuition">Tuition</button><button type="button" data-topic="schedule">Schedule</button><button type="button" data-topic="location">Location</button><button type="button" data-topic="trial">Free trial</button></div><div id="journeyReplySearchResults" class="journey-reply-options"></div></section>
@@ -163,10 +162,10 @@ function initJourneyPanel(){
     replyModeLabel.textContent=replyManualMode?'Your message':'Suggested reply';
     replyWriteOwn.textContent=replyManualMode?'Use suggested reply':'Write my own';
     replyWriteOwn.setAttribute('aria-pressed',String(replyManualMode));
-    replyEditor.placeholder=replyManualMode?'Write your own message to the parent…':'Select an approved reply to prepare an editable message…';
+    replyEditor.placeholder=replyManualMode?'Write your own message to the parent…':'';
   }
   function resetReplyAssistance(){
-    replySession++;replyPreviewRequest++;replyQuestionId=0;replyTemplateId=0;replyMatches=[];replySending=false;replyManualMode=false;replySavedSuggestion=null;replyEditor.value='';replyLanguage.value='taglish';renderReplyLanguageButton();replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='Select a response below, or save a parent message to get a suggestion';replyStatus.textContent='';replyCopyRecord.textContent='Copy & Record Sent';replySearch.value='';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
+    replySession++;replyPreviewRequest++;replyQuestionId=0;replyTemplateId=0;replyMatches=[];replySending=false;replyManualMode=false;replySavedSuggestion=null;replyEditor.value='';replyLanguage.value='taglish';renderReplyLanguageButton();replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='';replyStatus.textContent='';replyCopyRecord.textContent='Copy & Record Sent';replySearch.value='';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
   }
   function createReplyChoice(question){
     const button=document.createElement('button');button.type='button';button.className='journey-reply-choice';button.textContent=question.question_label||('Reply #'+question.id);
@@ -242,7 +241,7 @@ function initJourneyPanel(){
       replyManualMode=false;
       if(replySavedSuggestion){
         replyQuestionId=replySavedSuggestion.id;replyTemplateId=replySavedSuggestion.templateId||0;replyEditor.value=replySavedSuggestion.text;replyMatchLabel.textContent=replySavedSuggestion.label;replyLanguage.value=replySavedSuggestion.language;renderReplyLanguageButton();replyStatus.textContent='Review and edit before copying';
-      }else{replyQuestionId=0;replyTemplateId=0;replyEditor.value='';replyMatchLabel.textContent='Select an approved reply below';replyStatus.textContent='';}
+      }else{replyQuestionId=0;replyTemplateId=0;replyEditor.value='';replyMatchLabel.textContent='';replyStatus.textContent='';}
       replySavedSuggestion=null;
     }
     showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();replyEditor.focus();
