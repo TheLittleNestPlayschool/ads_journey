@@ -241,7 +241,7 @@ function initJourneyPanel(){
     }else{
       replyManualMode=false;
       if(replySavedSuggestion){
-        replyQuestionId=replySavedSuggestion.id;replyTemplateId=replySavedSuggestion.templateId||0;replyEditor.value=replySavedSuggestion.text;replyMatchLabel.textContent=replySavedSuggestion.label;replyLanguage.value=replySavedSuggestion.language;replyStatus.textContent='Review and edit before copying';
+        replyQuestionId=replySavedSuggestion.id;replyTemplateId=replySavedSuggestion.templateId||0;replyEditor.value=replySavedSuggestion.text;replyMatchLabel.textContent=replySavedSuggestion.label;replyLanguage.value=replySavedSuggestion.language;renderReplyLanguageButton();replyStatus.textContent='Review and edit before copying';
       }else{replyQuestionId=0;replyTemplateId=0;replyEditor.value='';replyMatchLabel.textContent='Select an approved reply below';replyStatus.textContent='';}
       replySavedSuggestion=null;
     }
