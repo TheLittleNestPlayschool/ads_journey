@@ -157,7 +157,7 @@ function initJourneyPanel(){
     let invalid=false;const english=target.replace(/%[a-z][a-z0-9_]*%/gi,key=>{if(!values.has(key.toLowerCase())){invalid=true;return key;}return values.get(key.toLowerCase());});
     return invalid?'':replyPlainText(english);
   }
-  function renderReplyLanguageButton(){const current=replyLanguage.value==='english'?'English':'Taglish',next=current==='English'?'Taglish':'English';replyLanguage.textContent=current;replyLanguage.title='Switch to '+next;replyLanguage.setAttribute('aria-label','Reply language '+current+', switch to '+next);}
+  function renderReplyLanguageButton(){const current=replyLanguage.value==='english'?'English':'Taglish',next=current==='English'?'Taglish':'English';replyLanguage.textContent=next;replyLanguage.title='Switch to '+next;replyLanguage.setAttribute('aria-label','Switch reply from '+current+' to '+next);}
   function updateReplyButton(){replyCopyRecord.disabled=replySending||(!replyQuestionId&&!replyTemplateId&&!replyManualMode)||!replyEditor.value.trim();}
   function showReplyMode(){
     replyModeLabel.textContent=replyManualMode?'Your message':'Suggested reply';
