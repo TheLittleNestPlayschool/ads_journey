@@ -664,3 +664,21 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-reply-own-toggle{padding:0;border:0;background:none;color:#356b75;text-decoration:underline;text-underline-offset:2px;font:inherit;font-size:10px;font-weight:700;cursor:pointer;white-space:nowrap}
 .journey-reply-own-toggle:hover,.journey-reply-own-toggle:focus-visible{color:#1e4b59}
 .journey-reply-own-toggle:focus-visible{outline:2px solid #6297a5;outline-offset:3px;border-radius:3px}
+
+/*   reply assistance: quick language/write toggles and focused saved-reply search*/
+.journey-reply-heading{align-items:center;gap:7px;flex-wrap:wrap}
+.journey-panel .journey-reply-toggle{display:inline-flex;align-items:center;justify-content:center;min-height:29px;padding:6px 10px;border:1px solid #bfd0cf;border-radius:8px;background:#edf3f1;color:#2c5860;text-decoration:none;font:inherit;font-size:11px;font-weight:700;line-height:1.2;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s}
+.journey-panel .journey-reply-toggle:hover{background:#dceae7;border-color:#93b4b3}
+.journey-panel .journey-reply-toggle:focus-visible{outline:2px solid #59959b;outline-offset:2px}
+.journey-panel .journey-reply-own-toggle[aria-pressed="true"]{background:#d4e8e5;border-color:#7faeaa}
+.journey-panel .journey-reply-language-toggle{background:#fff;border-color:#b4c7c8;color:#2b5361;min-width:69px}
+.journey-reply-library-title{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:9px}
+.journey-reply-library-title h4{margin:0}
+#journeyReplySearchCount{font-size:10px;color:#697e7d;white-space:nowrap}
+.journey-panel .journey-reply-search{min-height:37px;padding:9px 11px;font-size:12px;border-color:#c3cfcd}
+.journey-reply-topics{display:flex;flex-wrap:wrap;gap:5px;margin-top:9px}
+.journey-reply-topics[hidden]{display:none}
+.journey-reply-topics button{border:1px solid #d2ded8;background:#f2f6f2;color:#45675e;border-radius:7px;padding:6px 9px;font:inherit;font-size:10px;font-weight:700;cursor:pointer}
+.journey-reply-topics button:hover,.journey-reply-topics button:focus-visible{border-color:#91b7aa;background:#e0ede5}
+.journey-reply-library .journey-reply-options{margin-top:9px}
+.journey-reply-library .journey-reply-choice{min-height:34px;padding:9px 11px;font-size:11px}
