@@ -71,15 +71,15 @@ function initJourneyPanel(){
   assistance.innerHTML=`<div class="journey-assistance-head"><h3>Reply Assistance</h3></div>
   <div class="journey-assistance-body">
     <section class="journey-assistance-section journey-assistance-editor-section">
-      <div class="journey-reply-heading"><div class="journey-reply-heading-main"><h4 id="journeyReplyModeLabel">Suggested reply</h4><button id="journeyReplyWriteOwn" class="journey-reply-own-toggle" type="button" aria-pressed="false">Write my own</button></div><label for="journeyReplyLanguage">Language <select id="journeyReplyLanguage"><option value="taglish">Taglish</option><option value="english">English</option></select></label></div>
+      <div class="journey-reply-heading"><div class="journey-reply-heading-main"><h4 id="journeyReplyModeLabel">Suggested reply</h4><button id="journeyReplyWriteOwn" class="journey-reply-own-toggle journey-reply-toggle" type="button" aria-pressed="false">Write my own</button></div><button id="journeyReplyLanguage" class="journey-reply-toggle journey-reply-language-toggle" type="button" value="taglish">Taglish</button></div>
       <p id="journeyReplyMatchLabel" class="journey-reply-match-label">Select a response below, or save a parent message to get a suggestion</p>
       <textarea id="journeyAssistanceReplyText" rows="8" maxlength="3000" placeholder="Select an approved reply to prepare an editable message…" aria-label="Editable reply to parent"></textarea>
       <button id="journeyReplyCopyRecord" class="journey-primary journey-reply-copy-record" type="button" disabled>Copy &amp; Record Sent</button>
       <p id="journeyReplyAssistStatus" class="journey-reply-assist-status" role="status"></p>
       <p class="journey-reply-guidance">Copies the reply and records it in this conversation. Paste it into Facebook Messenger and send it to the parent.</p>
     </section>
-    <section class="journey-assistance-section"><h4>Other matching replies</h4><div id="journeyReplyAlternatives" class="journey-reply-options"><span class="journey-assistance-muted">Save a parent message to see matching replies</span></div></section>
-    <section class="journey-assistance-section"><h4>Search saved replies</h4><input id="journeyReplySearch" class="journey-reply-search" type="search" placeholder="Type a question or keyword…" aria-label="Search approved replies"><div id="journeyReplySearchResults" class="journey-reply-options"><span class="journey-assistance-muted">Type to search the reply library</span></div></section>
+    <section class="journey-reply-hidden-alternatives" hidden><div id="journeyReplyAlternatives"></div></section>
+    <section class="journey-assistance-section journey-reply-library"><div class="journey-reply-library-title"><h4>Search saved replies</h4><span id="journeyReplySearchCount"></span></div><input id="journeyReplySearch" class="journey-reply-search" type="search" placeholder="Search tuition, schedule, location…" aria-label="Search saved replies"><div id="journeyReplyTopics" class="journey-reply-topics"><button type="button" data-topic="tuition">Tuition</button><button type="button" data-topic="schedule">Schedule</button><button type="button" data-topic="location">Location</button><button type="button" data-topic="trial">Free trial</button></div><div id="journeyReplySearchResults" class="journey-reply-options"></div></section>
   </div>`;
   document.getElementById('journeyPanel').appendChild(assistance);
   /*   conversation and journey history switcher*/
@@ -143,8 +143,21 @@ function initJourneyPanel(){
   });
   /*   reply assistance: approved matches, editable draft, and one-action copy + record*/
   const replyEditor=document.getElementById('journeyAssistanceReplyText'),replyStatus=document.getElementById('journeyReplyAssistStatus'),replyCopyRecord=document.getElementById('journeyReplyCopyRecord'),replyMatchLabel=document.getElementById('journeyReplyMatchLabel'),replyLanguage=document.getElementById('journeyReplyLanguage'),replyAlternatives=document.getElementById('journeyReplyAlternatives'),replySearch=document.getElementById('journeyReplySearch'),replySearchResults=document.getElementById('journeyReplySearchResults'),replyModeLabel=document.getElementById('journeyReplyModeLabel'),replyWriteOwn=document.getElementById('journeyReplyWriteOwn');
-  let replyQuestionId=0,replyTemplateId=0,replyMatches=[],replyQuestions=[],replyQuestionsLoaded=false,replyQuestionsLoading=false,replySending=false,replyPreviewRequest=0,replySession=0,replyManualMode=false,replySavedSuggestion=null;
+  let replyQuestionId=0,replyTemplateId=0,replyMatches=[],replyQuestions=[],replyQuestionsLoaded=false,replyQuestionsLoading=false,replySending=false,replyPreviewRequest=0,replySession=0,replyManualMode=false,replySavedSuggestion=null,replyTaglishDraft='',replyEnglishDraft='';
   function replyPlainText(value){return String(value||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<\/p\s*>/gi,'\n').replace(/<[^>]*>/g,'').replace(/&nbsp;/gi,' ').trim();}
+  /*   English uses only values that Xano resolved in the Taglish reply*/
+  function replyEnglishFromTemplate(template,rendered){
+    const source=String(template?.taglish_text||''),target=String(template?.english_text||''),filled=String(rendered||'');
+    if(!source||!target||!filled)return '';
+    const escape=x=>x.replace(/[|\\{}()[\]^$+*?.]/g,'\\$&'),keys=[];let pattern='^',cursor=0;
+    for(const token of source.matchAll(/%[a-z][a-z0-9_]*%/gi)){pattern+=escape(source.slice(cursor,token.index))+'([\\s\\S]*?)';keys.push(token[0].toLowerCase());cursor=token.index+token[0].length;}
+    pattern+=escape(source.slice(cursor))+'$';let groups;try{groups=filled.match(new RegExp(pattern));}catch(_error){return '';}
+    if(!groups)return '';const values=new Map();
+    for(let i=0;i<keys.length;i++){if(values.has(keys[i])&&values.get(keys[i])!==groups[i+1])return '';values.set(keys[i],groups[i+1]);}
+    let invalid=false;const english=target.replace(/%[a-z][a-z0-9_]*%/gi,key=>{if(!values.has(key.toLowerCase())){invalid=true;return key;}return values.get(key.toLowerCase());});
+    return invalid?'':replyPlainText(english);
+  }
+  function renderReplyLanguageButton(){const current=replyLanguage.value==='english'?'English':'Taglish',next=current==='English'?'Taglish':'English';replyLanguage.textContent=current;replyLanguage.title='Switch to '+next;replyLanguage.setAttribute('aria-label','Reply language '+current+', switch to '+next);}
   function updateReplyButton(){replyCopyRecord.disabled=replySending||(!replyQuestionId&&!replyTemplateId&&!replyManualMode)||!replyEditor.value.trim();}
   function showReplyMode(){
     replyModeLabel.textContent=replyManualMode?'Your message':'Suggested reply';
@@ -153,7 +166,7 @@ function initJourneyPanel(){
     replyEditor.placeholder=replyManualMode?'Write your own message to the parent…':'Select an approved reply to prepare an editable message…';
   }
   function resetReplyAssistance(){
-    replySession++;replyPreviewRequest++;replyQuestionId=0;replyTemplateId=0;replyMatches=[];replySending=false;replyManualMode=false;replySavedSuggestion=null;replyEditor.value='';replyLanguage.value='taglish';replyMatchLabel.textContent='Select a response below, or save a parent message to get a suggestion';replyStatus.textContent='';replyCopyRecord.textContent='Copy & Record Sent';replySearch.value='';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
+    replySession++;replyPreviewRequest++;replyQuestionId=0;replyTemplateId=0;replyMatches=[];replySending=false;replyManualMode=false;replySavedSuggestion=null;replyEditor.value='';replyLanguage.value='taglish';renderReplyLanguageButton();replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='Select a response below, or save a parent message to get a suggestion';replyStatus.textContent='';replyCopyRecord.textContent='Copy & Record Sent';replySearch.value='';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
   }
   function createReplyChoice(question){
     const button=document.createElement('button');button.type='button';button.className='journey-reply-choice';button.textContent=question.question_label||('Reply #'+question.id);
@@ -167,13 +180,14 @@ function initJourneyPanel(){
     alternatives.forEach(q=>replyAlternatives.appendChild(createReplyChoice(q)));
   }
   function renderReplySearch(){
-    replySearchResults.replaceChildren();
-    if(!replyQuestionsLoaded){const p=document.createElement('span');p.className='journey-assistance-muted';p.textContent=replyQuestionsLoading?'Loading reply library…':'Reply library not loaded';replySearchResults.appendChild(p);return;}
-    const query=replySearch.value.trim().toLowerCase();
-    if(!query){const p=document.createElement('span');p.className='journey-assistance-muted';p.textContent='Type a question or keyword to browse approved replies';replySearchResults.appendChild(p);return;}
-    const matched=replyQuestions.filter(q=>String(q.question_label||'').toLowerCase().includes(query)||String(q.search_keywords||'').toLowerCase().includes(query)).slice(0,7);
-    if(!matched.length){const p=document.createElement('span');p.className='journey-assistance-muted';p.textContent='No matching approved replies';replySearchResults.appendChild(p);return;}
-    matched.forEach(q=>replySearchResults.appendChild(createReplyChoice(q)));
+    const count=document.getElementById('journeyReplySearchCount'),topics=document.getElementById('journeyReplyTopics');
+    replySearchResults.replaceChildren();const query=replySearch.value.trim().toLowerCase(),words=query.split(/\s+/).filter(Boolean);
+    topics.hidden=Boolean(query);
+    if(!replyQuestionsLoaded){count.textContent='';const item=document.createElement('span');item.className='journey-assistance-muted';item.textContent=replyQuestionsLoading?'Loading saved replies…':'Saved replies unavailable';replySearchResults.appendChild(item);return;}
+    const results=words.length?replyQuestions.filter(q=>{const value=[q.question_label,q.search_keywords,q.admin_action_notes].join(' ').toLowerCase();return words.every(word=>value.includes(word));}):replyMatches.filter(q=>Number(q.id)!==replyQuestionId);
+    count.textContent=words.length?results.length+' found':results.length?'Related replies':'';
+    if(!results.length){if(words.length){const item=document.createElement('span');item.className='journey-assistance-muted';item.textContent='No saved replies found. Try another keyword.';replySearchResults.appendChild(item);}return;}
+    results.slice(0,6).forEach(q=>replySearchResults.appendChild(createReplyChoice(q)));
   }
   async function loadReplyQuestions(){
     if(replyQuestionsLoaded||replyQuestionsLoading)return;
@@ -208,9 +222,9 @@ function initJourneyPanel(){
     const preferred=newTemplate?data.preferred_intent:data?.preferred_match;
     if(preferred?.id){
       replyTemplateId=newTemplate?Number(data.selected_template.id):0;replyQuestionId=newTemplate?0:Number(preferred.id);
-      replyLanguage.value='taglish';
+      replyLanguage.value='taglish';renderReplyLanguageButton();
       replyMatchLabel.textContent=newTemplate?(data.selected_template.template_name||preferred.intent_name||('Template #'+replyTemplateId)):(preferred.question_label||('Reply #'+preferred.id));
-      replyEditor.value=replyPlainText(data.response_text);
+      replyEditor.value=replyPlainText(data.response_text);replyTaglishDraft=replyEditor.value;replyEnglishDraft=newTemplate?replyEnglishFromTemplate(data.selected_template,data.response_text):'';
       replyStatus.textContent=(newTemplate?'New response library':'Saved reply library')+' · Review and edit before copying';
     }else{
       replyQuestionId=0;replyTemplateId=0;replyEditor.value='';
@@ -233,9 +247,22 @@ function initJourneyPanel(){
     }
     showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();replyEditor.focus();
   });
-  replyEditor.addEventListener('input',updateReplyButton);
+  replyEditor.addEventListener('input',()=>{if(replyTemplateId&&!replyManualMode){if(replyLanguage.value==='english')replyEnglishDraft=replyEditor.value;else replyTaglishDraft=replyEditor.value;}updateReplyButton();});
   replySearch.addEventListener('input',renderReplySearch);
-  replyLanguage.addEventListener('change',()=>{if(replyTemplateId){replyLanguage.value='taglish';replyStatus.textContent='English preview for this new template is not available yet. Select an existing saved reply for English.';return;}if(replyQuestionId){const selected=replyMatches.concat(replyQuestions).find(q=>Number(q.id)===replyQuestionId)||{id:replyQuestionId,question_label:replyMatchLabel.textContent};loadReplyPreview(selected);}});
+  document.getElementById('journeyReplyTopics').addEventListener('click',event=>{const button=event.target.closest('button[data-topic]');if(!button)return;replySearch.value=button.dataset.topic;renderReplySearch();replySearch.focus();});
+  replyLanguage.addEventListener('click',()=>{
+    if(replySending)return;
+    const before=replyLanguage.value,after=before==='english'?'taglish':'english';
+    if(replyManualMode){replyLanguage.value=after;renderReplyLanguageButton();return;}
+    if(replyTemplateId){
+      if(before==='english')replyEnglishDraft=replyEditor.value;else replyTaglishDraft=replyEditor.value;
+      const translation=after==='english'?replyEnglishDraft:replyTaglishDraft;
+      if(!translation){replyStatus.textContent='This translation is not ready. Choose a saved reply or write your own.';return;}
+      replyLanguage.value=after;renderReplyLanguageButton();replyEditor.value=translation;replyStatus.textContent='Review and edit before copying';updateReplyButton();return;
+    }
+    replyLanguage.value=after;renderReplyLanguageButton();
+    if(replyQuestionId){const chosen=replyMatches.concat(replyQuestions).find(q=>Number(q.id)===replyQuestionId)||{id:replyQuestionId,question_label:replyMatchLabel.textContent};loadReplyPreview(chosen);}
+  });
   replyCopyRecord.addEventListener('click',async()=>{
     const message=replyEditor.value.trim(),questionId=replyQuestionId,templateId=replyTemplateId,language=replyLanguage.value,journeyId=Number(demo.journeyId)||0,inquiryId=conversationInquiryId;
     if(replySending||!message||(!replyManualMode&&!questionId&&!templateId)||!journeyId||!inquiryId)return;
