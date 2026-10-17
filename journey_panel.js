@@ -135,7 +135,7 @@ function initJourneyPanel(){
       const result=await response.json().catch(()=>({}));
       if(!response.ok||!result.message?.id)throw new Error(result.message?.message||result.error||'Unable to save the parent message');
       if(conversationInquiryId===inquiryId&&Number(demo.journeyId)===journeyId){
-        manualText.value='';manualStatus.textContent='Parent message recorded';if(!replyManualMode||!replyEditor.value.trim())applyResponseMatches(result.response_matches);
+        manualText.value='';manualStatus.textContent='Parent message recorded';if(!replyManualMode||!replyEditor.value.trim())applyResponseMatches(result.response_matches_v2||result.response_matches,result.response_matches);
         conversationFingerprint='';await loadMessengerConversation(inquiryId,false);
       }
     }catch(error){manualStatus.textContent=error.message||'Unable to save the parent message';}
@@ -143,9 +143,9 @@ function initJourneyPanel(){
   });
   /*   reply assistance: approved matches, editable draft, and one-action copy + record*/
   const replyEditor=document.getElementById('journeyAssistanceReplyText'),replyStatus=document.getElementById('journeyReplyAssistStatus'),replyCopyRecord=document.getElementById('journeyReplyCopyRecord'),replyMatchLabel=document.getElementById('journeyReplyMatchLabel'),replyLanguage=document.getElementById('journeyReplyLanguage'),replyAlternatives=document.getElementById('journeyReplyAlternatives'),replySearch=document.getElementById('journeyReplySearch'),replySearchResults=document.getElementById('journeyReplySearchResults'),replyModeLabel=document.getElementById('journeyReplyModeLabel'),replyWriteOwn=document.getElementById('journeyReplyWriteOwn');
-  let replyQuestionId=0,replyMatches=[],replyQuestions=[],replyQuestionsLoaded=false,replyQuestionsLoading=false,replySending=false,replyPreviewRequest=0,replySession=0,replyManualMode=false,replySavedSuggestion=null;
+  let replyQuestionId=0,replyTemplateId=0,replyMatches=[],replyQuestions=[],replyQuestionsLoaded=false,replyQuestionsLoading=false,replySending=false,replyPreviewRequest=0,replySession=0,replyManualMode=false,replySavedSuggestion=null;
   function replyPlainText(value){return String(value||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<\/p\s*>/gi,'\n').replace(/<[^>]*>/g,'').replace(/&nbsp;/gi,' ').trim();}
-  function updateReplyButton(){replyCopyRecord.disabled=replySending||(!replyQuestionId&&!replyManualMode)||!replyEditor.value.trim();}
+  function updateReplyButton(){replyCopyRecord.disabled=replySending||(!replyQuestionId&&!replyTemplateId&&!replyManualMode)||!replyEditor.value.trim();}
   function showReplyMode(){
     replyModeLabel.textContent=replyManualMode?'Your message':'Suggested reply';
     replyWriteOwn.textContent=replyManualMode?'Use suggested reply':'Write my own';
@@ -153,7 +153,7 @@ function initJourneyPanel(){
     replyEditor.placeholder=replyManualMode?'Write your own message to the parent…':'Select an approved reply to prepare an editable message…';
   }
   function resetReplyAssistance(){
-    replySession++;replyPreviewRequest++;replyQuestionId=0;replyMatches=[];replySending=false;replyManualMode=false;replySavedSuggestion=null;replyEditor.value='';replyLanguage.value='taglish';replyMatchLabel.textContent='Select a response below, or save a parent message to get a suggestion';replyStatus.textContent='';replyCopyRecord.textContent='Copy & Record Sent';replySearch.value='';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
+    replySession++;replyPreviewRequest++;replyQuestionId=0;replyTemplateId=0;replyMatches=[];replySending=false;replyManualMode=false;replySavedSuggestion=null;replyEditor.value='';replyLanguage.value='taglish';replyMatchLabel.textContent='Select a response below, or save a parent message to get a suggestion';replyStatus.textContent='';replyCopyRecord.textContent='Copy & Record Sent';replySearch.value='';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
   }
   function createReplyChoice(question){
     const button=document.createElement('button');button.type='button';button.className='journey-reply-choice';button.textContent=question.question_label||('Reply #'+question.id);
@@ -190,7 +190,7 @@ function initJourneyPanel(){
   }
   async function loadReplyPreview(question){
     const id=Number(question?.id)||0,journeyId=Number(demo.journeyId)||0,inquiryId=conversationInquiryId,request=++replyPreviewRequest;
-    replyManualMode=false;replySavedSuggestion=null;showReplyMode();replyQuestionId=id;replyEditor.value='';replyMatchLabel.textContent=question?.question_label||('Reply #'+id);replyStatus.textContent='Preparing reply…';updateReplyButton();renderReplyOptions();renderReplySearch();
+    replyManualMode=false;replySavedSuggestion=null;replyTemplateId=0;showReplyMode();replyQuestionId=id;replyEditor.value='';replyMatchLabel.textContent=question?.question_label||('Reply #'+id);replyStatus.textContent='Preparing reply…';updateReplyButton();renderReplyOptions();renderReplySearch();
     if(!id||!demo.franchiseId){replyStatus.textContent='Branch information is required to prepare this reply';return;}
     try{
       const response=await fetch(API+'/nf_response_preview',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({question_id:id,franchise_id:Number(demo.franchiseId),language:replyLanguage.value})});
@@ -201,37 +201,44 @@ function initJourneyPanel(){
     }catch(error){if(request===replyPreviewRequest){replyStatus.textContent=error.message||'Unable to prepare reply';updateReplyButton();}}
   }
   function selectReplyQuestion(question){if(!question?.id)return;loadReplyPreview(question);}
-  function applyResponseMatches(data){
-    replySession++;replyPreviewRequest++;replyManualMode=false;replySavedSuggestion=null;showReplyMode();replyMatches=Array.isArray(data?.matches)?data.matches:[];
-    const preferred=data?.preferred_match;
+  function applyResponseMatches(data,legacyData){
+    const newTemplate=Boolean(data?.selected_template?.id&&data?.preferred_intent?.id&&data?.response_text);
+    replySession++;replyPreviewRequest++;replyManualMode=false;replySavedSuggestion=null;showReplyMode();
+    replyMatches=Array.isArray(legacyData?.matches)?legacyData.matches:(newTemplate?[]:(Array.isArray(data?.matches)?data.matches:[]));
+    const preferred=newTemplate?data.preferred_intent:data?.preferred_match;
     if(preferred?.id){
-      replyQuestionId=Number(preferred.id);replyLanguage.value='taglish';replyMatchLabel.textContent=preferred.question_label||('Reply #'+preferred.id);
+      replyTemplateId=newTemplate?Number(data.selected_template.id):0;replyQuestionId=newTemplate?0:Number(preferred.id);
+      replyLanguage.value='taglish';
+      replyMatchLabel.textContent=newTemplate?(data.selected_template.template_name||preferred.intent_name||('Template #'+replyTemplateId)):(preferred.question_label||('Reply #'+preferred.id));
       replyEditor.value=replyPlainText(data.response_text);
-      replyStatus.textContent='Suggested from the parent message · Review and edit';
-    }else{replyQuestionId=0;replyEditor.value='';replyMatchLabel.textContent='No automatic match · Search an approved reply below';replyStatus.textContent='';}
+      replyStatus.textContent=(newTemplate?'New response library':'Saved reply library')+' · Review and edit before copying';
+    }else{
+      replyQuestionId=0;replyTemplateId=0;replyEditor.value='';
+      replyMatchLabel.textContent='No automatic match · Search a saved reply below';replyStatus.textContent='';
+    }
     renderReplyOptions();renderReplySearch();updateReplyButton();
   }
   replyWriteOwn.addEventListener('click',()=>{
     if(replySending)return;
     ++replyPreviewRequest;
     if(!replyManualMode){
-      replySavedSuggestion=replyQuestionId?{id:replyQuestionId,text:replyEditor.value,label:replyMatchLabel.textContent,language:replyLanguage.value}:null;
-      replyManualMode=true;replyQuestionId=0;replyEditor.value='';replyMatchLabel.textContent='Write a personal reply in your own words';replyStatus.textContent='';
+      replySavedSuggestion=(replyQuestionId||replyTemplateId)?{id:replyQuestionId,templateId:replyTemplateId,text:replyEditor.value,label:replyMatchLabel.textContent,language:replyLanguage.value}:null;
+      replyManualMode=true;replyQuestionId=0;replyTemplateId=0;replyEditor.value='';replyMatchLabel.textContent='Write a personal reply in your own words';replyStatus.textContent='';
     }else{
       replyManualMode=false;
       if(replySavedSuggestion){
-        replyQuestionId=replySavedSuggestion.id;replyEditor.value=replySavedSuggestion.text;replyMatchLabel.textContent=replySavedSuggestion.label;replyLanguage.value=replySavedSuggestion.language;replyStatus.textContent='Review and edit before copying';
-      }else{replyQuestionId=0;replyEditor.value='';replyMatchLabel.textContent='Select an approved reply below';replyStatus.textContent='';}
+        replyQuestionId=replySavedSuggestion.id;replyTemplateId=replySavedSuggestion.templateId||0;replyEditor.value=replySavedSuggestion.text;replyMatchLabel.textContent=replySavedSuggestion.label;replyLanguage.value=replySavedSuggestion.language;replyStatus.textContent='Review and edit before copying';
+      }else{replyQuestionId=0;replyTemplateId=0;replyEditor.value='';replyMatchLabel.textContent='Select an approved reply below';replyStatus.textContent='';}
       replySavedSuggestion=null;
     }
     showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();replyEditor.focus();
   });
   replyEditor.addEventListener('input',updateReplyButton);
   replySearch.addEventListener('input',renderReplySearch);
-  replyLanguage.addEventListener('change',()=>{if(replyQuestionId){const selected=replyMatches.concat(replyQuestions).find(q=>Number(q.id)===replyQuestionId)||{id:replyQuestionId,question_label:replyMatchLabel.textContent};loadReplyPreview(selected);}});
+  replyLanguage.addEventListener('change',()=>{if(replyTemplateId){replyLanguage.value='taglish';replyStatus.textContent='English preview for this new template is not available yet. Select an existing saved reply for English.';return;}if(replyQuestionId){const selected=replyMatches.concat(replyQuestions).find(q=>Number(q.id)===replyQuestionId)||{id:replyQuestionId,question_label:replyMatchLabel.textContent};loadReplyPreview(selected);}});
   replyCopyRecord.addEventListener('click',async()=>{
-    const message=replyEditor.value.trim(),questionId=replyQuestionId,language=replyLanguage.value,journeyId=Number(demo.journeyId)||0,inquiryId=conversationInquiryId;
-    if(replySending||!message||(!replyManualMode&&!questionId)||!journeyId||!inquiryId)return;
+    const message=replyEditor.value.trim(),questionId=replyQuestionId,templateId=replyTemplateId,language=replyLanguage.value,journeyId=Number(demo.journeyId)||0,inquiryId=conversationInquiryId;
+    if(replySending||!message||(!replyManualMode&&!questionId&&!templateId)||!journeyId||!inquiryId)return;
     if(!lockOwned||lockPending||lockJourneyId!==journeyId){replyStatus.textContent='Take Control before recording replies';return;}
     const session=++replySession;replySending=true;replyCopyRecord.textContent='Copying…';replyStatus.textContent='';updateReplyButton();
     try{
@@ -242,7 +249,7 @@ function initJourneyPanel(){
     try{
       if(session!==replySession||journeyId!==Number(demo.journeyId)||inquiryId!==conversationInquiryId)return;
       replyCopyRecord.textContent='Recording…';
-      const response=await fetch(API+'/ad_reply_record_sent',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:journeyId,ad_inquiry_id:inquiryId,response_text:message,question_id:questionId,language,reply_source:questionId?'reply_assistant_manual':'admin_composed'})});
+      const response=await fetch(API+'/ad_reply_record_sent',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:journeyId,ad_inquiry_id:inquiryId,response_text:message,question_id:templateId?0:questionId,language,reply_source:templateId?'ad_response_template_'+templateId:(questionId?'reply_assistant_manual':'admin_composed')})});
       const result=await response.json().catch(()=>({}));
       if(!response.ok||!result.message?.id){
         const details=typeof result.message==='string'?result.message:(typeof result.error==='string'?result.error:(typeof result.error?.message==='string'?result.error.message:(typeof result.code==='string'?result.code:'Server did not return a saved message')));
@@ -250,7 +257,7 @@ function initJourneyPanel(){
         throw new Error('Recording failed (HTTP '+response.status+'): '+details);
       }
       if(session===replySession&&journeyId===Number(demo.journeyId)&&inquiryId===conversationInquiryId){
-        replyEditor.value='';replyQuestionId=0;replySavedSuggestion=null;replyMatchLabel.textContent=replyManualMode?'Write another message when needed':'Reply recorded · Select another approved reply when needed';replyStatus.textContent='Copied & recorded. Paste and send it in Facebook Messenger';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
+        replyEditor.value='';replyQuestionId=0;replyTemplateId=0;replySavedSuggestion=null;replyMatchLabel.textContent=replyManualMode?'Write another message when needed':'Reply recorded · Select another approved reply when needed';replyStatus.textContent='Copied & recorded. Paste and send it in Facebook Messenger';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
         conversationFingerprint='';await loadMessengerConversation(inquiryId,false);conversationList.scrollTop=conversationList.scrollHeight;
       }
     }catch(error){if(session===replySession)replyStatus.textContent='Copied, but recording was not confirmed. Check Conversation before retrying. '+(error.message||'');}
