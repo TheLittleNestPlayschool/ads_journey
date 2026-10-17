@@ -71,7 +71,7 @@ function initJourneyPanel(){
   assistance.innerHTML=`<div class="journey-assistance-head"><h3>Reply Assistance</h3></div>
   <div class="journey-assistance-body">
     <section class="journey-assistance-section journey-assistance-editor-section">
-      <div class="journey-reply-heading"><div class="journey-reply-heading-main"><h4 id="journeyReplyModeLabel">Suggested reply</h4><button id="journeyReplyWriteOwn" class="journey-reply-own-toggle journey-reply-toggle" type="button" aria-pressed="false">Write my own</button></div><button id="journeyReplyLanguage" class="journey-reply-toggle journey-reply-language-toggle" type="button" value="taglish">Taglish</button></div>
+      <div class="journey-reply-heading"><div class="journey-reply-heading-main"><h4 id="journeyReplyModeLabel">Suggested reply</h4><button id="journeyReplyWriteOwn" class="journey-reply-own-toggle journey-reply-toggle" type="button" aria-pressed="false">Write my own</button></div><div class="journey-reply-emoji-wrap"><button id="journeyReplyEmojiToggle" class="journey-reply-emoji-toggle" type="button" aria-label="Insert emoji" aria-expanded="false" aria-controls="journeyReplyEmojiMenu" title="Add emoji">😊 <span aria-hidden="true">▾</span></button><div id="journeyReplyEmojiMenu" class="journey-reply-emoji-menu" role="group" aria-label="Choose an emoji" hidden><button type="button" data-emoji="😊" aria-label="Smiling face">😊</button><button type="button" data-emoji="❤️" aria-label="Red heart">❤️</button><button type="button" data-emoji="🥰" aria-label="Smiling face with hearts">🥰</button><button type="button" data-emoji="👍" aria-label="Thumbs up">👍</button><button type="button" data-emoji="🎉" aria-label="Celebration">🎉</button></div></div><button id="journeyReplyLanguage" class="journey-reply-toggle journey-reply-language-toggle" type="button" value="taglish">Taglish</button></div>
       <p id="journeyReplyMatchLabel" class="journey-reply-match-label"></p>
       <textarea id="journeyAssistanceReplyText" rows="8" maxlength="3000" placeholder="" aria-label="Editable reply to parent"></textarea>
       <button id="journeyReplyCopyRecord" class="journey-primary journey-reply-copy-record" type="button" disabled>Copy &amp; Record Sent</button>
@@ -141,7 +141,7 @@ function initJourneyPanel(){
     finally{manualSaving=false;manualSave.disabled=false;manualSave.textContent='Save Parent Message';}
   });
   /*   reply assistance: approved matches, editable draft, and one-action copy + record*/
-  const replyEditor=document.getElementById('journeyAssistanceReplyText'),replyStatus=document.getElementById('journeyReplyAssistStatus'),replyCopyRecord=document.getElementById('journeyReplyCopyRecord'),replyMatchLabel=document.getElementById('journeyReplyMatchLabel'),replyLanguage=document.getElementById('journeyReplyLanguage'),replyAlternatives=document.getElementById('journeyReplyAlternatives'),replySearch=document.getElementById('journeyReplySearch'),replySearchResults=document.getElementById('journeyReplySearchResults'),replyModeLabel=document.getElementById('journeyReplyModeLabel'),replyWriteOwn=document.getElementById('journeyReplyWriteOwn');
+  const replyEditor=document.getElementById('journeyAssistanceReplyText'),replyStatus=document.getElementById('journeyReplyAssistStatus'),replyCopyRecord=document.getElementById('journeyReplyCopyRecord'),replyMatchLabel=document.getElementById('journeyReplyMatchLabel'),replyLanguage=document.getElementById('journeyReplyLanguage'),replyAlternatives=document.getElementById('journeyReplyAlternatives'),replySearch=document.getElementById('journeyReplySearch'),replySearchResults=document.getElementById('journeyReplySearchResults'),replyModeLabel=document.getElementById('journeyReplyModeLabel'),replyWriteOwn=document.getElementById('journeyReplyWriteOwn'),replyEmojiToggle=document.getElementById('journeyReplyEmojiToggle'),replyEmojiMenu=document.getElementById('journeyReplyEmojiMenu');
   let replyQuestionId=0,replyTemplateId=0,replyMatches=[],replyQuestions=[],replyQuestionsLoaded=false,replyQuestionsLoading=false,replySending=false,replyPreviewRequest=0,replySession=0,replyManualMode=false,replySavedSuggestion=null,replyTaglishDraft='',replyEnglishDraft='';
   function replyPlainText(value){return String(value||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<\/p\s*>/gi,'\n').replace(/<[^>]*>/g,'').replace(/&nbsp;/gi,' ').trim();}
   /*   English uses only values that Xano resolved in the Taglish reply*/
@@ -165,6 +165,7 @@ function initJourneyPanel(){
     replyEditor.placeholder=replyManualMode?'Write your own message to the parent…':'';
   }
   function resetReplyAssistance(){
+    replyEmojiRange=null;closeReplyEmojiMenu();
     replySession++;replyPreviewRequest++;replyQuestionId=0;replyTemplateId=0;replyMatches=[];replySending=false;replyManualMode=false;replySavedSuggestion=null;replyEditor.value='';replyLanguage.value='taglish';renderReplyLanguageButton();replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='';replyStatus.textContent='';replyCopyRecord.textContent='Copy & Record Sent';replySearch.value='';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
   }
   function createReplyChoice(question){
@@ -202,6 +203,7 @@ function initJourneyPanel(){
     finally{replyQuestionsLoading=false;renderReplySearch();}
   }
   async function loadReplyPreview(question){
+    replyEmojiRange=null;closeReplyEmojiMenu();
     const id=Number(question?.id)||0,journeyId=Number(demo.journeyId)||0,inquiryId=conversationInquiryId,request=++replyPreviewRequest;
     replyManualMode=false;replySavedSuggestion=null;replyTemplateId=0;showReplyMode();replyQuestionId=id;replyEditor.value='';replyMatchLabel.textContent=question?.question_label||('Reply #'+id);replyStatus.textContent='Preparing reply…';updateReplyButton();renderReplyOptions();renderReplySearch();
     if(!id||!demo.franchiseId){replyStatus.textContent='Branch information is required to prepare this reply';return;}
@@ -215,6 +217,7 @@ function initJourneyPanel(){
   }
   function selectReplyQuestion(question){if(!question?.id)return;loadReplyPreview(question);}
   function applyResponseMatches(data,legacyData){
+    replyEmojiRange=null;closeReplyEmojiMenu();
     const newTemplate=Boolean(data?.selected_template?.id&&data?.preferred_intent?.id&&data?.response_text);
     replySession++;replyPreviewRequest++;replyManualMode=false;replySavedSuggestion=null;showReplyMode();
     replyMatches=Array.isArray(legacyData?.matches)?legacyData.matches:(newTemplate?[]:(Array.isArray(data?.matches)?data.matches:[]));
@@ -233,6 +236,7 @@ function initJourneyPanel(){
   }
   replyWriteOwn.addEventListener('click',()=>{
     if(replySending)return;
+    replyEmojiRange=null;closeReplyEmojiMenu();
     ++replyPreviewRequest;
     if(!replyManualMode){
       replySavedSuggestion=(replyQuestionId||replyTemplateId)?{id:replyQuestionId,templateId:replyTemplateId,text:replyEditor.value,label:replyMatchLabel.textContent,language:replyLanguage.value}:null;
@@ -246,6 +250,32 @@ function initJourneyPanel(){
     }
     showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();replyEditor.focus();
   });
+  /*   insert selected emoji at the last caret position inside the editable reply*/
+  let replyEmojiRange=null;
+  function closeReplyEmojiMenu(){replyEmojiMenu.hidden=true;replyEmojiToggle.setAttribute('aria-expanded','false');}
+  function rememberReplyEmojiRange(){replyEmojiRange={start:replyEditor.selectionStart,end:replyEditor.selectionEnd};}
+  replyEditor.addEventListener('select',rememberReplyEmojiRange);
+  replyEditor.addEventListener('click',rememberReplyEmojiRange);
+  replyEditor.addEventListener('keyup',rememberReplyEmojiRange);
+  replyEmojiToggle.addEventListener('click',()=>{
+    const shouldOpen=replyEmojiMenu.hidden;
+    replyEmojiMenu.hidden=!shouldOpen;
+    replyEmojiToggle.setAttribute('aria-expanded',String(shouldOpen));
+  });
+  replyEmojiMenu.addEventListener('click',event=>{
+    const choice=event.target.closest('button[data-emoji]');
+    if(!choice)return;
+    const emoji=choice.dataset.emoji,range=replyEmojiRange||{start:replyEditor.value.length,end:replyEditor.value.length};
+    const start=Math.min(range.start,replyEditor.value.length),end=Math.min(range.end,replyEditor.value.length);
+    if(replyEditor.value.length-(end-start)+emoji.length>replyEditor.maxLength){replyStatus.textContent='Reply is at its character limit';closeReplyEmojiMenu();return;}
+    replyEditor.focus();
+    replyEditor.setRangeText(emoji,start,end,'end');
+    rememberReplyEmojiRange();
+    replyEditor.dispatchEvent(new Event('input',{bubbles:true}));
+    closeReplyEmojiMenu();
+  });
+  document.addEventListener('click',event=>{if(!replyEmojiMenu.hidden&&!event.target.closest('.journey-reply-emoji-wrap'))closeReplyEmojiMenu();});
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!replyEmojiMenu.hidden){event.stopPropagation();closeReplyEmojiMenu();replyEmojiToggle.focus();}});
   replyEditor.addEventListener('input',()=>{if(replyTemplateId&&!replyManualMode){if(replyLanguage.value==='english')replyEnglishDraft=replyEditor.value;else replyTaglishDraft=replyEditor.value;}updateReplyButton();});
   replySearch.addEventListener('input',renderReplySearch);
   document.getElementById('journeyReplyTopics').addEventListener('click',event=>{const button=event.target.closest('button[data-topic]');if(!button)return;replySearch.value=button.dataset.topic;renderReplySearch();replySearch.focus();});
