@@ -586,8 +586,8 @@ function initJourneyPanel(){
     if(!text)return {out,warnings};
     function labeled(pattern){const expression=new RegExp('(?:^|\\n)\\s*(?:[-•*]\\s*)?(?:'+pattern+')\\s*[:\\-–]\\s*([^\\n]+)','im');const m=text.match(expression);return m?cleanCapturedValue(m[1]):'';}
     function natural(pattern){const m=text.match(pattern);return m?cleanCapturedValue(m[1].split(/\s+(?:and|pero|but|then|at|when|who)\s+/i)[0].split(/[.!?](?:\s|$)/)[0]):'';}
-    out.parent=labeled("parent(?:'s)?\\s*(?:full\\s*)?name|name\\s*of\\s*parent|mother(?:'s)?\\s*name|father(?:'s)?\\s*name")||natural(/\b(?:my name is|i am|i'm|ako po si|ako si)\s+([a-zÀ-ÿ][a-zÀ-ÿ' .-]{1,65})/i);
-    out.child=labeled("child(?:'s)?\\s*(?:full\\s*)?name|name\\s*of\\s*child|student(?:'s)?\\s*name|kid(?:'s)?\\s*name")||natural(/\b(?:my (?:son|daughter|child|baby|little one)(?:'s name)? is|my (?:son|daughter|child) is named|anak ko(?: po)? (?:si|ay si)|his name is|her name is)\s+([a-zÀ-ÿ][a-zÀ-ÿ' .-]{1,65})/i);
+    out.parent=labeled("parent(?:'s)?\\s*(?:full\\s*)?name|name\\s*of\\s*parent|mother(?:'s)?\\s*name|father(?:'s)?\\s*name|parent")||natural(/\b(?:my name is|i am|i'm|ako po si|ako si)\s+([a-zÀ-ÿ][a-zÀ-ÿ' .-]{1,65})/i);
+    out.child=labeled("child(?:'s)?\\s*(?:full\\s*)?name|name\\s*of\\s*child|student(?:'s)?\\s*name|kid(?:'s)?\\s*name|child")||natural(/\b(?:my (?:son|daughter|child|baby|little one)(?:'s name)? is|my (?:son|daughter|child) is named|anak ko(?: po)? (?:si|ay si)|his name is|her name is)\s+([a-zÀ-ÿ][a-zÀ-ÿ' .-]{1,65})/i);
     const ageText=labeled("child(?:'s)?\\s*age|age(?:\\s*of\\s*child)?")||text;
     const both=ageText.match(/\b(\d{1,2})\s*(?:years?|yrs?|yo|taon)\s*(?:and\s*)?(\d{1,2})\s*(?:months?|mos?|buwan)\b/i);
     const years=ageText.match(/\b(\d{1,2})\s*(?:years?|yrs?|yo|taon)(?:\s*old)?\b/i),months=ageText.match(/\b(\d{1,2})\s*(?:months?|mos?|buwan)(?:\s*old)?\b/i);
@@ -596,7 +596,7 @@ function initJourneyPanel(){
     else if(months){const n=Number(months[1]);out.ageYears=String(Math.floor(n/12));out.ageMonths=String(n%12);}
     if(out.ageYears&&Number(out.ageYears)>12){out.ageYears='';out.ageMonths='';warnings.push('Child age needs checking');}
     out.address=labeled("address|home\\s*address|location\\s*of\\s*parent|residential\\s*address")||natural(/\b(?:we (?:live|are living) (?:in|at)|we(?:'re| are) from|taga(?:\\s+po)?(?:\\s+kami)?(?:\\s+sa)?)\s+([^\n.!?]{3,110})/i);
-    out.classPreference=labeled("preferred\\s*(?:class\\s*)?(?:schedule|session|time)|class\\s*preference|preferred\\s*class|session\\s*interested\\s*in")||natural(/\b((?:morning|afternoon|evening)\s*(?:classes?|sessions?|sana)?)\b/i);
+    out.classPreference=labeled("preferred\\s*(?:class\\s*)?(?:schedule|session|time)|class\\s*preference|preferred\\s*class|session\\s*interested\\s*in|class\\s*schedule|schedule")||natural(/\b((?:morning|afternoon|evening)\s*(?:classes?|sessions?|sana)?)\b/i);
     let dateText=labeled("(?:preferred\\s*)?(?:visit|trial|appointment)\\s*date|date\\s*(?:of\\s*)?(?:visit|trial)|preferred\\s*date"),timeText=labeled("(?:preferred\\s*)?(?:visit|trial|appointment)\\s*time|time\\s*(?:of\\s*)?(?:visit|trial)|preferred\\s*time");
     if(!dateText)dateText=text;
     if(!timeText)timeText=text;
