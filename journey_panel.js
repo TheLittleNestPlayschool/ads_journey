@@ -342,6 +342,7 @@ function initJourneyPanel(){
   });
   replyCopyRecord.addEventListener('click',async()=>{
     const message=replyEditor.value.trim(),questionId=replyQuestionId,templateId=replyTemplateId,language=replyLanguage.value,journeyId=Number(demo.journeyId)||0,inquiryId=conversationInquiryId;
+    const isConfirmation=replyQuickFormActive&&replyMatchLabel.textContent.startsWith('Appointment confirmation');
     if(replySending||!message||(!replyManualMode&&!questionId&&!templateId)||!journeyId||!inquiryId)return;
     if(!lockOwned||lockPending||lockJourneyId!==journeyId){replyStatus.textContent='Take Control before recording replies';return;}
     const session=++replySession;replySending=true;replyCopyRecord.textContent='Copying…';replyStatus.textContent='';updateReplyButton();
@@ -359,6 +360,10 @@ function initJourneyPanel(){
         const details=typeof result.message==='string'?result.message:(typeof result.error==='string'?result.error:(typeof result.error?.message==='string'?result.error.message:(typeof result.code==='string'?result.code:'Server did not return a saved message')));
         console.warn('Reply recording failed:',response.status,result.code||'',details);
         throw new Error('Recording failed (HTTP '+response.status+'): '+details);
+      }
+      if(isConfirmation&&stage2State){
+        try{const saved=await fetch(API+'/ad_parent_confirmation_sent',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:journeyId,message_id:result.message.id,scheduled_at:stage2State.scheduledFor})});if(!saved.ok)throw Error('Confirmation status not saved');parentConfirmationState=true;showParentConfirmationGate();window.dispatchEvent(new Event('parent-confirmation-recorded'));}
+        catch(_){replyStatus.textContent='Message recorded; parent confirmation status still pending. Please check before franchise handoff.';}
       }
       if(session===replySession&&journeyId===Number(demo.journeyId)&&inquiryId===conversationInquiryId){
         replyEditor.value='';replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyMatchLabel.textContent=replyManualMode?'Write another message when needed':'Reply recorded · Select another approved reply when needed';replyStatus.textContent='Copied & recorded. Paste and send it in Facebook Messenger';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
