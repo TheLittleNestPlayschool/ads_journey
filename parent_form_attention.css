@@ -1,0 +1,25 @@
+/*   Parent form attention queue for the desktop Ads Journey dashboard*/
+.form-attention-button{display:flex;align-items:center;gap:6px;white-space:nowrap}
+.form-attention-button[hidden]{display:none!important}
+.form-attention-button strong{display:grid;place-items:center;min-width:19px;height:19px;padding:1px 5px;background:#f5e0a8;color:#563c16;border-radius:11px;font-size:11px;font-variant-numeric:tabular-nums}
+.form-attention-icon{color:#f1cc72;font-size:15px;line-height:1}
+.parent-form-star{display:inline-flex;align-items:center;gap:5px;padding:5px 7px;margin-top:6px;max-width:100%;border-radius:7px;border:1px solid #e7cc8a;background:#fff6d9;color:#765519;font-weight:800;font-size:10px;line-height:1.2;white-space:normal}
+.parent-form-star::first-letter{color:#d9a633}
+@keyframes form-star-arrival{0%,60%,100%{box-shadow:0 0 0 0 rgba(217,166,51,0)}30%{box-shadow:0 0 0 5px rgba(217,166,51,.19)}}
+.parent-form-star{animation:form-star-arrival 2.5s ease-out 2}
+@media(prefers-reduced-motion:reduce){.parent-form-star{animation:none}}
+.form-attention-overlay[hidden]{display:none!important}
+.form-attention-overlay{position:fixed;inset:0;display:grid;place-items:center;padding:20px;background:rgba(15,34,47,.38);z-index:210}
+.form-attention-dialog{width:min(640px,96vw);max-height:85vh;display:flex;flex-direction:column;overflow:hidden;background:#fcfaf6;border:1px solid #cad8cf;border-radius:16px;box-shadow:0 25px 60px rgba(15,33,46,.25);color:#304b49}
+.form-attention-dialog header{display:flex;justify-content:space-between;gap:15px;padding:19px 19px 14px;border-bottom:1px solid #dbe4dc}
+.form-attention-dialog header small{font-size:9px;font-weight:800;letter-spacing:.12em;color:#68877b}
+.form-attention-dialog header h2{margin:5px 0;font-size:21px;color:#274b45}
+.form-attention-dialog header p{margin:0;font-size:12px;line-height:1.4;color:#6f8378}
+.form-attention-dialog header button{align-self:flex-start;min-width:32px;min-height:32px;border:1px solid #c9d7d2;border-radius:8px;background:#fff;color:#395c56;cursor:pointer;font-size:22px}
+.form-attention-list{overflow:auto;min-height:100px;padding:12px;display:grid;align-content:start;gap:8px}
+.form-attention-empty{margin:16px;padding:18px;text-align:center;color:#657f73;font-size:13px}
+.form-attention-row{width:100%;padding:12px;border:1px solid #dbe3db;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:white;cursor:pointer;text-align:left;color:#345a52}
+.form-attention-row:hover,.form-attention-row:focus-visible{background:#edf5ee;border-color:#a9cabc}
+.form-attention-row-info{display:grid;gap:4px}.form-attention-row-info strong{font-size:13px}.form-attention-row-info small{color:#728079;font-size:11px}
+.form-attention-row-action{font-size:11px;font-weight:800;white-space:nowrap;color:#417a6c}
+.form-attention-dialog footer{border-top:1px solid #dbe4dc;padding:10px 18px;font-size:10px;color:#71877b;line-height:1.4}
