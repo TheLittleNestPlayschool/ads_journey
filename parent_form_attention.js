@@ -12,6 +12,8 @@ const list=overlay.querySelector('#parentFormAttentionList'),counter=btn.querySe
 let pending=[],loading=false,lastError=false,active=true;
 const integer=v=>{const n=Number(v);return Number.isSafeInteger(n)&&n>0?n:0;};
 const timestamp=v=>{const n=Number(v);return Number.isFinite(n)&&n>0?n:0;};
+/*   Queue follows the currently selected franchises on the dashboard */
+function selectedFranchises(){try{const ids=JSON.parse(localStorage.getItem('ads_journey_franchise_filter')||'null');return Array.isArray(ids)?new Set(ids.map(integer).filter(Boolean)):null;}catch(_){return null;}}
 function prettyDate(t){const n=timestamp(t);if(!n)return 'Date unavailable';return new Date(n).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});}
 function clearStars(){document.querySelectorAll('.journey-card.parent-form-needs-attention').forEach(card=>{card.classList.remove('parent-form-needs-attention');card.removeAttribute('data-parent-form-alert');});}
 function renderStars(){
@@ -46,7 +48,9 @@ row.append(left,action);row.addEventListener('click',()=>openFromQueue(item));li
 function normalize(data){
 const raw=Array.isArray(data.items)?data.items:(Array.isArray(data.pending)?data.pending:[]);
 const byJourney=new Map();
+const selected=selectedFranchises();
 for(const v of raw){
+if(selected&&!selected.has(integer(v?.franchise_id)))continue;
 const id=integer(v?.ad_journey_id);if(!id||v.status&&v.status!=='awaiting_schedule')continue;
 const val={...v,ad_journey_id:id};
 if(!byJourney.has(id)||timestamp(val.submitted_at||val.created_at)>timestamp(byJourney.get(id).submitted_at||byJourney.get(id).created_at))byJourney.set(id,val);
@@ -71,6 +75,7 @@ overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.hidden=true;}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!overlay.hidden)overlay.hidden=true;});
 window.addEventListener('journey-card-added',()=>{if(pending.length)queueMicrotask(renderStars);});
 window.addEventListener('journey-sync-refresh',()=>refresh());
+window.addEventListener('ads-journey-franchise-filter-changed',()=>refresh());
 window.addEventListener('ad-parent-form-scheduled',()=>refresh());
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
 window.addEventListener('pagehide',()=>active=false,{once:true});
