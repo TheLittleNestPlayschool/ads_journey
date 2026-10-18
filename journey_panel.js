@@ -78,7 +78,7 @@ function initJourneyPanel(){
       <p id="journeyReplyAssistStatus" class="journey-reply-assist-status" role="status"></p>
     </section>
     <section class="journey-reply-hidden-alternatives" hidden><div id="journeyReplyAlternatives"></div></section>
-    <section class="journey-assistance-section journey-reply-library"><div class="journey-reply-library-title"><h4>Search saved replies</h4><span id="journeyReplySearchCount"></span></div><input id="journeyReplySearch" class="journey-reply-search" type="search" placeholder="Search tuition, schedule, location…" aria-label="Search saved replies"><div id="journeyReplyTopics" class="journey-reply-topics"><button type="button" data-topic="tuition">Tuition</button><button type="button" data-topic="schedule">Schedule</button><button type="button" data-topic="location">Location</button><button type="button" data-topic="trial">Free trial</button></div><div id="journeyReplySearchResults" class="journey-reply-options"></div></section>
+    <section class="journey-assistance-section journey-reply-library"><div class="journey-reply-library-title"><h4>Search saved replies</h4><button id="journeyReplyQuickForm" class="journey-reply-quick-form" type="button" title="Prepare a parent information request to send through Messenger">Quick Share Form</button><span id="journeyReplySearchCount"></span></div><input id="journeyReplySearch" class="journey-reply-search" type="search" placeholder="Search tuition, schedule, location…" aria-label="Search saved replies"><div id="journeyReplyTopics" class="journey-reply-topics"><button type="button" data-topic="tuition">Tuition</button><button type="button" data-topic="schedule">Schedule</button><button type="button" data-topic="location">Location</button><button type="button" data-topic="trial">Free trial</button></div><div id="journeyReplySearchResults" class="journey-reply-options"></div></section>
   </div>`;
   document.getElementById('journeyPanel').appendChild(assistance);
   /*   conversation and journey history switcher*/
@@ -141,8 +141,8 @@ function initJourneyPanel(){
     finally{manualSaving=false;manualSave.disabled=false;manualSave.textContent='Save Parent Message';}
   });
   /*   reply assistance: approved matches, editable draft, and one-action copy + record*/
-  const replyEditor=document.getElementById('journeyAssistanceReplyText'),replyStatus=document.getElementById('journeyReplyAssistStatus'),replyCopyRecord=document.getElementById('journeyReplyCopyRecord'),replyMatchLabel=document.getElementById('journeyReplyMatchLabel'),replyLanguage=document.getElementById('journeyReplyLanguage'),replyAlternatives=document.getElementById('journeyReplyAlternatives'),replySearch=document.getElementById('journeyReplySearch'),replySearchResults=document.getElementById('journeyReplySearchResults'),replyModeLabel=document.getElementById('journeyReplyModeLabel'),replyWriteOwn=document.getElementById('journeyReplyWriteOwn'),replyEmojiToggle=document.getElementById('journeyReplyEmojiToggle'),replyEmojiMenu=document.getElementById('journeyReplyEmojiMenu');
-  let replyQuestionId=0,replyTemplateId=0,replyMatches=[],replyQuestions=[],replyQuestionsLoaded=false,replyQuestionsLoading=false,replySending=false,replyPreviewRequest=0,replySession=0,replyManualMode=false,replySavedSuggestion=null,replyTaglishDraft='',replyEnglishDraft='';
+  const replyEditor=document.getElementById('journeyAssistanceReplyText'),replyStatus=document.getElementById('journeyReplyAssistStatus'),replyCopyRecord=document.getElementById('journeyReplyCopyRecord'),replyMatchLabel=document.getElementById('journeyReplyMatchLabel'),replyLanguage=document.getElementById('journeyReplyLanguage'),replyAlternatives=document.getElementById('journeyReplyAlternatives'),replySearch=document.getElementById('journeyReplySearch'),replySearchResults=document.getElementById('journeyReplySearchResults'),replyModeLabel=document.getElementById('journeyReplyModeLabel'),replyWriteOwn=document.getElementById('journeyReplyWriteOwn'),replyEmojiToggle=document.getElementById('journeyReplyEmojiToggle'),replyEmojiMenu=document.getElementById('journeyReplyEmojiMenu'),replyQuickForm=document.getElementById('journeyReplyQuickForm');
+  let replyQuestionId=0,replyTemplateId=0,replyMatches=[],replyQuestions=[],replyQuestionsLoaded=false,replyQuestionsLoading=false,replySending=false,replyPreviewRequest=0,replySession=0,replyManualMode=false,replySavedSuggestion=null,replyTaglishDraft='',replyEnglishDraft='',replyQuickFormActive=false,replyQuickFormDrafts={taglish:'',english:''};
   function replyPlainText(value){return String(value||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<\/p\s*>/gi,'\n').replace(/<[^>]*>/g,'').replace(/&nbsp;/gi,' ').trim();}
   /*   English uses only values that Xano resolved in the Taglish reply*/
   function replyEnglishFromTemplate(template,rendered){
@@ -159,14 +159,14 @@ function initJourneyPanel(){
   function renderReplyLanguageButton(){const current=replyLanguage.value==='english'?'English':'Taglish',next=current==='English'?'Taglish':'English';replyLanguage.textContent=next;replyLanguage.title='Switch to '+next;replyLanguage.setAttribute('aria-label','Switch reply from '+current+' to '+next);}
   function updateReplyButton(){replyCopyRecord.disabled=replySending||(!replyQuestionId&&!replyTemplateId&&!replyManualMode)||!replyEditor.value.trim();}
   function showReplyMode(){
-    replyModeLabel.textContent=replyManualMode?'Your message':'Suggested reply';
+    replyModeLabel.textContent=replyQuickFormActive?'Parent details request':replyManualMode?'Your message':'Suggested reply';
     replyWriteOwn.textContent=replyManualMode?'Use suggested reply':'Write my own';
     replyWriteOwn.setAttribute('aria-pressed',String(replyManualMode));
     replyEditor.placeholder=replyManualMode?'Write your own message to the parent…':'';
   }
   function resetReplyAssistance(){
     replyEmojiRange=null;closeReplyEmojiMenu();
-    replySession++;replyPreviewRequest++;replyQuestionId=0;replyTemplateId=0;replyMatches=[];replySending=false;replyManualMode=false;replySavedSuggestion=null;replyEditor.value='';replyLanguage.value='taglish';renderReplyLanguageButton();replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='';replyStatus.textContent='';replyCopyRecord.textContent='Copy & Record Sent';replySearch.value='';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
+    replySession++;replyPreviewRequest++;replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replyMatches=[];replySending=false;replyManualMode=false;replySavedSuggestion=null;replyEditor.value='';replyLanguage.value='taglish';renderReplyLanguageButton();replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='';replyStatus.textContent='';replyCopyRecord.textContent='Copy & Record Sent';replySearch.value='';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
   }
   function createReplyChoice(question){
     const button=document.createElement('button');button.type='button';button.className='journey-reply-choice';button.textContent=question.question_label||('Reply #'+question.id);
@@ -205,7 +205,7 @@ function initJourneyPanel(){
   async function loadReplyPreview(question){
     replyEmojiRange=null;closeReplyEmojiMenu();
     const id=Number(question?.id)||0,journeyId=Number(demo.journeyId)||0,inquiryId=conversationInquiryId,request=++replyPreviewRequest;
-    replyManualMode=false;replySavedSuggestion=null;replyTemplateId=0;showReplyMode();replyQuestionId=id;replyEditor.value='';replyMatchLabel.textContent=question?.question_label||('Reply #'+id);replyStatus.textContent='Preparing reply…';updateReplyButton();renderReplyOptions();renderReplySearch();
+    replyManualMode=false;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyTemplateId=0;showReplyMode();replyQuestionId=id;replyEditor.value='';replyMatchLabel.textContent=question?.question_label||('Reply #'+id);replyStatus.textContent='Preparing reply…';updateReplyButton();renderReplyOptions();renderReplySearch();
     if(!id||!demo.franchiseId){replyStatus.textContent='Branch information is required to prepare this reply';return;}
     try{
       const response=await fetch(API+'/nf_response_preview',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({question_id:id,franchise_id:Number(demo.franchiseId),language:replyLanguage.value})});
@@ -219,7 +219,7 @@ function initJourneyPanel(){
   function applyResponseMatches(data,legacyData){
     replyEmojiRange=null;closeReplyEmojiMenu();
     const newTemplate=Boolean(data?.selected_template?.id&&data?.preferred_intent?.id&&data?.response_text);
-    replySession++;replyPreviewRequest++;replyManualMode=false;replySavedSuggestion=null;showReplyMode();
+    replySession++;replyPreviewRequest++;replyManualMode=false;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;showReplyMode();
     replyMatches=Array.isArray(legacyData?.matches)?legacyData.matches:(newTemplate?[]:(Array.isArray(data?.matches)?data.matches:[]));
     const preferred=newTemplate?data.preferred_intent:data?.preferred_match;
     if(preferred?.id){
@@ -238,6 +238,7 @@ function initJourneyPanel(){
     if(replySending)return;
     replyEmojiRange=null;closeReplyEmojiMenu();
     ++replyPreviewRequest;
+    replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};
     if(!replyManualMode){
       replySavedSuggestion=(replyQuestionId||replyTemplateId)?{id:replyQuestionId,templateId:replyTemplateId,text:replyEditor.value,label:replyMatchLabel.textContent,language:replyLanguage.value}:null;
       replyManualMode=true;replyQuestionId=0;replyTemplateId=0;replyEditor.value='';replyMatchLabel.textContent='Write a personal reply in your own words';replyStatus.textContent='';
@@ -276,13 +277,32 @@ function initJourneyPanel(){
   });
   document.addEventListener('click',event=>{if(!replyEmojiMenu.hidden&&!event.target.closest('.journey-reply-emoji-wrap'))closeReplyEmojiMenu();});
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!replyEmojiMenu.hidden){event.stopPropagation();closeReplyEmojiMenu();replyEmojiToggle.focus();}});
-  replyEditor.addEventListener('input',()=>{if(replyTemplateId&&!replyManualMode){if(replyLanguage.value==='english')replyEnglishDraft=replyEditor.value;else replyTaglishDraft=replyEditor.value;}updateReplyButton();});
+  /*   Easy parent reply: one answer per line, no copying of a blank form*/
+  function parentDetailsRequest(language,kind){
+    const appointment=kind==='trial'?'free trial':'visit';
+    if(language==='english')return 'Hi! 😊 To help us arrange your '+appointment+', please send these details:\n\n1. Parent’s name\n2. Address and city\n3. Child’s name\n4. Child’s age (years or months)\n5. Preferred '+appointment+' date and time (if known)\n6. Preferred class schedule (if known)\n\nJust reply with your answers in the same order, one per line. There’s no need to copy this message. Thank you! ❤️';
+    return 'Hi po! 😊 Para ma-arrange namin ang inyong '+appointment+', paki-send lang po ng details:\n\n1. Parent’s name\n2. Address at city\n3. Child’s name\n4. Age ni little one (years or months)\n5. Preferred '+appointment+' date at time (if known)\n6. Preferred class schedule (if known)\n\nReply lang po ng answers in the same order, one per line. No need i-copy itong message. Salamat po! ❤️';
+  }
+  replyQuickForm.addEventListener('click',()=>{
+    if(replySending||!demo.journeyId)return;
+    if(replyEditor.value.trim()&&!replyQuickFormActive&&!window.confirm('Replace the current unsent reply with the parent information request?'))return;
+    const kind=document.querySelector('input[name="visitType"]:checked')?.value==='trial'?'trial':'visit';
+    if(!replyManualMode&&(replyQuestionId||replyTemplateId)){replySavedSuggestion={id:replyQuestionId,templateId:replyTemplateId,text:replyEditor.value,label:replyMatchLabel.textContent,language:replyLanguage.value};}
+    ++replyPreviewRequest;replyEmojiRange=null;closeReplyEmojiMenu();
+    replyManualMode=true;replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=true;
+    replyQuickFormDrafts={taglish:parentDetailsRequest('taglish',kind),english:parentDetailsRequest('english',kind)};
+    replyEditor.value=replyQuickFormDrafts[replyLanguage.value];
+    replyMatchLabel.textContent='Parent can reply with answers on separate lines — no copying needed';
+    replyStatus.textContent='Review this request, then use Copy & Record Sent';
+    showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();replyEditor.focus();
+  });
+  replyEditor.addEventListener('input',()=>{if(replyQuickFormActive)replyQuickFormDrafts[replyLanguage.value]=replyEditor.value;if(replyTemplateId&&!replyManualMode){if(replyLanguage.value==='english')replyEnglishDraft=replyEditor.value;else replyTaglishDraft=replyEditor.value;}updateReplyButton();});
   replySearch.addEventListener('input',renderReplySearch);
   document.getElementById('journeyReplyTopics').addEventListener('click',event=>{const button=event.target.closest('button[data-topic]');if(!button)return;replySearch.value=button.dataset.topic;renderReplySearch();replySearch.focus();});
   replyLanguage.addEventListener('click',()=>{
     if(replySending)return;
     const before=replyLanguage.value,after=before==='english'?'taglish':'english';
-    if(replyManualMode){replyLanguage.value=after;renderReplyLanguageButton();return;}
+    if(replyManualMode){if(replyQuickFormActive){replyQuickFormDrafts[before]=replyEditor.value;replyEditor.value=replyQuickFormDrafts[after];updateReplyButton();}replyLanguage.value=after;renderReplyLanguageButton();return;}
     if(replyTemplateId){
       if(before==='english')replyEnglishDraft=replyEditor.value;else replyTaglishDraft=replyEditor.value;
       const translation=after==='english'?replyEnglishDraft:replyTaglishDraft;
@@ -313,7 +333,7 @@ function initJourneyPanel(){
         throw new Error('Recording failed (HTTP '+response.status+'): '+details);
       }
       if(session===replySession&&journeyId===Number(demo.journeyId)&&inquiryId===conversationInquiryId){
-        replyEditor.value='';replyQuestionId=0;replyTemplateId=0;replySavedSuggestion=null;replyMatchLabel.textContent=replyManualMode?'Write another message when needed':'Reply recorded · Select another approved reply when needed';replyStatus.textContent='Copied & recorded. Paste and send it in Facebook Messenger';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
+        replyEditor.value='';replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyMatchLabel.textContent=replyManualMode?'Write another message when needed':'Reply recorded · Select another approved reply when needed';replyStatus.textContent='Copied & recorded. Paste and send it in Facebook Messenger';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
         conversationFingerprint='';await loadMessengerConversation(inquiryId,false);conversationList.scrollTop=conversationList.scrollHeight;
       }
     }catch(error){if(session===replySession)replyStatus.textContent='Copied, but recording was not confirmed. Check Conversation before retrying. '+(error.message||'');}
