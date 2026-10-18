@@ -263,10 +263,7 @@ async function openAttentionJourney(detail){
   closeDashboardModals();
   let card=document.querySelector('.journey-card[data-journey-id="'+CSS.escape(String(journeyId))+'"]');
   if(card){card.click();return;}
-  if(franchiseId&&!selectedFranchiseIds.has(franchiseId)){
-    selectedFranchiseIds.add(franchiseId);saveSelection();renderFranchiseList();updateFilterLabel();
-    syncUsageFranchiseSelection('attention_queue',franchiseId,true);
-  }
+  if(franchiseId&&!selectedFranchiseIds.has(franchiseId))return;
   await loadBoard();
   card=document.querySelector('.journey-card[data-journey-id="'+CSS.escape(String(journeyId))+'"]');
   if(card){card.click();return;}
