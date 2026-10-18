@@ -78,7 +78,7 @@ function initJourneyPanel(){
       <p id="journeyReplyAssistStatus" class="journey-reply-assist-status" role="status"></p>
     </section>
     <section class="journey-reply-hidden-alternatives" hidden><div id="journeyReplyAlternatives"></div></section>
-    <section class="journey-assistance-section journey-reply-library"><div class="journey-reply-library-title"><h4>Search saved replies</h4><button id="journeyReplyQuickForm" class="journey-reply-quick-form" type="button" title="Prepare a parent information request to send through Messenger">Quick Share Form</button><span id="journeyReplySearchCount"></span></div><input id="journeyReplySearch" class="journey-reply-search" type="search" placeholder="Search tuition, schedule, location…" aria-label="Search saved replies"><div id="journeyReplyTopics" class="journey-reply-topics"><button type="button" data-topic="tuition">Tuition</button><button type="button" data-topic="schedule">Schedule</button><button type="button" data-topic="location">Location</button><button type="button" data-topic="trial">Free trial</button></div><div id="journeyReplySearchResults" class="journey-reply-options"></div></section>
+    <section class="journey-assistance-section journey-reply-library"><div class="journey-reply-library-title"><h4>Search saved replies</h4><button id="journeyReplyQuickForm" class="journey-reply-quick-form" type="button" title="Existing text form for Messenger">Text Form</button><button id="journeyReplyOnlineForm" class="journey-reply-quick-form" type="button" title="Create a private parent information form link">Parent Form Link</button><span id="journeyReplySearchCount"></span></div><input id="journeyReplySearch" class="journey-reply-search" type="search" placeholder="Search tuition, schedule, location…" aria-label="Search saved replies"><div id="journeyReplyTopics" class="journey-reply-topics"><button type="button" data-topic="tuition">Tuition</button><button type="button" data-topic="schedule">Schedule</button><button type="button" data-topic="location">Location</button><button type="button" data-topic="trial">Free trial</button></div><div id="journeyReplySearchResults" class="journey-reply-options"></div></section>
   </div>`;
   document.getElementById('journeyPanel').appendChild(assistance);
   /*   conversation and journey history switcher*/
@@ -141,7 +141,7 @@ function initJourneyPanel(){
     finally{manualSaving=false;manualSave.disabled=false;manualSave.textContent='Save Parent Message';}
   });
   /*   reply assistance: approved matches, editable draft, and one-action copy + record*/
-  const replyEditor=document.getElementById('journeyAssistanceReplyText'),replyStatus=document.getElementById('journeyReplyAssistStatus'),replyCopyRecord=document.getElementById('journeyReplyCopyRecord'),replyMatchLabel=document.getElementById('journeyReplyMatchLabel'),replyLanguage=document.getElementById('journeyReplyLanguage'),replyAlternatives=document.getElementById('journeyReplyAlternatives'),replySearch=document.getElementById('journeyReplySearch'),replySearchResults=document.getElementById('journeyReplySearchResults'),replyModeLabel=document.getElementById('journeyReplyModeLabel'),replyWriteOwn=document.getElementById('journeyReplyWriteOwn'),replyEmojiToggle=document.getElementById('journeyReplyEmojiToggle'),replyEmojiMenu=document.getElementById('journeyReplyEmojiMenu'),replyQuickForm=document.getElementById('journeyReplyQuickForm');
+  const replyEditor=document.getElementById('journeyAssistanceReplyText'),replyStatus=document.getElementById('journeyReplyAssistStatus'),replyCopyRecord=document.getElementById('journeyReplyCopyRecord'),replyMatchLabel=document.getElementById('journeyReplyMatchLabel'),replyLanguage=document.getElementById('journeyReplyLanguage'),replyAlternatives=document.getElementById('journeyReplyAlternatives'),replySearch=document.getElementById('journeyReplySearch'),replySearchResults=document.getElementById('journeyReplySearchResults'),replyModeLabel=document.getElementById('journeyReplyModeLabel'),replyWriteOwn=document.getElementById('journeyReplyWriteOwn'),replyEmojiToggle=document.getElementById('journeyReplyEmojiToggle'),replyEmojiMenu=document.getElementById('journeyReplyEmojiMenu'),replyQuickForm=document.getElementById('journeyReplyQuickForm'),replyOnlineForm=document.getElementById('journeyReplyOnlineForm');
   let replyQuestionId=0,replyTemplateId=0,replyMatches=[],replyQuestions=[],replyQuestionsLoaded=false,replyQuestionsLoading=false,replySending=false,replyPreviewRequest=0,replySession=0,replyManualMode=false,replySavedSuggestion=null,replyTaglishDraft='',replyEnglishDraft='',replyQuickFormActive=false,replyQuickFormDrafts={taglish:'',english:''};
   function replyPlainText(value){return String(value||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<\/p\s*>/gi,'\n').replace(/<[^>]*>/g,'').replace(/&nbsp;/gi,' ').trim();}
   /*   English uses only values that Xano resolved in the Taglish reply*/
@@ -296,6 +296,34 @@ function initJourneyPanel(){
     replyStatus.textContent='Review this request, then use Copy & Record Sent';
     showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();replyEditor.focus();
   });
+  /*   Online form links are created only by the authenticated Xano API*/
+  function parentFormLinkMessage(language,kind,url){
+    const type=kind==='trial'?'free trial':'visit';
+    if(language==='english')return 'Hi! 😊 We would love to arrange a '+type+' for your little one. Please open this short form and send us your details:\n\n'+url+'\n\nThere is nothing to copy or type back here in Messenger. Our teachers will review your request and confirm the available schedule with you. Thank you! ❤️';
+    return 'Hi po! 😊 Para ma-arrange natin ang '+type+' ni little one, kindly tap po ang short form at fill out ng details:\n\n'+url+'\n\nNo need po mag-copy ng questions dito sa Messenger. Ire-review po ng teachers namin ang request at iko-confirm ang available schedule. Salamat po! ❤️';
+  }
+  let parentFormLinkLoading=false;
+  replyOnlineForm.addEventListener('click',async()=>{
+    const journeyId=Number(demo.journeyId)||0,inquiryId=Number(conversationInquiryId)||0,kind=document.querySelector('input[name="visitType"]:checked')?.value==='trial'?'trial':'visit';
+    if(parentFormLinkLoading||replySending||!journeyId||!inquiryId)return;
+    if(!lockOwned||lockPending||lockJourneyId!==journeyId){replyStatus.textContent='Take Control before generating a parent link';return;}
+    if(replyEditor.value.trim()&&!window.confirm('Replace the current unsent reply with the online parent form link?'))return;
+    parentFormLinkLoading=true;replyOnlineForm.disabled=true;replyOnlineForm.textContent='Preparing link…';replyStatus.textContent='Requesting secure form link…';
+    try{
+      const response=await fetch(API+'/ad_parent_form_link',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_inquiry_id:inquiryId,ad_journey_id:journeyId,schedule_type:kind})});
+      const data=await response.json().catch(()=>({}));
+      const ticket=String(data.token||'');
+      if(!response.ok||data.success!==true||!/^[A-Za-z0-9_-]{24,160}$/.test(ticket))throw Error('Form link service is not ready in Xano. No link was created or sent.');
+      if(journeyId!==Number(demo.journeyId)||inquiryId!==Number(conversationInquiryId))return;
+      const url=new URL('parent_form.html',window.location.href);url.searchParams.set('t',ticket);
+      ++replyPreviewRequest;replyEmojiRange=null;closeReplyEmojiMenu();
+      replyManualMode=true;replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=true;replySavedSuggestion=null;
+      replyQuickFormDrafts={taglish:parentFormLinkMessage('taglish',kind,url.href),english:parentFormLinkMessage('english',kind,url.href)};
+      replyEditor.value=replyQuickFormDrafts[replyLanguage.value];replyMatchLabel.textContent='Personalized form link · Review before sending';replyStatus.textContent='Link ready. Use Copy & Record Sent, then send it through Messenger.';
+      showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
+    }catch(e){replyStatus.textContent=e.message||'Could not prepare the form link. No link was sent.';}
+    finally{parentFormLinkLoading=false;replyOnlineForm.disabled=false;replyOnlineForm.textContent='Parent Form Link';}
+  });
   replyEditor.addEventListener('input',()=>{if(replyQuickFormActive)replyQuickFormDrafts[replyLanguage.value]=replyEditor.value;if(replyTemplateId&&!replyManualMode){if(replyLanguage.value==='english')replyEnglishDraft=replyEditor.value;else replyTaglishDraft=replyEditor.value;}updateReplyButton();});
   replySearch.addEventListener('input',renderReplySearch);
   document.getElementById('journeyReplyTopics').addEventListener('click',event=>{const button=event.target.closest('button[data-topic]');if(!button)return;replySearch.value=button.dataset.topic;renderReplySearch();replySearch.focus();});
@@ -359,28 +387,72 @@ function initJourneyPanel(){
       if(!document.hidden&&panel.classList.contains('open')&&conversationInquiryId===inquiryId&&!conversationLoading)loadMessengerConversation(inquiryId,false);
     },CONVERSATION_REFRESH_MS);
   }
+  /*   Parent website submissions share the Conversation timeline but are not Messenger messages*/
+  function showParentSubmissionReview(item){
+    openCaptureReview('');
+    if(captureOverlay.hidden)return;
+    const fields={parent:item.parent_name,child:item.child_name,ageYears:item.age_years,ageMonths:item.age_months,date:item.preferred_date};
+    Object.entries(fields).forEach(([key,value])=>captureField(key).value=value===null||value===undefined?'':String(value));
+    const address=[item.address,item.city].filter(Boolean).join(', ');
+    captureField('address').value=address;
+    const notes=[];
+    if(item.contact_number)notes.push('Contact number: '+item.contact_number);
+    if(item.preferred_time)notes.push('Preferred visit/trial time: '+item.preferred_time);
+    if(item.notes)notes.push(String(item.notes));
+    captureField('notes').value=notes.join('\n');
+    captureSource.open=false;captureRaw.value='';
+    captureNotice.textContent='Submitted online by the parent. Review and confirm the appointment time before applying; no schedule has been saved.';
+    captureField('parent').focus();
+  }
+  function renderParentSubmission(item){
+    const line=document.createElement('div');line.className='journey-message-row incoming journey-submission-row';
+    const bubble=document.createElement('div');bubble.className='journey-submission-bubble';
+    const heading=document.createElement('strong');heading.textContent='★ Parent Information Received';
+    const origin=document.createElement('small');origin.textContent='Website form submission · '+conversationDate(item.submitted_at||item.created_at);
+    bubble.append(heading,origin);
+    const details=[
+      ['Parent',item.parent_name],['Child',item.child_name],
+      ['Age',Number.isFinite(Number(item.age_years))&&item.age_years!==null?String(item.age_years)+' years'+(Number(item.age_months)>0?', '+item.age_months+' months':''):''],
+      ['City',item.city],['Address',item.address],['Contact',item.contact_number],
+      ['Requested date',item.preferred_date],['Requested time',item.preferred_time],['Notes',item.notes]
+    ];
+    const grid=document.createElement('dl');grid.className='journey-submission-details';
+    details.forEach(([label,value])=>{if(value===null||value===undefined||String(value).trim()==='')return;const dt=document.createElement('dt');dt.textContent=label;const dd=document.createElement('dd');dd.textContent=String(value);grid.append(dt,dd);});
+    bubble.appendChild(grid);
+    if(item.status==='awaiting_schedule'){
+      const action=document.createElement('button');action.type='button';action.className='journey-primary journey-submission-review';action.textContent='Review & Fill Schedule';action.addEventListener('click',()=>showParentSubmissionReview(item));bubble.appendChild(action);
+    }else{const done=document.createElement('p');done.className='journey-submission-handled';done.textContent='Schedule recorded · submission retained for history';bubble.appendChild(done);}
+    line.appendChild(bubble);return line;
+  }
   async function loadMessengerConversation(inquiryId,initial=false){
     if(conversationLoading)return;
-    const request=++conversationRequest;
-    conversationLoading=true;
-    if(initial){setJourneyRightView('conversation');conversationNotice('Loading Messenger conversation…');}
+    const request=++conversationRequest;conversationLoading=true;
+    if(initial){setJourneyRightView('conversation');conversationNotice('Loading conversation…');}
     if(!inquiryId){conversationNotice('This journey has no linked inquiry.');conversationLoading=false;return;}
     try{
-      const response=await fetch(API+'/ad_messenger_conversation?ad_inquiry_id='+encodeURIComponent(inquiryId),{headers:{Authorization:'Bearer '+journeyToken}});
+      const [response,formsResponse]=await Promise.all([
+        fetch(API+'/ad_messenger_conversation?ad_inquiry_id='+encodeURIComponent(inquiryId),{headers:{Authorization:'Bearer '+journeyToken}}),
+        fetch(API+'/ad_parent_form_submissions?ad_inquiry_id='+encodeURIComponent(inquiryId),{headers:{Authorization:'Bearer '+journeyToken},cache:'no-store'}).catch(()=>null)
+      ]);
       if(request!==conversationRequest)return;
-      if(!response.ok)throw new Error('Conversation request failed ('+response.status+').');
+      if(!response.ok)throw Error('Conversation request failed ('+response.status+').');
       const data=await response.json();
+      const fdata=formsResponse?.ok?await formsResponse.json().catch(()=>({})):{};
       if(request!==conversationRequest)return;
-      const raw=Array.isArray(data.messages)?data.messages:(Array.isArray(data.messages?.items)?data.messages.items:(Array.isArray(data.messages?.records)?data.messages.records:[]));
-      const messages=raw.slice().sort((a,b)=>Number(a.message_timestamp||a.created_at||0)-Number(b.message_timestamp||b.created_at||0));
-      const fingerprint=JSON.stringify(messages.map(item=>[item.id,item.message_id,item.message_text,item.direction,item.message_timestamp]));
+      const messages=Array.isArray(data.messages)?data.messages:(Array.isArray(data.messages?.items)?data.messages.items:(Array.isArray(data.messages?.records)?data.messages.records:[]));
+      const forms=Array.isArray(fdata.submissions)?fdata.submissions:[];
+      const timeline=[
+        ...messages.map(item=>({kind:'message',item,timestamp:Number(item.message_timestamp||item.created_at)||0})),
+        ...forms.map(item=>({kind:'form',item,timestamp:Number(item.submitted_at||item.created_at)||0}))
+      ].sort((a,b)=>a.timestamp-b.timestamp);
+      const fingerprint=JSON.stringify(timeline.map(({kind,item,timestamp})=>kind==='form'?[kind,item.id,item.status,timestamp]:[kind,item.id,item.message_id,item.message_text,item.direction,timestamp]));
       if(fingerprint===conversationFingerprint)return;
       conversationFingerprint=fingerprint;
-      if(!messages.length){conversationNotice('No Messenger messages recorded for this inquiry yet.');return;}
-      const nearBottom=conversationList.scrollHeight-conversationList.scrollTop-conversationList.clientHeight<70;
-      const previousScroll=conversationList.scrollTop;
+      if(!timeline.length){conversationNotice('No conversation messages or parent forms recorded yet.');return;}
+      const nearBottom=conversationList.scrollHeight-conversationList.scrollTop-conversationList.clientHeight<70,previousScroll=conversationList.scrollTop;
       const fragment=document.createDocumentFragment();
-      messages.forEach(item=>{
+      timeline.forEach(({kind,item})=>{
+        if(kind==='form'){fragment.appendChild(renderParentSubmission(item));return;}
         const outgoing=item.direction==='outbound'||item.direction==='outgoing';
         const line=document.createElement('div');line.className='journey-message-row '+(outgoing?'outgoing':'incoming');
         const bubble=document.createElement('div');bubble.className='journey-message-bubble';
@@ -825,6 +897,7 @@ function initJourneyPanel(){
       const response=await fetch(`${API}/ad_journey_schedule`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${journeyToken}`},body:JSON.stringify({journey_id:demo.journeyId,schedule_type:type,scheduled_for:scheduledFor,session_id:Number(sessionSelect.value),note:notes,parent_name:parent,child_name:child,age_years:ageYears===''?0:Number(ageYears),age_months:ageMonths===''?0:Number(ageMonths),session_name:session})});
       const data=await response.json().catch(()=>({}));
       if(!response.ok)throw new Error(data.message||data.error||data.detail||'Unable to save schedule.');
+      window.dispatchEvent(new CustomEvent('ad-parent-form-scheduled',{detail:{ad_journey_id:Number(demo.journeyId)}}));
       document.getElementById('journeyParentName').textContent=parent;panel.dataset.stage='scheduled';setActionDockStage('scheduled');setQuickGuide('scheduled');
       document.getElementById('journeyStage').textContent='Appointment Scheduled';
       document.getElementById('journeyStatus').textContent=type==='trial'?'Free Trial Scheduled':'Visit Scheduled';
