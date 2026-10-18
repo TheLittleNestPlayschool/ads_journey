@@ -1009,6 +1009,7 @@ function initJourneyPanel(){
     document.getElementById('copyMessageBlock').hidden=pending;
     document.getElementById('stage2DockSend').hidden=pending;
     document.getElementById('handoffDetailsToggle').hidden=pending;
+    document.getElementById('handoffKicker').textContent=pending?'Parent Confirmation':'Franchise Handoff';
     document.getElementById('handoffStatus').textContent=pending?'Parent confirmation needed':'Ready to send';
     document.getElementById('journeyNextAction').textContent=pending?'Share Confirmation with Parent':'Send Details to Franchise';
   }
