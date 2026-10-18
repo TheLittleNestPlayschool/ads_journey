@@ -280,8 +280,8 @@ function initJourneyPanel(){
   /*   Easy parent reply: one answer per line, no copying of a blank form*/
   function parentDetailsRequest(language,kind){
     const appointment=kind==='trial'?'free trial':'visit';
-    if(language==='english')return 'Hi! 😊 To help us arrange your '+appointment+', please send these details:\n\n1. Parent’s name\n2. Address and city\n3. Child’s name\n4. Child’s age (years or months)\n5. Preferred '+appointment+' date and time (if known)\n6. Preferred class schedule (if known)\n\nJust reply with your answers in the same order, one per line. There’s no need to copy this message. Thank you! ❤️';
-    return 'Hi po! 😊 Para ma-arrange namin ang inyong '+appointment+', paki-send lang po ng details:\n\n1. Parent’s name\n2. Address at city\n3. Child’s name\n4. Age ni little one (years or months)\n5. Preferred '+appointment+' date at time (if known)\n6. Preferred class schedule (if known)\n\nReply lang po ng answers in the same order, one per line. No need i-copy itong message. Salamat po! ❤️';
+    if(language==='english')return 'Hi! 😊 To help us arrange your '+appointment+', please send these details:\n\n1. Parent’s name\n2. Address and city\n3. Child’s name\n4. Child’s age (years or months)\n5. Preferred '+appointment+' date and time (if known)\n\nJust reply with your answers in the same order, one per line. There’s no need to copy this message. Thank you! ❤️';
+    return 'Hi po! 😊 Para ma-arrange namin ang inyong '+appointment+', paki-send lang po ng details:\n\n1. Parent’s name\n2. Address at city\n3. Child’s name\n4. Age ni little one (years or months)\n5. Preferred '+appointment+' date at time (if known)\n\nReply lang po ng answers in the same order, one per line. No need i-copy itong message. Salamat po! ❤️';
   }
   replyQuickForm.addEventListener('click',()=>{
     if(replySending||!demo.journeyId)return;
@@ -575,7 +575,7 @@ function initJourneyPanel(){
   const captureOverlay=document.createElement('div');
   captureOverlay.id='journeyCaptureOverlay';captureOverlay.className='journey-capture-overlay';captureOverlay.hidden=true;
   captureOverlay.innerHTML=[
-    '<section class="journey-capture-dialog" role="dialog" aria-modal="true" aria-labelledby="journeyCaptureTitle">',
+    '<section class="journey-capture-dialog" role="dialog" aria-modal="false" aria-labelledby="journeyCaptureTitle">',
     '<div class="journey-capture-head"><div><small>PARENT INFORMATION</small><h3 id="journeyCaptureTitle">Review Schedule Details</h3></div><button id="journeyCaptureClose" class="journey-capture-close" type="button" aria-label="Close review">×</button></div>',
     '<p class="journey-capture-intro">Check and correct the details before filling the form. Nothing is saved yet.</p>',
     '<details id="journeyCaptureSource"><summary>Source message — view or edit</summary><textarea id="journeyCaptureRaw" rows="4" placeholder="Paste the completed parent form or message here"></textarea><button type="button" id="journeyCaptureExtract" class="journey-capture-extract">Extract details again</button></details>',
@@ -586,17 +586,16 @@ function initJourneyPanel(){
     '<label>Age — years<input id="journeyCaptureAgeYears" type="number" min="0" max="12" placeholder="—"></label>',
     '<label>Age — months<input id="journeyCaptureAgeMonths" type="number" min="0" max="11" placeholder="—"></label>',
     '<label class="journey-capture-wide">Address<input id="journeyCaptureAddress" type="text" placeholder="Not provided"></label>',
-    '<label class="journey-capture-wide">Preferred class schedule<input id="journeyCaptureClass" type="text" placeholder="If known"></label>',
     '<label>Visit / trial date<input id="journeyCaptureDate" type="date"></label>',
     '<label>Visit / trial time<input id="journeyCaptureTime" type="time" step="300"></label>',
     '<label class="journey-capture-wide">Additional notes<textarea id="journeyCaptureNotes" rows="2" placeholder="Optional"></textarea></label>',
-    '</div><p class="journey-capture-footnote">Missing details remain unfilled. Check the appointment date, time and class before saving.</p>',
+    '</div><p class="journey-capture-footnote">Missing details remain unfilled. Check the appointment date and time before saving.</p>',
     '<div class="journey-capture-actions"><button type="button" id="journeyCaptureCancel" class="journey-capture-cancel">Cancel</button><button type="button" id="journeyCaptureApplyVisit" class="journey-capture-apply">Fill Visit</button><button type="button" id="journeyCaptureApplyTrial" class="journey-capture-apply">Fill Free Trial</button></div>',
     '</section>'
   ].join('');
   document.body.appendChild(captureOverlay);
   const captureButton=document.getElementById('journeyFillSchedule'),captureRaw=document.getElementById('journeyCaptureRaw'),captureSource=document.getElementById('journeyCaptureSource'),captureNotice=document.getElementById('journeyCaptureNotice');
-  const captureFields={parent:'journeyCaptureParent',child:'journeyCaptureChild',ageYears:'journeyCaptureAgeYears',ageMonths:'journeyCaptureAgeMonths',address:'journeyCaptureAddress',classPreference:'journeyCaptureClass',date:'journeyCaptureDate',time:'journeyCaptureTime',notes:'journeyCaptureNotes'};
+  const captureFields={parent:'journeyCaptureParent',child:'journeyCaptureChild',ageYears:'journeyCaptureAgeYears',ageMonths:'journeyCaptureAgeMonths',address:'journeyCaptureAddress',date:'journeyCaptureDate',time:'journeyCaptureTime',notes:'journeyCaptureNotes'};
   let captureJourneyId=0,captureLastFocus=null,captureDraggedText='';
   function captureField(key){return document.getElementById(captureFields[key]);}
   function closeCaptureReview(){captureOverlay.hidden=true;captureButton.classList.remove('is-drag-over');captureDraggedText='';captureJourneyId=0;if(captureLastFocus?.isConnected)captureLastFocus.focus({preventScroll:true});}
@@ -702,13 +701,9 @@ function initJourneyPanel(){
     if(!hour.querySelector('option[value=""]')){const blank=new Option('—','');hour.prepend(blank);}
     if(values.time){const h=Number(values.time.slice(0,2));hour.value=String(h%12||12);minute.value=values.time.slice(3);period.value=h>=12?'PM':'AM';}
     else{hour.value='';minute.value='00';period.value='AM';}
-    const session=document.getElementById('scheduleSession'),preference=values.classPreference.toLowerCase(),options=[...session.options].filter(o=>o.value!=='0'&&o.value!=='');
-    const matched=preference?options.filter(o=>o.textContent.toLowerCase().includes(preference)||preference.includes(o.textContent.trim().toLowerCase())):[];
-    if(matched.length===1)session.value=matched[0].value;
-    else session.value='0';
+    /*   The admin decides the available session; do not change that selection*/
     let note=values.notes;
     if(values.address)note=mergeCapturedNotes(note,'Address: '+values.address);
-    if(values.classPreference&&matched.length!==1)note=mergeCapturedNotes(note,'Preferred class schedule: '+values.classPreference);
     document.getElementById('scheduleNotes').value=mergeCapturedNotes(document.getElementById('scheduleNotes').value,note);
     const chosen=document.querySelector('input[name="visitType"][value="'+kind+'"]');chosen.checked=true;chosen.dispatchEvent(new Event('change',{bubbles:true}));
     closeCaptureReview();
