@@ -13,13 +13,12 @@ let pending=[],loading=false,lastError=false,active=true;
 const integer=v=>{const n=Number(v);return Number.isSafeInteger(n)&&n>0?n:0;};
 const timestamp=v=>{const n=Number(v);return Number.isFinite(n)&&n>0?n:0;};
 function prettyDate(t){const n=timestamp(t);if(!n)return 'Date unavailable';return new Date(n).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});}
-function clearStars(){document.querySelectorAll('.parent-form-star').forEach(element=>element.remove());}
+function clearStars(){document.querySelectorAll('.journey-card.parent-form-needs-attention').forEach(card=>{card.classList.remove('parent-form-needs-attention');card.removeAttribute('data-parent-form-alert');});}
 function renderStars(){
 clearStars();
 for(const item of pending){
 const card=document.querySelector('.journey-card[data-journey-id="'+item.ad_journey_id+'"]');if(!card)continue;
-const star=document.createElement('span');star.className='parent-form-star';star.textContent='★ Parent form received';star.title='Parent information waiting. Save Schedule to clear this notification.';
-card.appendChild(star);
+card.classList.add('parent-form-needs-attention');card.dataset.parentFormAlert='★ Parent form received';card.title='Parent information waiting. Save Schedule to clear this notification.';
 }
 }
 function openFromQueue(item){
@@ -31,7 +30,7 @@ if(search){search.click();const input=document.getElementById('journeySearchInpu
 }
 function renderQueue(){
 list.replaceChildren();
-if(lastError){const message=document.createElement('p');message.className='form-attention-empty';message.textContent='Unable to refresh the queue. Try again shortly.';list.appendChild(message);return;}
+if(lastError){const message=document.createElement('p');message.className='form-attention-empty';message.textContent='Unable to refresh the queue. Previously received alerts may be out of date.';list.appendChild(message);return;}
 if(!pending.length){const message=document.createElement('p');message.className='form-attention-empty';message.textContent='No parent forms waiting for scheduling.';list.appendChild(message);return;}
 pending.forEach(item=>{
 const row=document.createElement('button');row.type='button';row.className='form-attention-row';
@@ -50,7 +49,7 @@ const byJourney=new Map();
 for(const v of raw){
 const id=integer(v?.ad_journey_id);if(!id||v.status&&v.status!=='awaiting_schedule')continue;
 const val={...v,ad_journey_id:id};
-if(!byJourney.has(id)||timestamp(val.submitted_at||val.created_at)<timestamp(byJourney.get(id).submitted_at||byJourney.get(id).created_at))byJourney.set(id,val);
+if(!byJourney.has(id)||timestamp(val.submitted_at||val.created_at)>timestamp(byJourney.get(id).submitted_at||byJourney.get(id).created_at))byJourney.set(id,val);
 }
 return [...byJourney.values()].sort((a,b)=>timestamp(a.submitted_at||a.created_at)-timestamp(b.submitted_at||b.created_at));
 }
@@ -63,7 +62,7 @@ const data=await r.json();
 if(!data||!Array.isArray(data.items)&&!Array.isArray(data.pending))throw Error('Invalid pending response');
 pending=normalize(data);lastError=false;btn.hidden=false;counter.textContent=String(pending.length);
 renderStars();if(!overlay.hidden)renderQueue();
-}catch(_){lastError=true;btn.hidden=true;clearStars();if(!overlay.hidden)renderQueue();}
+}catch(_){lastError=true;btn.hidden=false;counter.textContent='!';if(!overlay.hidden)renderQueue();}
 finally{loading=false;}
 }
 btn.addEventListener('click',()=>{overlay.hidden=false;renderQueue();});
