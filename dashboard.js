@@ -299,7 +299,7 @@ async function openExistingJourney(detail){
   }
 }
 function usageEvent(type,details={}){if(typeof window.trackUsageEvent==='function')window.trackUsageEvent(type,details);}
-function syncUsageFranchiseSelection(source,changedFranchiseId=null,checked=null){const ids=[...selectedFranchiseIds].map(Number).sort((a,b)=>a-b);if(typeof window.updateUsageSessionContext==='function')window.updateUsageSessionContext({selected_franchise_ids:ids});usageEvent('franchise_filter_changed',{module:'franchise_filter',action:'change',source,selected_franchise_ids:ids,selected_count:ids.length,changed_franchise_id:changedFranchiseId,checked});}
+function syncUsageFranchiseSelection(source,changedFranchiseId=null,checked=null){window.dispatchEvent(new Event('ads-journey-franchise-filter-changed'));const ids=[...selectedFranchiseIds].map(Number).sort((a,b)=>a-b);if(typeof window.updateUsageSessionContext==='function')window.updateUsageSessionContext({selected_franchise_ids:ids});usageEvent('franchise_filter_changed',{module:'franchise_filter',action:'change',source,selected_franchise_ids:ids,selected_count:ids.length,changed_franchise_id:changedFranchiseId,checked});}
 function titleCase(value){return String(value||'').replace(/_/g,' ').replace(/\b\w/g,char=>char.toUpperCase());}
 function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));}
 logoutButton.addEventListener('click',logout);
