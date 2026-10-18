@@ -738,3 +738,8 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel .journey-reply-quick-form{margin-left:auto;flex:0 0 auto;min-height:29px;padding:6px 10px;border:1px solid #97bcb3;border-radius:8px;background:#e7f2ed;color:#33685f;font:inherit;font-size:10px;font-weight:800;line-height:1.25;cursor:pointer;white-space:nowrap}
 .journey-panel .journey-reply-quick-form:hover,.journey-panel .journey-reply-quick-form:focus-visible{background:#d2e9df;border-color:#70a597}
 .journey-reply-library-title #journeyReplySearchCount:not(:empty){width:100%;text-align:right;margin-top:-5px}
+
+/*   Nonblocking Fill Schedule review sits over the left appointment form only*/
+.journey-capture-overlay{display:block;padding:0;background:transparent;backdrop-filter:none;pointer-events:none}
+.journey-capture-dialog{position:fixed;pointer-events:auto;overflow-y:auto;width:auto;margin:0;align-items:stretch;box-shadow:0 14px 38px rgba(24,46,54,.25);border-color:#a4bbb5}
+@media(min-width:901px){.journey-capture-dialog{gap:9px;padding:14px 15px 12px}.journey-capture-fields{column-gap:9px;row-gap:8px}.journey-capture-head h3{font-size:15px}.journey-capture-intro{line-height:1.35}}
