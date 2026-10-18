@@ -488,3 +488,8 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 .topbar-summary .summary-card:nth-child(4) .summary-value{color:#f6c17e}
 .topbar-summary .summary-card:nth-child(5) .summary-value{color:#d0b2f4}
 .topbar-summary .summary-card:nth-child(6) .summary-value{color:#9bdab9}
+
+/*   Separate Stage 2 confirmation indicator from parent-form Needs Attention */
+.stage2-confirmation-count{border:1px solid #c9aa66;border-radius:20px;background:#fff2d5;color:#74501a;cursor:pointer;font-weight:800;padding:3px 8px;font-size:11px}
+.stage2-confirmation-count[hidden]{display:none}
+.journey-card.stage2-confirmation-pending::after{content:attr(data-confirmation-label);display:inline-block;padding:5px 8px;margin-top:5px;border-radius:7px;border:1px solid #e4c780;background:#fff1cd;color:#704d17;font-size:10px;font-weight:800}
