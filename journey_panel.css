@@ -758,3 +758,7 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel .journey-submission-review{display:block;width:100%;min-height:34px;border:1px solid #8bb7a1;border-radius:8px;background:#d4e8d9;color:#2d624c;font-size:11px;font-weight:800;cursor:pointer}
 .journey-panel .journey-submission-review:hover{background:#bddac5}
 .journey-panel .journey-submission-handled{margin:8px 0 0;color:#537967;font-size:10px;font-weight:700}
+
+/*   Give scheduling notes room for parent details and admin review */
+.journey-panel #scheduleNotes{min-height:118px;line-height:1.5;resize:vertical}
+.journey-panel #journeyCaptureNotes{min-height:104px;line-height:1.5;resize:vertical}
