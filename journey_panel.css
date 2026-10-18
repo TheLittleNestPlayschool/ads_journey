@@ -762,3 +762,8 @@ body:has(#journeyPanel.open){overflow:hidden}
 /*   Give scheduling notes room for parent details and admin review */
 .journey-panel #scheduleNotes{min-height:118px;line-height:1.5;resize:vertical}
 .journey-panel #journeyCaptureNotes{min-height:104px;line-height:1.5;resize:vertical}
+
+/*   Stage 2 parent confirmation comes before franchise handoff */
+.parent-confirmation-block{margin:9px 0;padding:15px;border:1px solid #e4cc9e;border-radius:11px;background:#fff8e9;color:#684d22;display:grid;gap:10px}
+.parent-confirmation-block[hidden]{display:none}
+.parent-confirmation-block strong{font-size:14px}.parent-confirmation-block p{font-size:12px;line-height:1.5;margin:0}.parent-confirmation-block small{font-size:11px}
