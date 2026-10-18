@@ -743,3 +743,18 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-capture-overlay{display:block;padding:0;background:transparent;backdrop-filter:none;pointer-events:none}
 .journey-capture-dialog{position:fixed;pointer-events:auto;overflow-y:auto;width:auto;margin:0;align-items:stretch;box-shadow:0 14px 38px rgba(24,46,54,.25);border-color:#a4bbb5}
 @media(min-width:901px){.journey-capture-dialog{gap:9px;padding:14px 15px 12px}.journey-capture-fields{column-gap:9px;row-gap:8px}.journey-capture-head h3{font-size:15px}.journey-capture-intro{line-height:1.35}}
+
+/*   Website parent form submissions are distinct from Messenger bubbles*/
+.journey-panel .journey-reply-library-title{display:flex;align-items:center;flex-wrap:wrap;gap:5px}
+.journey-panel .journey-reply-library-title h4{margin-right:auto}
+.journey-panel .journey-reply-library-title .journey-reply-quick-form{margin-left:0}
+.journey-panel .journey-submission-row{max-width:100%;width:100%;justify-content:flex-start}
+.journey-panel .journey-submission-bubble{width:min(96%,450px);max-width:100%;padding:13px 14px;border-radius:12px;background:#e8f4eb;border:1px solid #b9d7c1;color:#294d40;box-sizing:border-box}
+.journey-panel .journey-submission-bubble>strong{display:block;font-size:12px;font-weight:800;color:#305b45;margin:0 0 5px}
+.journey-panel .journey-submission-bubble>small{display:block;font-size:10px;color:#688c78;margin:0 0 10px}
+.journey-panel .journey-submission-details{display:grid;grid-template-columns:minmax(75px,33%) 1fr;column-gap:7px;row-gap:6px;margin:0 0 11px;font-size:11px;line-height:1.4}
+.journey-panel .journey-submission-details dt{font-weight:700;color:#50735f}
+.journey-panel .journey-submission-details dd{margin:0;color:#294a40;overflow-wrap:anywhere;white-space:pre-wrap}
+.journey-panel .journey-submission-review{display:block;width:100%;min-height:34px;border:1px solid #8bb7a1;border-radius:8px;background:#d4e8d9;color:#2d624c;font-size:11px;font-weight:800;cursor:pointer}
+.journey-panel .journey-submission-review:hover{background:#bddac5}
+.journey-panel .journey-submission-handled{margin:8px 0 0;color:#537967;font-size:10px;font-weight:700}
