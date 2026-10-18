@@ -597,6 +597,23 @@ function initJourneyPanel(){
   const captureButton=document.getElementById('journeyFillSchedule'),captureRaw=document.getElementById('journeyCaptureRaw'),captureSource=document.getElementById('journeyCaptureSource'),captureNotice=document.getElementById('journeyCaptureNotice');
   const captureFields={parent:'journeyCaptureParent',child:'journeyCaptureChild',ageYears:'journeyCaptureAgeYears',ageMonths:'journeyCaptureAgeMonths',address:'journeyCaptureAddress',date:'journeyCaptureDate',time:'journeyCaptureTime',notes:'journeyCaptureNotes'};
   let captureJourneyId=0,captureLastFocus=null,captureDraggedText='';
+  /*   Anchor review to the left Visit / Free Trial form, leaving Conversation usable*/
+  const captureDialog=captureOverlay.querySelector('.journey-capture-dialog');
+  function positionCaptureReview(){
+    if(captureOverlay.hidden)return;
+    const card=document.getElementById('scheduleActionCard');
+    const rect=card.getBoundingClientRect(),margin=9;
+    const width=Math.max(240,Math.min(rect.width,window.innerWidth-margin*2));
+    const left=Math.max(margin,Math.min(rect.left,window.innerWidth-margin-width));
+    const top=Math.max(margin,Math.min(rect.top,window.innerHeight-margin-180));
+    const maxHeight=Math.max(180,Math.min(rect.bottom-top,window.innerHeight-top-margin));
+    captureDialog.style.left=left+'px';
+    captureDialog.style.top=top+'px';
+    captureDialog.style.width=width+'px';
+    captureDialog.style.maxHeight=maxHeight+'px';
+  }
+  window.addEventListener('resize',positionCaptureReview);
+  document.querySelector('#journeyPanel .journey-panel-main')?.addEventListener('scroll',positionCaptureReview,{passive:true});
   function captureField(key){return document.getElementById(captureFields[key]);}
   function closeCaptureReview(){captureOverlay.hidden=true;captureButton.classList.remove('is-drag-over');captureDraggedText='';captureJourneyId=0;if(captureLastFocus?.isConnected)captureLastFocus.focus({preventScroll:true});}
   function cleanCapturedValue(value){return String(value||'').trim().replace(/^[\s:–—\-]+/,'').replace(/[\s.!;]+$/,'').slice(0,180);}
@@ -677,6 +694,7 @@ function initJourneyPanel(){
     captureLastFocus=document.activeElement;
     captureJourneyId=Number(demo.journeyId);
     captureOverlay.hidden=false;
+    positionCaptureReview();
     captureRaw.value=String(source||'').trim();
     captureSource.open=!captureRaw.value;
     extractIntoCapture();
