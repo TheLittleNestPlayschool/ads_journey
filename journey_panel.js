@@ -584,22 +584,47 @@ function initJourneyPanel(){
   function extractCaptureDetails(source){
     const text=String(source||'').replace(/\r/g,'').trim(),out={parent:'',child:'',ageYears:'',ageMonths:'',address:'',classPreference:'',date:'',time:'',notes:''},warnings=[];
     if(!text)return {out,warnings};
-    function labeled(pattern){const expression=new RegExp('(?:^|\\n)\\s*(?:[-•*]\\s*)?(?:'+pattern+')\\s*[:\\-–]\\s*([^\\n]+)','im');const m=text.match(expression);return m?cleanCapturedValue(m[1]):'';}
+    function labeled(pattern){const expression=new RegExp('(?:^|\\n)\\s*(?:[-•*]\\s*)?(?:\\d+[.)]\\s*)?(?:'+pattern+')\\s*[:\\-–]\\s*([^\\n]+)','im');const m=text.match(expression);return m?cleanCapturedValue(m[1]):'';}
     function natural(pattern){const m=text.match(pattern);return m?cleanCapturedValue(m[1].split(/\s+(?:and|pero|but|then|at|when|who)\s+/i)[0].split(/[.!?](?:\s|$)/)[0]):'';}
-    out.parent=labeled("parent(?:'s)?\\s*(?:full\\s*)?name|name\\s*of\\s*parent|mother(?:'s)?\\s*name|father(?:'s)?\\s*name|parent")||natural(/\b(?:my name is|i am|i'm|ako po si|ako si)\s+([a-zÀ-ÿ][a-zÀ-ÿ' .-]{1,65})/i);
-    out.child=labeled("child(?:'s)?\\s*(?:full\\s*)?name|name\\s*of\\s*child|student(?:'s)?\\s*name|kid(?:'s)?\\s*name|child")||natural(/\b(?:my (?:son|daughter|child|baby|little one)(?:'s name)? is|my (?:son|daughter|child) is named|anak ko(?: po)? (?:si|ay si)|his name is|her name is)\s+([a-zÀ-ÿ][a-zÀ-ÿ' .-]{1,65})/i);
+    out.parent=labeled("parent(?:'s)?\\s*(?:full\\s*)?name|name\\s*of\\s*parent|mother(?:'s)?\\s*name|father(?:'s)?\\s*name|parent|name")||natural(/\b(?:my name is|i am|i'm|ako po si|ako si)\s+([a-zÀ-ÿ][a-zÀ-ÿ' .-]{1,65})/i);
+    out.child=labeled("child(?:'?s)?\\s*(?:full\\s*)?name|name\\s*of\\s*child|student(?:'s)?\\s*name|kid(?:'s)?\\s*name|child")||natural(/\b(?:my (?:son|daughter|child|baby|little one)(?:'s name)? is|my (?:son|daughter|child) is named|anak ko(?: po)? (?:si|ay si)|his name is|her name is)\s+([a-zÀ-ÿ][a-zÀ-ÿ' .-]{1,65})/i);
     const ageText=labeled("child(?:'s)?\\s*age|age(?:\\s*of\\s*child)?")||text;
     const both=ageText.match(/\b(\d{1,2})\s*(?:years?|yrs?|yo|taon)\s*(?:and\s*)?(\d{1,2})\s*(?:months?|mos?|buwan)\b/i);
     const years=ageText.match(/\b(\d{1,2})\s*(?:years?|yrs?|yo|taon)(?:\s*old)?\b/i),months=ageText.match(/\b(\d{1,2})\s*(?:months?|mos?|buwan)(?:\s*old)?\b/i);
     if(both){out.ageYears=both[1];out.ageMonths=both[2];}
     else if(years){out.ageYears=years[1];out.ageMonths='0';}
     else if(months){const n=Number(months[1]);out.ageYears=String(Math.floor(n/12));out.ageMonths=String(n%12);}
+    else if(ageText!==text&&/^\d{1,2}$/.test(ageText.trim())){out.ageYears=ageText.trim();out.ageMonths='0';}
     if(out.ageYears&&Number(out.ageYears)>12){out.ageYears='';out.ageMonths='';warnings.push('Child age needs checking');}
     out.address=labeled("address|home\\s*address|location\\s*of\\s*parent|residential\\s*address")||natural(/\b(?:we (?:live|are living) (?:in|at)|we(?:'re| are) from|taga(?:\\s+po)?(?:\\s+kami)?(?:\\s+sa)?)\s+([^\n.!?]{3,110})/i);
+    const city=labeled("city|town|municipality");
+    if(city&&!out.address.toLowerCase().includes(city.toLowerCase()))out.address=out.address?out.address+', '+city:city;
     out.classPreference=labeled("preferred\\s*(?:class\\s*)?(?:schedule|session|time)|class\\s*preference|preferred\\s*class|session\\s*interested\\s*in|class\\s*schedule|schedule")||natural(/\b((?:morning|afternoon|evening)\s*(?:classes?|sessions?|sana)?)\b/i);
+    /*   short Messenger answers may have no labels; infer only a known 4–8 line layout*/
+    const lines=text.split('\n').map(x=>x.trim().replace(/^(?:\d+\s*[.):]\s*|[•*]\s*)/,'').trim()).filter(Boolean);
+    const hasLabels=lines.some(x=>/^(?:parent|name|child|kid|student|age|address|city|preferred|visit|trial|appointment|schedule|session|notes)\b[^:\n]{0,26}[:\-–]/i.test(x));
+    const isAge=x=>/^\d{1,2}(?:\s*(?:years?|yrs?|months?|mos?|yo))?$/i.test(x||'');
+    let positionalDate='';
+    if(!hasLabels&&lines.length>=4&&lines.length<=8){
+      let ageIndex=-1,citySeparate=false;
+      if(lines.length>=5&&isAge(lines[4])&&/(\d|street|st\b|road|rd\b|barangay|brgy|subdivision|village)/i.test(lines[1])){ageIndex=4;citySeparate=true;}
+      else if(isAge(lines[3]))ageIndex=3;
+      if(ageIndex>=0){
+        if(!out.parent)out.parent=cleanCapturedValue(lines[0]);
+        if(!out.child)out.child=cleanCapturedValue(lines[ageIndex-1]);
+        if(!out.address)out.address=cleanCapturedValue(lines[1]+(citySeparate?', '+lines[2]:''));
+        const age=lines[ageIndex].match(/^(\d{1,2})\s*(months?|mos?|years?|yrs?|yo)?$/i);
+        if(age){const n=Number(age[1]);if(/^(?:months?|mos?)$/i.test(age[2]||'')){out.ageYears=String(Math.floor(n/12));out.ageMonths=String(n%12);}else if(n<=12){out.ageYears=String(n);out.ageMonths='0';}else warnings.push('Check child age');}
+        const extra=lines.slice(ageIndex+1);
+        const dated=extra.find(x=>/\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)\b|\b20\d{2}-\d{1,2}-\d{1,2}\b|\b\d{1,2}[\/\-]\d{1,2}[\/\-]20\d{2}\b/i.test(x));
+        if(dated)positionalDate=dated;
+        if(!out.classPreference){const preference=extra.find(x=>/\b(?:morning|afternoon|evening)\b/i.test(x));if(preference)out.classPreference=cleanCapturedValue(preference);}
+        warnings.push('Matched answers by line order — please verify');
+      }
+    }
     let dateText=labeled("(?:preferred\\s*)?(?:visit|trial|appointment)\\s*date|date\\s*(?:of\\s*)?(?:visit|trial)|preferred\\s*date"),timeText=labeled("(?:preferred\\s*)?(?:visit|trial|appointment)\\s*time|time\\s*(?:of\\s*)?(?:visit|trial)|preferred\\s*time");
-    if(!dateText)dateText=text;
-    if(!timeText)timeText=text;
+    if(!dateText)dateText=positionalDate||text;
+    if(!timeText)timeText=positionalDate||text;
     const iso=dateText.match(/\b(20\d{2})-(\d{1,2})-(\d{1,2})\b/);
     let stamp=null;
     if(iso){stamp=new Date(Number(iso[1]),Number(iso[2])-1,Number(iso[3]));if(stamp.getMonth()!==Number(iso[2])-1||stamp.getDate()!==Number(iso[3]))stamp=null;}
@@ -611,7 +636,7 @@ function initJourneyPanel(){
       const numeric=dateText.match(/\b(\d{1,2})[\/\-](\d{1,2})[\/\-](20\d{2})\b/);
       if(numeric){const a=Number(numeric[1]),b=Number(numeric[2]);if(a>12&&b<=12){stamp=new Date(Number(numeric[3]),b-1,a);}else{warnings.push('Numeric date is ambiguous — choose date manually');}}
     }
-    if(!stamp&&/\b(?:visit|trial|appointment|date)\b/i.test(text)){
+    if(!stamp&&(positionalDate||/\b(?:visit|trial|appointment|date)\b/i.test(text))){
       const day=dateText.match(/\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i);
       if(day){const names=['sunday','monday','tuesday','wednesday','thursday','friday','saturday'],today=new Date(new Date().toLocaleString('en-US',{timeZone:'Asia/Manila'})),delta=(names.indexOf(day[1].toLowerCase())-today.getDay()+7)%7||7;stamp=new Date(today.getFullYear(),today.getMonth(),today.getDate()+delta);warnings.push('Date interpreted as next '+day[1]+' — please confirm');}
     }
