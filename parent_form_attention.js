@@ -26,7 +26,7 @@ overlay.hidden=true;
 const card=document.querySelector('.journey-card[data-journey-id="'+item.ad_journey_id+'"]');
 if(card){card.click();return;}
 /*   Existing dashboard flow can select a filtered-out franchise and open its journey */
-window.dispatchEvent(new CustomEvent('open-existing-journey',{detail:{query:String(item.ad_journey_id)}}));
+window.dispatchEvent(new CustomEvent('open-attention-journey',{detail:{journeyId:item.ad_journey_id,franchiseId:integer(item.franchise_id),inquiryId:integer(item.ad_inquiry_id)}}));
 }
 function renderQueue(){
 list.replaceChildren();
