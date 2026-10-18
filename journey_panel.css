@@ -732,3 +732,9 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-capture-apply{border:1px solid #89b3ae;background:#dcece9;color:#265f59}
 .journey-capture-apply:hover{background:#c7e4df}
 @media(max-width:600px){.journey-capture-fields{grid-template-columns:1fr}.journey-capture-dialog{padding:14px}.journey-capture-actions button{flex:1}.journey-capture-cancel{margin-right:0}}
+
+/*   Quick Share Form action inside the saved replies header*/
+.journey-reply-library-title{flex-wrap:wrap}
+.journey-panel .journey-reply-quick-form{margin-left:auto;flex:0 0 auto;min-height:29px;padding:6px 10px;border:1px solid #97bcb3;border-radius:8px;background:#e7f2ed;color:#33685f;font:inherit;font-size:10px;font-weight:800;line-height:1.25;cursor:pointer;white-space:nowrap}
+.journey-panel .journey-reply-quick-form:hover,.journey-panel .journey-reply-quick-form:focus-visible{background:#d2e9df;border-color:#70a597}
+.journey-reply-library-title #journeyReplySearchCount:not(:empty){width:100%;text-align:right;margin-top:-5px}
