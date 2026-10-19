@@ -441,6 +441,9 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 .re-action-card{min-height:0}
 .re-action-dock{flex:0 0 auto;background:#fcfaf6;border-top:1px solid #d5d9d9;border-radius:5px;padding:9px;display:flex;align-items:center;justify-content:flex-end}
 .re-action-dock button{border:1px solid #abc4d1;background:#deebf2;color:#263747;border-radius:6px;font-size:10px;font-weight:800;padding:9px 12px;cursor:pointer}
+.re-action-dock{gap:8px}
+.re-action-dock [data-re-reactivate]{background:#e3f1e6;border-color:#a8c8b4;color:#26523e}
+.re-action-dock button:disabled{opacity:.55;cursor:not-allowed}
 .re-journey-assistance{background:#f8f6f1;border:1px solid #dedbd4;border-radius:11px;min-width:0;overflow:auto;display:flex;flex-direction:column}
 .re-assist-head{background:#ede7dc;border-bottom:1px solid #dcd3c6;padding:14px}
 .re-assist-head small{font-size:8px;letter-spacing:.1em;color:#8c755a;font-weight:700}
