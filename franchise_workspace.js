@@ -2,8 +2,8 @@
 (()=>{'use strict';
 const API='https://x58r-xped-p4y6.n7e.xano.io/api:0Ddhs4dT',token=localStorage.getItem('ads_journey_token');if(!token)return;
 const $=id=>document.getElementById(id),column=document.querySelector('.journey-column[data-stage="enrollment"]');
-if(!column||!$('franchiseWorkspace'))return;
-const tabs={franchises:$('franchiseWorkspaceTab'),enrollment:$('enrollmentWorkspaceTab')};
+if(!column||!$('franchiseWorkspace')||!$('fwHeaderToggle'))return;
+const toggle=$('fwHeaderToggle');
 const panels={franchises:$('franchiseWorkspace'),enrollment:$('enrollmentWorkspace')};
 const overview=$('fwGroupOverview'),groupList=$('fwGroupList'),groupMessage=$('fwGroupMessage'),groupEditor=$('fwGroupEditor'),editorStatus=$('fwEditorStatus');
 const authHeaders={Authorization:'Bearer '+token};
@@ -26,7 +26,8 @@ return groups.find(g=>g.id===activeGroupId&&match(g))||groups.find(match)||null;
 }
 function setTab(tab){
 const view=tab==='enrollment'?'enrollment':'franchises';
-for(const key of ['franchises','enrollment']){const on=view===key;tabs[key].setAttribute('aria-selected',String(on));panels[key].hidden=!on;}
+for(const key of ['franchises','enrollment'])panels[key].hidden=view!==key;
+const target=view==='franchises'?'Enrollment':'Franchises';toggle.textContent='⇄ '+target;toggle.setAttribute('aria-label','Switch to '+target+' view');toggle.title='Switch to '+target+' view';
 localStorage.setItem(tabStorage,view);
 }
 function renderGroups(current){
@@ -110,8 +111,7 @@ groupApiReady=true;setGroupMessage('');
 }catch(_){groupApiReady=false;setGroupMessage('Could not load groups. Click ↻ to retry.',true);}
 renderSelections();
 }
-tabs.franchises.addEventListener('click',()=>setTab('franchises'));
-tabs.enrollment.addEventListener('click',()=>setTab('enrollment'));
+toggle.addEventListener('click',()=>setTab(panels.franchises.hidden?'franchises':'enrollment'));
 $('fwAllFranchises').addEventListener('click',()=>{activeGroupId=0;applySelection([...franchiseIds()],'workspace_all');});
 $('fwReloadGroups').addEventListener('click',loadGroups);
 $('fwSaveGroup').addEventListener('click',()=>openEditor());
