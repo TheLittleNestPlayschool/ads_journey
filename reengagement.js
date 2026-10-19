@@ -10,6 +10,42 @@ visibilityObserver.observe(modal,{attributes:true,attributeFilter:['hidden']});
 const body=document.getElementById('reengagementRecords'),daily=document.getElementById('reDaily'),queue=document.getElementById('reengagementQueueView'),detail=document.getElementById('reengagementDetailView');
 let records=[],lockMap=new Map(),request=0,lockId=0,lockOwned=false,lockTimer=null,lockSeq=0;
 const LOCK_RENEW_MS=60000;
+const nameCache=new Map(),nameAttempted=new Set(),nameQueued=new Set(),nameQueue=[];let nameObserver=null,nameLoading=0;
+function recordName(r){
+const inquiry=r._ad_inquiry||r.inquiry||{};
+const board=typeof boardJourneys!=='undefined'?boardJourneys.find(j=>Number(j.id)===Number(r.id)):null;
+const linked=board?._ad_inquiry||{};
+return String(r.resolved_name||r.parent_name||r.facebook_name||r.inquiry_name||inquiry.parent_name||inquiry.facebook_name||linked.parent_name||linked.facebook_name||nameCache.get(Number(r.id))||'').trim();
+}
+/*   Resolve missing names only as queue cards come into view; cache results for repeat visits*/
+function resolveQueuedNames(){
+while(nameLoading<3&&nameQueue.length){
+const id=nameQueue.shift();nameQueued.delete(id);if(nameAttempted.has(id))continue;
+nameAttempted.add(id);nameLoading++;
+(async()=>{try{
+const response=await fetch(API+'/ad_journey_detail?journey_id='+id,{cache:'no-store',headers:{Authorization:'Bearer '+localStorage.getItem('ads_journey_token')}});
+if(!response.ok)return;
+const data=await response.json().catch(()=>({})),inquiry=data.inquiry||{};
+const name=String(inquiry.parent_name||inquiry.facebook_name||'').trim();
+if(!name)return;
+nameCache.set(id,name);
+const record=records.find(r=>Number(r.id)===id);if(record)record.resolved_name=name;
+const card=[...body.querySelectorAll('.reengagement-card')].find(x=>Number(x.dataset.reId)===id);
+const label=card?.querySelector('.card-top > strong');if(label)label.textContent=name;
+}catch(_error){}finally{nameLoading--;resolveQueuedNames();}})();
+}
+}
+function hydrateQueueNames(){
+if(nameObserver){nameObserver.disconnect();nameObserver=null;}
+const unresolved=[...body.querySelectorAll('.reengagement-card')].filter(card=>{
+const record=records.find(r=>Number(r.id)===Number(card.dataset.reId));
+return record&&!recordName(record)&&!nameAttempted.has(Number(record.id));
+});
+if(!unresolved.length)return;
+if(typeof IntersectionObserver==='undefined'){unresolved.slice(0,8).forEach(card=>{const id=Number(card.dataset.reId);if(!nameQueued.has(id)){nameQueued.add(id);nameQueue.push(id);}});resolveQueuedNames();return;}
+nameObserver=new IntersectionObserver(entries=>{entries.forEach(entry=>{if(!entry.isIntersecting)return;nameObserver?.unobserve(entry.target);const id=Number(entry.target.dataset.reId);if(!nameAttempted.has(id)&&!nameQueued.has(id)){nameQueued.add(id);nameQueue.push(id);}});resolveQueuedNames();},{root:null,rootMargin:'160px 0px'});
+unresolved.forEach(card=>nameObserver.observe(card));
+}
 async function lockCall(endpoint,id){const res=await fetch(API+'/'+endpoint,{method:'POST',headers:{Authorization:'Bearer '+localStorage.getItem('ads_journey_token'),'Content-Type':'application/json'},body:JSON.stringify({ad_journey_id:id})});const data=await res.json().catch(()=>({}));if(!res.ok||data.success!==true)throw Error(data.message||data.error||'Record lock unavailable');return data;}
 function stopRenewal(){if(lockTimer!==null){clearInterval(lockTimer);lockTimer=null;}}
 async function releaseLock(){const id=lockOwned?lockId:0;++lockSeq;stopRenewal();lockId=0;lockOwned=false;if(id)try{await lockCall('ad_journey_lock_release',id);}catch(_error){}}
@@ -63,8 +99,8 @@ lastLocation=location;
 const lockedLabel=lockLabel(r);
 const status=classify(r),label=status==='due'?'Due now':status==='scheduled'?'Scheduled':'Awaiting Reply';
 const nextLabel=status==='awaiting'?'Reply deadline':'Follow Up With Parent';
-return divider+'<div class="reengagement-item journey-card reengagement-card '+(status==='due'?'urgent':'')+'" data-re-id="'+e(r.id)+'" role="button" tabindex="0"><div class="card-top"><strong>'+e(r.parent_name||r.facebook_name||r.inquiry_name||'Journey #'+r.id)+'</strong>'+(lockedLabel?'<span class="re-card-lock">🔒 '+e(lockedLabel)+'</span>':'')+'<span class="priority '+(status==='due'?'overdue':status==='scheduled'?'upcoming':'waiting-parent')+'">'+label+'</span></div><p>'+e(location)+' · Re-engagement</p><div class="card-next"><span>'+nextLabel+'</span><time>'+e(date(r.next_action_at))+'</time></div></div>';
-}).join('');
+return divider+'<div class="reengagement-item journey-card reengagement-card '+(status==='due'?'urgent':'')+'" data-re-id="'+e(r.id)+'" role="button" tabindex="0"><div class="card-top"><strong>'+e(recordName(r)||'Journey #'+r.id)+'</strong>'+(lockedLabel?'<span class="re-card-lock">🔒 '+e(lockedLabel)+'</span>':'')+'<span class="priority '+(status==='due'?'overdue':status==='scheduled'?'upcoming':'waiting-parent')+'">'+label+'</span></div><p>'+e(location)+' · Re-engagement</p><div class="card-next"><span>'+nextLabel+'</span><time>'+e(date(r.next_action_at))+'</time></div></div>';
+}).join('');hydrateQueueNames();
 }
 button.addEventListener('click',async()=>{await releaseLock();modal.style.display='flex';modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();if(typeof openDashboardModal==='function')openDashboardModal('reengagementModal');else{modal.hidden=false;document.getElementById('dashboardModalBackdrop').hidden=false;}await refresh();});
 body.addEventListener('click',event=>{const btn=event.target.closest('[data-re-id]');if(!btn)return;const record=records.find(r=>String(r.id)===btn.dataset.reId);if(!record)return;showRecord(record);});
