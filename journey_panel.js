@@ -361,12 +361,17 @@ function initJourneyPanel(){
         console.warn('Reply recording failed:',response.status,result.code||'',details);
         throw new Error('Recording failed (HTTP '+response.status+'): '+details);
       }
+      let confirmationSaveFailed=false;
       if(isConfirmation&&stage2State){
-        try{const saved=await fetch(API+'/ad_parent_confirmation_sent',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:journeyId,message_id:result.message.id,scheduled_at:stage2State.scheduledFor})});if(!saved.ok)throw Error('Confirmation status not saved');parentConfirmationState=true;showParentConfirmationGate();window.dispatchEvent(new Event('parent-confirmation-recorded'));}
-        catch(_){replyStatus.textContent='Message recorded; parent confirmation status still pending. Please check before franchise handoff.';}
+        try{
+          const saved=await fetch(API+'/ad_parent_confirmation_sent',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:journeyId,message_id:result.message.id,scheduled_at:stage2State.scheduledFor})});
+          const state=await saved.json().catch(()=>({}));
+          if(!saved.ok||state.success===false||state.error||state.code)throw Error('Confirmation status not saved');
+          parentConfirmationState=true;showParentConfirmationGate();window.dispatchEvent(new Event('parent-confirmation-recorded'));
+        }catch(_){confirmationSaveFailed=true;}
       }
       if(session===replySession&&journeyId===Number(demo.journeyId)&&inquiryId===conversationInquiryId){
-        replyEditor.value='';replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyMatchLabel.textContent=replyManualMode?'Write another message when needed':'Reply recorded · Select another approved reply when needed';replyStatus.textContent='Copied & recorded. Paste and send it in Facebook Messenger';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
+        replyEditor.value='';replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyMatchLabel.textContent=replyManualMode?'Write another message when needed':'Reply recorded · Select another approved reply when needed';replyStatus.textContent=confirmationSaveFailed?'Message recorded, but parent confirmation status was NOT saved. Please check the appointment before proceeding.':'Copied & recorded. Paste and send it in Facebook Messenger';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
         conversationFingerprint='';await loadMessengerConversation(inquiryId,false);conversationList.scrollTop=conversationList.scrollHeight;
       }
     }catch(error){if(session===replySession)replyStatus.textContent='Copied, but recording was not confirmed. Check Conversation before retrying. '+(error.message||'');}
