@@ -597,3 +597,10 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 .fw-group-editor .fw-editor-actions button:first-child{background:#38576d;border-color:#819eae;color:#f1f7f7}
 .fw-group-editor .fw-editor-actions button:first-child:hover{background:#486d81}
 .fw-group-editor .fw-editor-actions .fw-confirm-save{width:100%;min-height:39px}
+
+/*   Stage 5: place the view toggle immediately above Enrollment */
+.journey-column[data-stage="enrollment"] .stage5-title-stack{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;min-width:0}
+.journey-column[data-stage="enrollment"] .stage5-title-stack h3{margin:0}
+.journey-column[data-stage="enrollment"] .stage5-title-stack .fw-header-toggle{font-size:10px;padding:5px 8px;min-height:24px;min-width:0;line-height:1.1;max-width:100%}
+.journey-column[data-stage="enrollment"] .stage5-title-stack .fw-header-toggle:before{content:none}
+.journey-column[data-stage="enrollment"]>header{align-items:center}
