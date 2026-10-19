@@ -604,3 +604,8 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 .journey-column[data-stage="enrollment"] .stage5-title-stack .fw-header-toggle{font-size:10px;padding:5px 8px;min-height:24px;min-width:0;line-height:1.1;max-width:100%}
 .journey-column[data-stage="enrollment"] .stage5-title-stack .fw-header-toggle:before{content:none}
 .journey-column[data-stage="enrollment"]>header{align-items:center}
+
+/*   Make selected group labels readable on the pale-green active background */
+.fw-all-button.active>span:first-child,.fw-group-item.active .fw-group-name{color:#163f34}
+.fw-all-button.active .fw-active-marker,.fw-group-item.active .fw-active-marker{color:#fff}
+.fw-all-button.active #fwAllCount{color:#245640}
