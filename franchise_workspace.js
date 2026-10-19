@@ -13,7 +13,8 @@ const tabStorage='ads_journey_franchise_workspace_tab_'+(Number(user.id)||'defau
 const idOf=v=>{const n=Number(v);return Number.isSafeInteger(n)&&n>0?n:0;};
 const franchiseIds=()=>new Set(franchises.map(f=>idOf(f.id)).filter(Boolean));
 const selectedIds=()=>[...selectedFranchiseIds].filter(id=>franchiseIds().has(id)).sort((a,b)=>a-b);
-const cleanIds=raw=>{const valid=franchiseIds();return [...new Set((Array.isArray(raw)?raw:[]).map(idOf).filter(id=>valid.has(id)))].sort((a,b)=>a-b)};
+const storedIds=raw=>[...new Set((Array.isArray(raw)?raw:[]).map(idOf).filter(Boolean))].sort((a,b)=>a-b);
+const cleanIds=raw=>{const valid=franchiseIds();return storedIds(raw).filter(id=>valid.has(id))};
 const sameIds=(one,two)=>JSON.stringify(cleanIds(one))===JSON.stringify(cleanIds(two));
 const selectedGroup=()=>groups.find(g=>g.id===activeGroupId)||null;
 const editable=g=>g&&(g.visibility==='shared'?canManageShared:idOf(g.owner_ad_user_id||g.created_by_ad_user_id)===idOf(user.id));
@@ -80,7 +81,7 @@ const data=await response.json();
 const rows=Array.isArray(data.groups)?data.groups:(Array.isArray(data.items)?data.items:null);
 if(!rows)throw Error('Invalid group response');
 canManageShared=data.can_manage_shared===true;
-groups=rows.map(g=>({id:idOf(g.id),name:String(g.name||'Unnamed group'),visibility:g.visibility==='shared'?'shared':'personal',franchise_ids:cleanIds(g.franchise_ids),owner_ad_user_id:idOf(g.owner_ad_user_id||g.created_by_ad_user_id)})).filter(g=>g.id);
+groups=rows.map(g=>({id:idOf(g.id),name:String(g.name||'Unnamed group'),visibility:g.visibility==='shared'?'shared':'personal',franchise_ids:storedIds(g.franchise_ids),owner_ad_user_id:idOf(g.owner_ad_user_id||g.created_by_ad_user_id)})).filter(g=>g.id);
 groupApiReady=true;setGroupMessage('');
 }catch(_){groupApiReady=false;groups=[];activeGroupId=0;setGroupMessage('Saved groups require the Xano group endpoints. Individual franchise selection works now.');}
 renderSelections();
