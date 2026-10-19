@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ads Journey</title>
-<link rel="stylesheet" href="dashboard.css?v=20261019-reengagement-confirm">
+<link rel="stylesheet" href="dashboard.css?v=20261019-group-editor-actions">
 <link rel="stylesheet" href="dashboard_filter.css?v=20261003-1925">
 <link rel="stylesheet" href="help_manual.css?v=20261004-1034">
 <link rel="stylesheet" href="parent_form_attention.css?v=20261018">
@@ -97,7 +97,7 @@
             </div>
           </div>
           <form id="fwGroupEditor" class="fw-group-editor" hidden>
-            <div class="fw-editor-header"><h4 id="fwEditorHeading">Create Group</h4><button type="button" id="fwCancelEditor">← Back</button></div>
+            <div class="fw-editor-header"><h4 id="fwEditorHeading">Create Group</h4></div>
             <label for="fwGroupName">Group name</label>
             <input id="fwGroupName" type="text" maxlength="60" placeholder="e.g. My Quezon Locations" required>
             <label id="fwSharedChoice" class="fw-shared-choice" hidden><input id="fwIsShared" type="checkbox"> Share with all admins</label>
@@ -106,7 +106,7 @@
             <input id="fwSearch" class="fw-search" type="search" placeholder="Search locations…" aria-label="Search franchise locations">
             <div id="fwFranchiseList" class="fw-franchise-list"></div>
             <p id="fwEditorStatus" role="status"></p>
-            <button type="submit" id="fwConfirmSave" class="fw-confirm-save">Save Group</button>
+            <div class="fw-editor-actions"><button type="button" id="fwCancelEditor">Cancel</button><button type="submit" id="fwConfirmSave" class="fw-confirm-save">Save Group</button></div>
           </form>
         </section>
         <div id="enrollmentWorkspace" class="enrollment-workspace" role="region" aria-label="Enrollment">
