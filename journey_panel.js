@@ -299,8 +299,8 @@ function initJourneyPanel(){
   /*   Online form links are created only by the authenticated Xano API*/
   function parentFormLinkMessage(language,kind,url){
     const type=kind==='trial'?'free trial':'visit';
-    if(language==='english')return 'Hi! 😊 We would love to arrange a '+type+' for your little one. Please open this short form and send us your details:\n\n'+url+'\n\nThere is nothing to copy or type back here in Messenger. Our teachers will review your request and confirm the available schedule with you. Thank you! ❤️';
-    return 'Hi po! 😊 Para ma-arrange natin ang '+type+' ni little one, kindly tap po ang short form at fill out ng details:\n\n'+url+'\n\nNo need po mag-copy ng questions dito sa Messenger. Ire-review po ng teachers namin ang request at iko-confirm ang available schedule. Salamat po! ❤️';
+    if(language==='english')return 'Hi! 😊 As discussed, please complete this short form so we have your little one’s details for the upcoming '+type+':\n\n'+url+'\n\nThank you! ❤️';
+    return 'Hi po! 😊 As discussed, kindly fill out po this short form para makuha namin ang details ni little one for the upcoming '+type+':\n\n'+url+'\n\nSalamat po! ❤️';
   }
   let parentFormLinkLoading=false;
   replyOnlineForm.addEventListener('click',async()=>{
@@ -315,7 +315,7 @@ function initJourneyPanel(){
       const ticket=String(data.token||'');
       if(!response.ok||data.success!==true||!/^[A-Za-z0-9_-]{24,160}$/.test(ticket))throw Error('Form link service is not ready in Xano. No link was created or sent.');
       if(journeyId!==Number(demo.journeyId)||inquiryId!==Number(conversationInquiryId))return;
-      const url=new URL('parent_form.html',window.location.href);url.searchParams.set('t',ticket);
+      const url=new URL('https://forms.thelittle-nest.com/');url.searchParams.set('t',ticket);
       ++replyPreviewRequest;replyEmojiRange=null;closeReplyEmojiMenu();
       replyManualMode=true;replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=true;replySavedSuggestion=null;
       replyQuickFormDrafts={taglish:parentFormLinkMessage('taglish',kind,url.href),english:parentFormLinkMessage('english',kind,url.href)};
