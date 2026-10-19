@@ -9,6 +9,24 @@ const visibilityObserver=new MutationObserver(()=>{modal.style.display=modal.hid
 visibilityObserver.observe(modal,{attributes:true,attributeFilter:['hidden']});
 const body=document.getElementById('reengagementRecords'),daily=document.getElementById('reDaily'),queue=document.getElementById('reengagementQueueView'),detail=document.getElementById('reengagementDetailView');
 let records=[],lockMap=new Map(),request=0,lockId=0,lockOwned=false,lockTimer=null,lockSeq=0;
+const justSent=new Set();
+const sendConfirm=document.createElement('div');sendConfirm.className='journey-change-overlay';sendConfirm.hidden=true;
+sendConfirm.innerHTML='<div class="journey-change-dialog" role="dialog" aria-modal="true" aria-labelledby="reFollowupConfirmTitle" aria-describedby="reFollowupConfirmDescription"><span class="journey-change-kicker">THE LITTLE NEST · ADS JOURNEY</span><h3 id="reFollowupConfirmTitle">Confirm Follow-up Sent</h3><p id="reFollowupConfirmDescription"></p><div class="journey-change-buttons"><button type="button" class="journey-change-cancel">Cancel</button><button type="button" class="journey-change-confirm">Confirm Sent</button></div></div>';
+document.body.appendChild(sendConfirm);
+let sendConfirmResolver=null,sendConfirmReturnFocus=null;
+function finishSendConfirmation(approved){if(!sendConfirmResolver)return;const resolve=sendConfirmResolver;sendConfirmResolver=null;sendConfirm.hidden=true;sendConfirmReturnFocus?.focus?.();sendConfirmReturnFocus=null;resolve(approved);}
+function confirmFollowupSent(parentName){
+if(sendConfirmResolver)return Promise.resolve(false);
+sendConfirmReturnFocus=document.activeElement;
+sendConfirm.querySelector('#reFollowupConfirmDescription').textContent='Confirm that the follow-up message was actually sent to '+parentName+'? This will remove the parent from the action queue while the system waits for a reply.';
+sendConfirm.hidden=false;sendConfirm.querySelector('.journey-change-confirm').focus();
+return new Promise(resolve=>{sendConfirmResolver=resolve;});
+}
+sendConfirm.querySelector('.journey-change-cancel').addEventListener('click',()=>finishSendConfirmation(false));
+sendConfirm.querySelector('.journey-change-confirm').addEventListener('click',()=>finishSendConfirmation(true));
+sendConfirm.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();finishSendConfirmation(false);}});
+const queueNotice=document.createElement('p');queueNotice.className='re-queue-notice';queueNotice.setAttribute('role','status');queueNotice.hidden=true;queue.querySelector('.reengagement-queue-head')?.after(queueNotice);
+function showQueueNotice(message){queueNotice.textContent=message;queueNotice.hidden=!message;}
 const LOCK_RENEW_MS=60000;
 const nameCache=new Map(),nameAttempted=new Set(),nameQueued=new Set(),nameQueue=[];let nameObserver=null,nameLoading=0;
 function recordName(r){
@@ -70,6 +88,7 @@ const response=await fetch(API+'/ad_journey_stage1b?'+params,{cache:'no-store',h
 if(!response.ok)throw Error('Unable to load Stage 1B ('+response.status+')');
 const data=await response.json();if(id!==request)return;
 records=Array.isArray(data.stage1b_records)?data.stage1b_records:[];
+for(const sentId of justSent){const current=records.find(item=>Number(item.id)===sentId);if(!current||classify(current)==='awaiting')justSent.delete(sentId);}
 try{const lockRes=await fetch(API+'/ad_journey_lock_status?'+params,{cache:'no-store',headers:{Authorization:'Bearer '+localStorage.getItem('ads_journey_token')}});if(!lockRes.ok)throw Error('Lock status unavailable');const lockData=await lockRes.json();if(id!==request)return;lockMap=new Map((Array.isArray(lockData.journey_locks)?lockData.journey_locks:[]).map(item=>[Number(item.id),item]));}catch(_error){if(id!==request)return;lockMap=new Map();}
 draw(data);
 }catch(err){if(id!==request)return;badge.hidden=true;if(!modal.hidden)body.innerHTML='<div class="reengagement-empty">'+e(err.message)+'</div>';}
@@ -87,9 +106,9 @@ renderList();
 function renderList(){
 const priority={due:0,scheduled:1,awaiting:2};
 const locationOf=r=>{const f=typeof franchises!=='undefined'?franchises.find(f=>Number(f.id)===Number(r.franchise_id)):null;return String(f?(f.location||f.name||f.branch_name):'Franchise #'+r.franchise_id).trim();};
-const rows=records.slice().sort((a,b)=>locationOf(a).localeCompare(locationOf(b),undefined,{sensitivity:'base',numeric:true})||priority[classify(a)]-priority[classify(b)]||(Number(a.next_action_at)||0)-(Number(b.next_action_at)||0));
+const rows=records.filter(r=>classify(r)!=='awaiting'&&!justSent.has(Number(r.id))).sort((a,b)=>locationOf(a).localeCompare(locationOf(b),undefined,{sensitivity:'base',numeric:true})||priority[classify(a)]-priority[classify(b)]||(Number(a.next_action_at)||0)-(Number(b.next_action_at)||0));
 const total=document.getElementById('reQueueTotal');if(total)total.textContent=rows.length+' '+(rows.length===1?'record':'records');
-if(!rows.length){body.innerHTML='<div class="reengagement-empty">No Re-engagement records for the selected franchises.</div>';return;}
+if(!rows.length){body.innerHTML='<div class="reengagement-empty">No follow-ups requiring action. Sent follow-ups remain tracked while awaiting a parent reply.</div>';return;}
 let lastLocation='';
 body.innerHTML=rows.map(r=>{
 const franchise=typeof franchises!=='undefined'?franchises.find(f=>Number(f.id)===Number(r.franchise_id)):null;
@@ -181,14 +200,17 @@ detail.querySelector('[data-re-send-shortcut]').addEventListener('click',async()
 const note=detail.querySelector('#reFollowupNote').value.trim(),status=detail.querySelector('#reSendStatus'),btn=detail.querySelector('[data-re-send-shortcut]');
 if(!note){status.textContent='Enter the message or follow-up notes first.';detail.querySelector('#reFollowupNote').focus();return;}
 if(!lockOwned||lockId!==id){status.textContent='Record is locked — you cannot confirm this follow-up.';return;}
-if(!window.confirm('Confirm this follow-up message was actually sent to the parent?'))return;
+if(!await confirmFollowupSent(name))return;
 btn.disabled=true;status.textContent='Recording confirmed follow-up…';
 try{
 const res=await fetch(API+'/ad_journey_stage1b_followup_sent',{method:'POST',headers:{...auth,'Content-Type':'application/json'},body:JSON.stringify({journey_id:id,note})});
 const result=await res.json().catch(()=>({}));if(!res.ok||result.success===false||result.error||result.code)throw Error(result.message||result.error||'Unable to record the follow-up.');
 status.textContent='Follow-up recorded as sent.';detail.querySelector('#reFollowupNote').value='';
-try{const logged=await refreshHistoryAfterSend(id,auth,events.length);if(!logged)status.textContent='Follow-up recorded as sent, but no new History event was returned. Check Xano event logging.';}
-catch(_error){status.textContent='Follow-up recorded as sent. History could not reload; reopen the card to check.';}
+justSent.add(id);records=records.map(row=>Number(row.id)===id?{...row,current_status:'follow_up_sent'}:row);
+let historyWarning='';
+try{const logged=await refreshHistoryAfterSend(id,auth,events.length);if(!logged)historyWarning='Follow-up saved, but the new History event could not be confirmed. Check Xano event logging.';}
+catch(_error){historyWarning='Follow-up saved. History could not be reloaded; you can check it through Journey Search.';}
+await releaseLock();modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();renderList();showQueueNotice(historyWarning);
 await refresh();if(typeof loadBoard==='function')loadBoard();
 }catch(error){status.textContent=error.message;}finally{btn.disabled=!lockOwned;}
 });
