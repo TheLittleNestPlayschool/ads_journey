@@ -586,3 +586,7 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 .fw-header-toggle:hover{background:#f0f7f1;border-color:#b1d4c5}
 .fw-header-toggle:focus-visible{outline:2px solid #bfe8d5;outline-offset:2px}
 @media(max-width:1200px){.journey-column[data-stage="enrollment"]>header{gap:3px;padding-left:6px;padding-right:6px}.journey-column[data-stage="enrollment"] .column-header-actions{gap:4px}.fw-header-toggle{font-size:0;min-width:28px;padding:4px 5px}.fw-header-toggle:before{content:"⇄";font-size:15px;line-height:1}}
+
+/*   Re-engagement: non-blocking warning if sent status is saved but History is unavailable */
+.re-queue-notice{margin:7px 0 10px;padding:9px 10px;border:1px solid #d5b785;border-radius:8px;background:#fff3db;color:#614b2b;font-size:11px;line-height:1.4}
+.re-queue-notice[hidden]{display:none!important}
