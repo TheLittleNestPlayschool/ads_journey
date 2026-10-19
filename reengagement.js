@@ -69,6 +69,28 @@ return divider+'<div class="reengagement-item journey-card reengagement-card '+(
 button.addEventListener('click',async()=>{await releaseLock();modal.style.display='flex';modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();if(typeof openDashboardModal==='function')openDashboardModal('reengagementModal');else{modal.hidden=false;document.getElementById('dashboardModalBackdrop').hidden=false;}await refresh();});
 body.addEventListener('click',event=>{const btn=event.target.closest('[data-re-id]');if(!btn)return;const record=records.find(r=>String(r.id)===btn.dataset.reId);if(!record)return;showRecord(record);});
 body.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&event.target.matches('.reengagement-card')){event.preventDefault();event.target.click();}});
+function historyMarkup(events){return events.slice().sort((a,b)=>Number(b.event_at||b.created_at)-Number(a.event_at||a.created_at)).map(ev=>'<div class="re-timeline-entry"><strong>'+e(ev.event_type?.replaceAll('_',' ')||'Journey update')+'</strong><p>'+e(ev.note||'')+'</p><small>'+e(date(ev.event_at||ev.created_at))+'</small></div>').join('');}
+async function refreshHistoryAfterSend(id,auth,oldEventCount){
+const res=await fetch(API+'/ad_journey_detail?journey_id='+id,{headers:auth,cache:'no-store'});
+if(!res.ok)throw Error('Unable to reload history');
+const data=await res.json().catch(()=>({})),events=Array.isArray(data.ad_journey_events)?data.ad_journey_events:null;
+if(!events)throw Error('Journey events missing from history response');
+if(Number(detail.dataset.journeyId)!==id)return false;
+const target=detail.querySelector('#reHistory');
+if(target)target.innerHTML=historyMarkup(events)||'<div class="reengagement-empty">No journey history.</div>';
+const journey=data.journey||{};
+if(journey.current_status==='follow_up_sent'){
+const strips=detail.querySelectorAll('.re-status-strip span');
+if(strips[1])strips[1].innerHTML='<small>CURRENT STATUS</small>Awaiting Parent Reply';
+if(strips[2])strips[2].innerHTML='<small>NEXT STEP</small>Wait for Parent';
+const title=detail.querySelector('.re-action-card h3'),description=detail.querySelector('.re-action-card > p');
+if(title)title.textContent='Waiting for Parent Reply';
+if(description)description.textContent='Follow-up sent. Parent reply deadline '+date(journey.next_action_at);
+const dock=detail.querySelector('[data-re-send-shortcut]');
+if(dock){dock.disabled=true;dock.hidden=true;}
+}
+return events.length>oldEventCount;
+}
 async function showRecord(record){
 await releaseLock();
 const id=Number(record.id),token=localStorage.getItem('ads_journey_token'),auth={Authorization:'Bearer '+token};
@@ -82,7 +104,7 @@ const inquiry=data.inquiry||{},journey=data.journey||record;
 const name=inquiry.facebook_name||inquiry.parent_name||'Journey #'+id,location=typeof franchises!=='undefined'?(franchises.find(f=>Number(f.id)===Number(record.franchise_id))||{}):{};
 const branch=location.location||location.name||location.branch_name||'Franchise #'+record.franchise_id;
 const events=Array.isArray(data.ad_journey_events)?data.ad_journey_events:[];
-const history=events.slice().sort((a,b)=>Number(b.event_at||b.created_at)-Number(a.event_at||a.created_at)).map(ev=>'<div class="re-timeline-entry"><strong>'+e(ev.event_type?.replaceAll('_',' ')||'Journey update')+'</strong><p>'+e(ev.note||'')+'</p><small>'+e(date(ev.event_at||ev.created_at))+'</small></div>').join('');
+const history=historyMarkup(events);
 detail.innerHTML='<div class="re-journey-header"><div><small>PARENT JOURNEY</small><h2>'+e(name)+'</h2><p>'+e(branch)+' · Facebook: '+e(name)+'</p></div><div class="re-header-controls"><span id="reLockStatus" class="re-header-lock" role="status">Checking control…</span><button class="secondary-button" type="button" data-re-back>← Back</button></div></div><div class="re-journey-content"><section class="re-journey-actions"><div class="re-status-strip"><span><small>JOURNEY STAGE</small>Re-engagement</span><span><small>CURRENT STATUS</small>'+e(classify(record)==='due'?'Follow-up Due':classify(record)==='awaiting'?'Awaiting Parent Reply':'Scheduled')+'</span><span><small>NEXT STEP</small>'+e(classify(record)==='awaiting'?'Wait for Parent':'Message Parent')+'</span></div><div class="re-action-card"><small>NEXT STEP</small><h3>Follow-up with Parent</h3><p>'+e(classify(record)==='scheduled'?'Follow-up scheduled for '+date(record.next_action_at):classify(record)==='awaiting'?'Follow-up already sent. Waiting for a reply.':'Follow-up due '+date(record.next_action_at))+'</p><label class="re-followup-label" for="reFollowupNote">MESSAGE SENT / FOLLOW-UP NOTES</label><textarea id="reFollowupNote" class="re-followup-note" placeholder="Enter the follow-up message sent to the parent…" required></textarea><p id="reSendStatus" class="re-send-status" role="status"></p></div><div class="re-action-dock"><button type="button" data-re-send-shortcut>Sent To Parent</button></div></section><section class="re-journey-middle"><div class="re-view-tabs"><button class="selected" type="button" data-re-view="conversation">Conversation</button><button type="button" data-re-view="history">History</button></div><div class="re-view-body" id="reConversation"><div class="reengagement-empty">Loading conversation…</div></div><div class="re-view-body" id="reHistory" hidden>'+ (history||'<div class="reengagement-empty">No journey history.</div>')+'</div><form id="reSendForm" class="re-send-form"><label for="reMessageText">REPLY TO PARENT</label><textarea id="reMessageText" placeholder="Write your reply…" required></textarea><button type="submit">Send Message to Parent</button></form></section><aside class="re-journey-assistance"><div class="re-assist-head"><small>THE LITTLE NEST</small><h3>Reply Assistance</h3><p>Prepared responses · Admin reviewed</p></div><div class="re-assist-body"><h4>Suggested reply</h4><div class="re-assist-placeholder">Suggested wording will appear here once the response library is connected.<p>Nothing is sent automatically. The admin always reviews and sends.</p></div><h4>Conversation context</h4><p>Known parent details and relevant questions will appear here after conversation analysis is connected.</p><h4>School information</h4><p>Verified branch details and response guidance will be shown here when applicable.</p></div></aside></div>';
 const back=detail.querySelector('[data-re-back]'),send=detail.querySelector('#reSendForm');
 detail.dataset.journeyId=String(id);
@@ -97,6 +119,8 @@ try{
 const res=await fetch(API+'/ad_journey_stage1b_followup_sent',{method:'POST',headers:{...auth,'Content-Type':'application/json'},body:JSON.stringify({journey_id:id,note})});
 const result=await res.json().catch(()=>({}));if(!res.ok||result.success===false||result.error||result.code)throw Error(result.message||result.error||'Unable to record the follow-up.');
 status.textContent='Follow-up recorded as sent.';detail.querySelector('#reFollowupNote').value='';
+try{const logged=await refreshHistoryAfterSend(id,auth,events.length);if(!logged)status.textContent='Follow-up recorded as sent, but no new History event was returned. Check Xano event logging.';}
+catch(_error){status.textContent='Follow-up recorded as sent. History could not reload; reopen the card to check.';}
 await refresh();if(typeof loadBoard==='function')loadBoard();
 }catch(error){status.textContent=error.message;}finally{btn.disabled=!lockOwned;}
 });
