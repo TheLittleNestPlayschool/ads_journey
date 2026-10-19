@@ -590,3 +590,10 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 /*   Re-engagement: non-blocking warning if sent status is saved but History is unavailable */
 .re-queue-notice{margin:7px 0 10px;padding:9px 10px;border:1px solid #d5b785;border-radius:8px;background:#fff3db;color:#614b2b;font-size:11px;line-height:1.4}
 .re-queue-notice[hidden]{display:none!important}
+
+/*   Franchise group editor: paired bottom Cancel and Save controls */
+.fw-group-editor .fw-editor-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);flex:0 0 auto;gap:8px}
+.fw-group-editor .fw-editor-actions button{min-width:0;min-height:39px;padding:9px 5px;font-size:11px;cursor:pointer}
+.fw-group-editor .fw-editor-actions button:first-child{background:#38576d;border-color:#819eae;color:#f1f7f7}
+.fw-group-editor .fw-editor-actions button:first-child:hover{background:#486d81}
+.fw-group-editor .fw-editor-actions .fw-confirm-save{width:100%;min-height:39px}
