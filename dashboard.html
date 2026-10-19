@@ -84,12 +84,8 @@
         <div class="journey-column-list"></div>
       </section>
       <section class="journey-column" data-stage="enrollment">
-        <header><div><span class="column-kicker">Stage 5</span><h3>Enrollment</h3></div><span class="column-count">0</span></header>
-        <div class="franchise-workspace-tabs" role="tablist" aria-label="Right column workspace">
-          <button id="franchiseWorkspaceTab" type="button" role="tab" aria-selected="false" aria-controls="franchiseWorkspace">Franchises</button>
-          <button id="enrollmentWorkspaceTab" type="button" role="tab" aria-selected="true" aria-controls="enrollmentWorkspace">Enrollment</button>
-        </div>
-        <section id="franchiseWorkspace" class="franchise-workspace" role="tabpanel" aria-labelledby="franchiseWorkspaceTab" hidden>
+        <header><div><span class="column-kicker">Stage 5</span><h3>Enrollment</h3></div><span class="column-count">0</span><button id="fwHeaderToggle" class="fw-header-toggle" type="button" aria-label="Switch to Enrollment view" title="Switch to Enrollment view">⇄ Enrollment</button></header>
+        <section id="franchiseWorkspace" class="franchise-workspace" role="region" aria-label="Franchise groups" hidden>
           <div id="fwGroupOverview" class="fw-group-overview">
             <div class="fw-groups-head"><strong>Quick selections</strong><button id="fwReloadGroups" type="button" title="Reload saved groups" aria-label="Reload saved groups">↻</button></div>
             <button id="fwAllFranchises" class="fw-all-button" type="button"><span>All Franchises</span><span class="fw-group-meta"><span class="fw-active-marker" hidden>✓ Active</span><span id="fwAllCount">—</span></span></button>
@@ -113,7 +109,7 @@
             <button type="submit" id="fwConfirmSave" class="fw-confirm-save">Save Group</button>
           </form>
         </section>
-        <div id="enrollmentWorkspace" class="enrollment-workspace" role="tabpanel" aria-labelledby="enrollmentWorkspaceTab">
+        <div id="enrollmentWorkspace" class="enrollment-workspace" role="region" aria-label="Enrollment">
           <div class="journey-column-list"></div>
           <div class="enrollment-performance" aria-label="Enrollment Performance">
             <h4>Enrollment Performance</h4>
