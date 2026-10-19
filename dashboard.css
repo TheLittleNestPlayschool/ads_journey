@@ -499,9 +499,6 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 
 
 /*   Stage 5: persistent franchise selector and saved group workspace */
-.journey-column[data-stage="enrollment"] .franchise-workspace-tabs{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:8px;background:rgba(21,44,65,.85);flex:0 0 auto;border-bottom:1px solid rgba(161,186,203,.22)}
-.franchise-workspace-tabs button{padding:9px 4px;border:1px solid #617b8e;border-radius:7px;background:#314b60;color:#dce8ef;font-size:11px;font-weight:750;cursor:pointer}
-.franchise-workspace-tabs button[aria-selected="true"]{background:#f7f4ed;color:#1c3850;border-color:#b8cbd0;box-shadow:0 1px 5px #0a203225}
 .journey-column[data-stage="enrollment"] .enrollment-workspace{min-height:0;flex:1 1 auto;display:flex;flex-direction:column}
 .journey-column[data-stage="enrollment"] .franchise-workspace{min-height:0;flex:1 1 auto;display:flex;flex-direction:column;gap:9px;padding:9px 8px;overflow-y:auto;scrollbar-color:#8095a5 transparent;color:#edf3f3}
 .franchise-workspace[hidden],.enrollment-workspace[hidden]{display:none!important}
@@ -581,3 +578,11 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 .fw-group-editor .fw-franchise-row{flex:0 0 auto;padding:7px 6px}
 .fw-group-editor .fw-confirm-save{flex:0 0 auto;min-height:37px;border:1px solid #a3c6be;border-radius:7px;background:#dce9e4;color:#173b3c;font-size:11px;font-weight:800;cursor:pointer}
 .fw-group-editor .fw-confirm-save:disabled{opacity:.5;cursor:wait}
+
+/*   Stage 5: one compact workspace toggle in the column header */
+.journey-column[data-stage="enrollment"]>header{gap:5px;padding-left:8px;padding-right:8px}
+.journey-column[data-stage="enrollment"] .column-header-actions{gap:5px}
+.fw-header-toggle{flex:0 0 auto;border:1px solid #7194a7;border-radius:7px;background:#dae9e5;color:#193e44;font-family:inherit;font-size:10px;font-weight:800;white-space:nowrap;line-height:1;padding:7px 8px;min-height:25px;cursor:pointer;transition:background .15s ease,border-color .15s ease}
+.fw-header-toggle:hover{background:#f0f7f1;border-color:#b1d4c5}
+.fw-header-toggle:focus-visible{outline:2px solid #bfe8d5;outline-offset:2px}
+@media(max-width:1200px){.journey-column[data-stage="enrollment"]>header{gap:3px;padding-left:6px;padding-right:6px}.journey-column[data-stage="enrollment"] .column-header-actions{gap:4px}.fw-header-toggle{font-size:0;min-width:28px;padding:4px 5px}.fw-header-toggle:before{content:"⇄";font-size:15px;line-height:1}}
