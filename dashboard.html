@@ -85,12 +85,39 @@
       </section>
       <section class="journey-column" data-stage="enrollment">
         <header><div><span class="column-kicker">Stage 5</span><h3>Enrollment</h3></div><span class="column-count">0</span></header>
-        <div class="journey-column-list"></div>
-        <div class="enrollment-performance" aria-label="Enrollment Performance">
-          <h4>Enrollment Performance</h4>
-          <div class="enrollment-performance-grid"><div><span>Today</span><strong data-enrollment-period="today">—</strong></div><div><span>Yesterday</span><strong data-enrollment-period="yesterday">—</strong></div><div><span>Last 7 days</span><strong data-enrollment-period="last7">—</strong></div><div><span>Previous 7 days</span><strong data-enrollment-period="previous7">—</strong></div></div>
-          <div class="enrollment-daily-title">Daily Enrollments · Last 7 Days</div>
-          <div class="enrollment-daily-days" id="enrollmentDailyDays"></div>
+        <div class="franchise-workspace-tabs" role="tablist" aria-label="Right column workspace">
+          <button id="franchiseWorkspaceTab" type="button" role="tab" aria-selected="false" aria-controls="franchiseWorkspace">Franchises</button>
+          <button id="enrollmentWorkspaceTab" type="button" role="tab" aria-selected="true" aria-controls="enrollmentWorkspace">Enrollment</button>
+        </div>
+        <section id="franchiseWorkspace" class="franchise-workspace" role="tabpanel" aria-labelledby="franchiseWorkspaceTab" hidden>
+          <div class="fw-selection-banner"><span>VIEWING</span><strong id="fwActiveSelection">All franchises</strong><small id="fwActiveCount">Loading locations…</small></div>
+          <div class="fw-groups-head"><strong>Quick selections</strong><button id="fwReloadGroups" type="button" title="Reload saved groups" aria-label="Reload saved groups">↻</button></div>
+          <button id="fwAllFranchises" class="fw-all-button" type="button">All Franchises <span id="fwAllCount">—</span></button>
+          <div id="fwGroupList" class="fw-group-list"><p class="fw-muted">Loading saved groups…</p></div>
+          <div id="fwGroupMessage" class="fw-group-message" role="status"></div>
+          <div class="fw-save-actions">
+            <button id="fwSaveGroup" type="button" disabled>+ Save as Group</button>
+            <button id="fwUpdateGroup" type="button" hidden disabled>Update Group</button>
+          </div>
+          <form id="fwGroupEditor" class="fw-group-editor" hidden>
+            <label for="fwGroupName">Group name</label>
+            <input id="fwGroupName" type="text" maxlength="60" placeholder="e.g. My Quezon Locations" required>
+            <label id="fwSharedChoice" class="fw-shared-choice" hidden><input id="fwIsShared" type="checkbox"> Share with all admins</label>
+            <div class="fw-editor-actions"><button type="button" id="fwCancelEditor">Cancel</button><button type="submit" id="fwConfirmSave">Save Group</button></div>
+            <p id="fwEditorStatus" role="status"></p>
+          </form>
+          <div class="fw-list-head"><strong>Individual franchises</strong><span id="fwCheckedCount"></span></div>
+          <input id="fwSearch" class="fw-search" type="search" placeholder="Search locations…" aria-label="Search franchise locations">
+          <div id="fwFranchiseList" class="fw-franchise-list"></div>
+        </section>
+        <div id="enrollmentWorkspace" class="enrollment-workspace" role="tabpanel" aria-labelledby="enrollmentWorkspaceTab">
+          <div class="journey-column-list"></div>
+          <div class="enrollment-performance" aria-label="Enrollment Performance">
+            <h4>Enrollment Performance</h4>
+            <div class="enrollment-performance-grid"><div><span>Today</span><strong data-enrollment-period="today">—</strong></div><div><span>Yesterday</span><strong data-enrollment-period="yesterday">—</strong></div><div><span>Last 7 days</span><strong data-enrollment-period="last7">—</strong></div><div><span>Previous 7 days</span><strong data-enrollment-period="previous7">—</strong></div></div>
+            <div class="enrollment-daily-title">Daily Enrollments · Last 7 Days</div>
+            <div class="enrollment-daily-days" id="enrollmentDailyDays"></div>
+          </div>
         </div>
       </section>
     </div>
