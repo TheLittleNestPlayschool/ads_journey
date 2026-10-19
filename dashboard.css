@@ -545,3 +545,39 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 .fw-franchise-row.checked{background:#35566c;border-color:#4c7288}
 .fw-franchise-row:hover{background:#3b596e}
 .fw-no-results{color:#b9ccd3;font-size:11px;padding:8px}
+
+
+/*   Compact franchise group view; checklist only appears when creating/editing */
+.journey-column[data-stage="enrollment"] .franchise-workspace{padding:7px;gap:0;overflow:hidden}
+.fw-group-overview{display:flex;flex:1 1 auto;min-height:0;flex-direction:column;gap:6px}
+.fw-group-overview[hidden],.fw-group-editor[hidden],.fw-active-marker[hidden],#fwUpdateGroup[hidden]{display:none!important}
+.fw-groups-head{flex:0 0 auto;padding:1px 1px 2px}
+.fw-groups-head strong{font-size:11px}
+.fw-all-button,.fw-group-item{padding:8px 10px;border-radius:7px;min-height:37px;font-size:11px;font-weight:750;transition:background .15s ease,border-color .15s ease}
+.fw-all-button{display:flex;align-items:center;justify-content:space-between;gap:6px;flex:0 0 auto}
+.fw-group-list{display:flex;flex:1 1 auto;min-height:0;overflow-y:auto;gap:5px;padding-right:2px;align-content:start;scrollbar-color:#8095a5 transparent}
+.fw-group-item{display:flex;align-items:center;justify-content:space-between;gap:7px;flex:0 0 auto}
+.fw-group-name{flex:1 1 auto;min-width:0;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
+.fw-group-meta{flex:0 0 auto;display:flex;align-items:center;gap:5px}
+.fw-group-count{display:inline-flex;min-width:18px;justify-content:center;align-items:center;color:#c9dfe2;background:rgba(255,255,255,.09);border-radius:5px;padding:3px 5px;font-size:10px;font-variant-numeric:tabular-nums}
+.fw-all-button.active,.fw-group-item.active{background:#e5f0e7;color:#163f34;border:1px solid #a9d7bb;box-shadow:inset 4px 0 #67ae8a}
+.fw-all-button.active .fw-group-count,.fw-group-item.active .fw-group-count{background:#ccdfd4;color:#245640}
+.fw-active-marker{display:inline-flex;align-items:center;gap:3px;white-space:nowrap;padding:2px 4px;border-radius:4px;background:#326b55;color:#fff;font-size:9px;font-weight:800;letter-spacing:.01em}
+.fw-sharing{font-size:9px;padding:2px 4px;white-space:nowrap}
+.fw-all-button:hover:not(.active),.fw-group-item:hover:not(.active){background:#3b5c70;border-color:#9ab7c6}
+.fw-all-button:disabled,.fw-group-item:disabled{cursor:wait;opacity:.77}
+.fw-save-actions{flex:0 0 auto;display:flex;gap:5px;padding-top:6px;border-top:1px solid #4c677a}
+.fw-save-actions button{min-height:37px;font-size:11px}
+.fw-group-message{flex:0 0 auto}
+.fw-group-editor{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden;gap:8px;padding:10px 9px}
+.fw-editor-header{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.fw-editor-header h4{font-size:12px;margin:0;color:#f2f7f5}
+.fw-editor-header button{font-size:10px;border:1px solid #7b9baa;background:#385b71;color:#f0f6f6;border-radius:6px;padding:6px 9px;cursor:pointer}
+.fw-editor-shortcuts{display:flex;gap:6px;flex:0 0 auto}
+.fw-editor-shortcuts button{flex:1;border:1px solid #7b9baa;background:#35576d;color:#e8f2f2;font-size:10px;border-radius:6px;padding:7px 4px;cursor:pointer}
+.fw-editor-shortcuts button:hover,.fw-editor-header button:hover{background:#476b80}
+.fw-group-editor .fw-list-head{padding-top:7px}
+.fw-group-editor .fw-franchise-list{flex:1 1 auto;min-height:70px;max-height:none;overflow-y:auto;gap:4px;padding-right:3px}
+.fw-group-editor .fw-franchise-row{flex:0 0 auto;padding:7px 6px}
+.fw-group-editor .fw-confirm-save{flex:0 0 auto;min-height:37px;border:1px solid #a3c6be;border-radius:7px;background:#dce9e4;color:#173b3c;font-size:11px;font-weight:800;cursor:pointer}
+.fw-group-editor .fw-confirm-save:disabled{opacity:.5;cursor:wait}
