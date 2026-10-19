@@ -103,6 +103,18 @@ return divider+'<div class="reengagement-item journey-card reengagement-card '+(
 }).join('');hydrateQueueNames();
 }
 button.addEventListener('click',async()=>{await releaseLock();modal.style.display='flex';modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();if(typeof openDashboardModal==='function')openDashboardModal('reengagementModal');else{modal.hidden=false;document.getElementById('dashboardModalBackdrop').hidden=false;}await refresh();});
+/*   Allow global Journey Search to open an active Stage 1B record directly*/
+window.openStage1BJourney=async journeyId=>{
+const id=Number(journeyId)||0;if(!id)return false;
+await refresh();
+const record=records.find(r=>Number(r.id)===id);
+if(!record)return false;
+await releaseLock();
+modal.style.display='flex';modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();
+if(typeof openDashboardModal==='function')openDashboardModal('reengagementModal');else{modal.hidden=false;document.getElementById('dashboardModalBackdrop').hidden=false;}
+await showRecord(record);
+return true;
+};
 body.addEventListener('click',event=>{const btn=event.target.closest('[data-re-id]');if(!btn)return;const record=records.find(r=>String(r.id)===btn.dataset.reId);if(!record)return;showRecord(record);});
 body.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&event.target.matches('.reengagement-card')){event.preventDefault();event.target.click();}});
 function historyMarkup(events){return events.slice().sort((a,b)=>Number(b.event_at||b.created_at)-Number(a.event_at||a.created_at)).map(ev=>'<div class="re-timeline-entry"><strong>'+e(ev.event_type?.replaceAll('_',' ')||'Journey update')+'</strong><p>'+e(ev.note||'')+'</p><small>'+e(date(ev.event_at||ev.created_at))+'</small></div>').join('');}
