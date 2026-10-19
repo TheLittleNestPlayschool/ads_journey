@@ -30,7 +30,7 @@
 <div class="row"><div class="field"><label for="ageYears">Age in years <span>*</span></label><input id="ageYears" name="age_years" type="number" min="0" max="12" step="1" required placeholder="0"></div><div class="field"><label for="ageMonths">Extra months <span>*</span></label><input id="ageMonths" name="age_months" type="number" min="0" max="11" step="1" value="0" required placeholder="0"></div></div>
 <div class="field"><label for="city">City / Municipality <span>*</span></label><input id="city" name="city" type="text" maxlength="120" required placeholder="e.g. Tanauan City"></div>
 <div class="field"><label for="address">Street / Barangay / Address</label><input id="address" name="address" type="text" maxlength="240" placeholder="Where you live (optional)"></div>
-<div class="field"><label for="contactNumber">Contact number <span>*</span></label><input id="contactNumber" name="contact_number" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" required placeholder="09xx xxx xxxx"></div>
+<div class="field"><label for="contactNumber">Contact number (optional)</label><input id="contactNumber" name="contact_number" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="09xx xxx xxxx"></div>
 <div class="field"><label for="parentNotes">Anything else you'd like us to know?</label><textarea id="parentNotes" name="notes" maxlength="700" placeholder="Optional"></textarea></div>
 <button class="submit" id="submitParentForm" type="submit">Send My Details ❤️</button>
 </form>
@@ -63,7 +63,8 @@ if(!form.reportValidity())return;
 const years=Number(el('ageYears').value),months=Number(el('ageMonths').value);
 if(!Number.isInteger(years)||years<0||years>12||!Number.isInteger(months)||months<0||months>11){notice('Please check your little one’s age.',true);return;}
 const parent=string(el('parentName').value,120),child=string(el('childName').value,120),city=string(el('city').value,120),phone=string(el('contactNumber').value,30);
-if(!parent||!child||!city||phone.replace(/\D/g,'').length<7){notice('Please complete the required details, including a valid contact number.',true);return;}
+if(!parent||!child||!city){notice('Please complete the required details.',true);return;}
+if(phone&&phone.replace(/\D/g,'').length<7){notice('Please enter a valid contact number, or leave it blank.',true);return;}
 const payload={token,parent_name:parent,child_name:child,age_years:years,age_months:months,city,address:string(el('address').value,240),contact_number:phone,preferred_date:null,preferred_time:'',notes:string(el('parentNotes').value,700)};
 busy=true;submit.disabled=true;submit.textContent='Sending your details…';message.hidden=true;
 try{
