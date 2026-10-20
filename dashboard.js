@@ -257,7 +257,7 @@ function eventActorName(event){
     return 'Admin #'+id;
   }
   if(event?.actor_type==='system'||event?.event_data?.actor_type==='system')return 'System';
-  return 'Unattributed';
+  return 'System';
 }
 window.adsJourneyEventActorName=eventActorName;
 function renderAdminActivity(events){const list=document.querySelector('#adminActivityModal .activity-list');if(!list)return;list.innerHTML='';if(!events.length){list.innerHTML='<div class="search-empty">No admin activity found for the selected locations.</div>';return;}events.forEach(eventActorName);events.forEach(event=>{const admin=eventActorName(event);const journey=event._ad_journey||{};const inquiry=journey._ad_inquiry||{};const franchise=journey.__franchise||{};const parent=inquiry.facebook_name||`Journey #${event.ad_journey_id||journey.id||''}`;const location=franchise.name||franchise.branch_name||franchiseName(franchises.find(item=>Number(item.id)===Number(event.franchise_id))||{id:event.franchise_id});const row=document.createElement('div');row.className='activity-row';row.innerHTML=`<time>${escapeHtml(formatActivityTime(event.event_at||event.created_at))}</time><span><b>${escapeHtml(admin)}</b> · ${escapeHtml(activityDescription(event,parent))}</span><strong>${escapeHtml(location)}</strong>`;list.appendChild(row);});}
