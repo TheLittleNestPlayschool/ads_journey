@@ -95,7 +95,7 @@ function initJourneyPanel(){
       <div class="journey-reply-heading"><div class="journey-reply-heading-main"><h4 id="journeyReplyModeLabel">Suggested reply</h4><button id="journeyReplyWriteOwn" class="journey-reply-own-toggle journey-reply-toggle" type="button" aria-pressed="false">Write my own</button></div><div class="journey-reply-emoji-wrap"><button id="journeyReplyEmojiToggle" class="journey-reply-emoji-toggle" type="button" aria-label="Insert emoji" aria-expanded="false" aria-controls="journeyReplyEmojiMenu" title="Add emoji">😊 <span aria-hidden="true">▾</span></button><div id="journeyReplyEmojiMenu" class="journey-reply-emoji-menu" role="group" aria-label="Choose an emoji" hidden><button type="button" data-emoji="😊" aria-label="Smiling face">😊</button><button type="button" data-emoji="❤️" aria-label="Red heart">❤️</button><button type="button" data-emoji="🥰" aria-label="Smiling face with hearts">🥰</button><button type="button" data-emoji="👍" aria-label="Thumbs up">👍</button><button type="button" data-emoji="🎉" aria-label="Celebration">🎉</button></div></div><button id="journeyReplyLanguage" class="journey-reply-toggle journey-reply-language-toggle" type="button" value="taglish">Taglish</button></div>
       <p id="journeyReplyMatchLabel" class="journey-reply-match-label"></p>
       <textarea id="journeyAssistanceReplyText" rows="8" maxlength="3000" placeholder="" aria-label="Editable reply to parent"></textarea>
-      <div class="journey-time-override-row" role="group" aria-label="Outgoing message original time"><span class="journey-time-override-label" title="Leave blank to use current time">Use Other Date and Time</span><input id="journeyReplyOriginalDate" type="date" aria-label="Outgoing message date"><span class="journey-time-simple"><select id="journeyReplyOriginalHour" aria-label="Outgoing message hour"><option value="">Hour</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select><span>:</span><input id="journeyReplyOriginalMinute" type="text" inputmode="numeric" maxlength="2" placeholder="Min" aria-label="Outgoing message minute"><select id="journeyReplyOriginalPeriod" aria-label="Outgoing message AM or PM"><option value="AM">AM</option><option value="PM" selected>PM</option></select><input id="journeyReplyOriginalTime" type="hidden"></span><button id="journeyReplyTimeClear" type="button" class="journey-time-clear" title="Clear date/time to use now" aria-label="Clear outgoing date and time">×</button></div>
+      <div class="journey-time-override-row" role="group" aria-label="Outgoing message original time"><span class="journey-time-override-label" title="Leave blank to use current time">Use Other Date and Time</span><input id="journeyReplyOriginalDate" type="date" aria-label="Outgoing message date"><input id="journeyReplyOriginalTime" class="journey-original-time-text" type="text" placeholder="9:45 AM" autocomplete="off" aria-label="Original Messenger time such as 9:45 AM"><button id="journeyReplyTimeClear" type="button" class="journey-time-clear" title="Clear date/time to use now" aria-label="Clear outgoing date and time">×</button></div>
       <button id="journeyReplyCopyRecord" class="journey-primary journey-reply-copy-record" type="button" disabled>Copy &amp; Record Sent</button>
       <p id="journeyReplyAssistStatus" class="journey-reply-assist-status" role="status"></p>
     </section>
@@ -141,38 +141,28 @@ function initJourneyPanel(){
   const manualForm=document.createElement('form');
   manualForm.id='journeyManualMessageForm';
   manualForm.className='journey-manual-message-form';
-  manualForm.innerHTML='<label for="journeyManualMessageText">Parent message from Messenger</label><textarea id="journeyManualMessageText" rows="2" maxlength="3000" placeholder="Paste the parent’s message here…" aria-label="Paste incoming parent message" required></textarea><div class="journey-time-override-row" role="group" aria-label="Parent message original time"><span class="journey-time-override-label" title="Leave blank to use current time">Use Other Date and Time</span><input id="journeyManualOriginalDate" type="date" aria-label="Parent message date"><span class="journey-time-simple"><select id="journeyManualOriginalHour" aria-label="Parent message hour"><option value="">Hour</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option></select><span>:</span><input id="journeyManualOriginalMinute" type="text" inputmode="numeric" maxlength="2" placeholder="Min" aria-label="Parent message minute"><select id="journeyManualOriginalPeriod" aria-label="Parent message AM or PM"><option value="AM">AM</option><option value="PM" selected>PM</option></select><input id="journeyManualOriginalTime" type="hidden"></span><button id="journeyManualTimeClear" type="button" class="journey-time-clear" title="Clear date/time to use now" aria-label="Clear parent message date and time">×</button></div><div class="journey-manual-message-footer"><span id="journeyManualMessageStatus" role="status"></span><button id="journeyManualMessageSave" class="journey-primary" type="submit">Save Parent Message</button></div>';
+  manualForm.innerHTML='<label for="journeyManualMessageText">Parent message from Messenger</label><textarea id="journeyManualMessageText" rows="2" maxlength="3000" placeholder="Paste the parent’s message here…" aria-label="Paste incoming parent message" required></textarea><div class="journey-time-override-row" role="group" aria-label="Parent message original time"><span class="journey-time-override-label" title="Leave blank to use current time">Use Other Date and Time</span><input id="journeyManualOriginalDate" type="date" aria-label="Parent message date"><input id="journeyManualOriginalTime" class="journey-original-time-text" type="text" placeholder="9:45 AM" autocomplete="off" aria-label="Original Messenger time such as 9:45 AM"><button id="journeyManualTimeClear" type="button" class="journey-time-clear" title="Clear date/time to use now" aria-label="Clear parent message date and time">×</button></div><div class="journey-manual-message-footer"><span id="journeyManualMessageStatus" role="status"></span><button id="journeyManualMessageSave" class="journey-primary" type="submit">Save Parent Message</button></div>';
   conversationView.appendChild(manualForm);
   const manualText=document.getElementById('journeyManualMessageText'),manualStatus=document.getElementById('journeyManualMessageStatus'),manualSave=document.getElementById('journeyManualMessageSave');
   const manualOriginalDate=document.getElementById('journeyManualOriginalDate'),manualOriginalTime=document.getElementById('journeyManualOriginalTime');
   let manualSaving=false;
   /*   Manual and outgoing historical times are Manila-local; blank uses now */
   function originalMessageTimestamp(dateInput,timeInput){
-    const date=dateInput.value,time=timeInput.value;
-    if(date&&!time)throw Error('Choose the hour and enter a two-digit minute (00–59).');
+    const date=dateInput.value,time=timeInput.value.trim();
     if(!date&&!time)return null;
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time))throw Error('Choose both date and time, or clear both to use now.');
-    const [year,month,day]=date.split('-').map(Number),[hour,minute]=time.split(':').map(Number);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!time)throw Error('Choose both original date and time, or clear both to use now.');
+    const parsed=time.match(/^(\d{1,2}):([0-5]\d)\s*(AM|PM)$/i);
+    if(!parsed)throw Error('Enter the time like 9:45 AM or 2:30 PM.');
+    const hour12=Number(parsed[1]),minute=Number(parsed[2]);
+    if(hour12<1||hour12>12)throw Error('Enter a valid hour from 1 to 12.');
+    const hour=hour12%12+(parsed[3].toUpperCase()==='PM'?12:0);
+    const [year,month,day]=date.split('-').map(Number);
     const at=Date.UTC(year,month-1,day,hour,minute)-8*60*60*1000;
     if(!Number.isFinite(at)||new Date(at+8*60*60*1000).toISOString().slice(0,16)!==date+'T'+time)throw Error('Enter a valid date and time.');
     if(at>Date.now()+60000)throw Error('Message date/time cannot be in the future.');
     return at;
   }
-  /*   Compact 12-hour historical time entry shared by both Messenger composers */
-  function wireOriginalTime(stem){
-    const hidden=document.getElementById(stem+'Time'),hour=document.getElementById(stem+'Hour'),minute=document.getElementById(stem+'Minute'),period=document.getElementById(stem+'Period');
-    const sync=()=>{
-      minute.value=minute.value.replace(/\D/g,'').slice(0,2);
-      if(hour.value&&minute.value.length===2&&Number(minute.value)<60){
-        const h=Number(hour.value)%12+(period.value==='PM'?12:0);
-        hidden.value=String(h).padStart(2,'0')+':'+minute.value;
-      }else hidden.value='';
-    };
-    hour.addEventListener('change',sync);minute.addEventListener('input',sync);period.addEventListener('change',sync);
-    return ()=>{hour.value='';minute.value='';period.value='PM';hidden.value='';};
-  }
-  const clearManualTime=wireOriginalTime('journeyManualOriginal'),clearReplyTime=wireOriginalTime('journeyReplyOriginal');
-  function resetManualTimestamp(){manualOriginalDate.value='';clearManualTime();}
+  function resetManualTimestamp(){manualOriginalDate.value='';manualOriginalTime.value='';}
   document.getElementById('journeyManualTimeClear').addEventListener('click',resetManualTimestamp);
   function resetManualComposer(){manualText.value='';manualStatus.textContent='';manualSaving=false;manualSave.disabled=false;manualSave.textContent='Save Parent Message';resetManualTimestamp();}
   manualForm.addEventListener('submit',async event=>{
@@ -199,7 +189,7 @@ function initJourneyPanel(){
   /*   Outgoing historical times await Xano's ad_reply_record_sent timestamp support */
   const outgoingTimestampEnabled=true;
   const replyOriginalDate=document.getElementById('journeyReplyOriginalDate'),replyOriginalTime=document.getElementById('journeyReplyOriginalTime');
-  function resetReplyTimestamp(){replyOriginalDate.value='';clearReplyTime();}
+  function resetReplyTimestamp(){replyOriginalDate.value='';replyOriginalTime.value='';}
   document.getElementById('journeyReplyTimeClear').addEventListener('click',resetReplyTimestamp);
   let replyQuestionId=0,replyTemplateId=0,replyMatches=[],replyQuestions=[],replyQuestionsLoaded=false,replyQuestionsLoading=false,replySending=false,replyPreviewRequest=0,replySession=0,replyManualMode=false,replySavedSuggestion=null,replyTaglishDraft='',replyEnglishDraft='',replyQuickFormActive=false,replyQuickFormDrafts={taglish:'',english:''};
   function replyPlainText(value){return String(value||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<\/p\s*>/gi,'\n').replace(/<[^>]*>/g,'').replace(/&nbsp;/gi,' ').trim();}
