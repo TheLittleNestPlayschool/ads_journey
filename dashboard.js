@@ -151,6 +151,43 @@ async function refreshJourneyLocks(){
 setInterval(refreshJourneyLocks,2000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshJourneyLocks();});
 function clearBoard(){document.querySelectorAll('.journey-column-list').forEach(list=>list.innerHTML='');document.querySelectorAll('.journey-column .column-count').forEach(count=>count.textContent='0');enrollmentSummary=null;enrollmentSummaryRequest++;renderEnrollmentPerformance();}
+/*   Independent, persistent sorting for each journey stage */
+const boardSortKey='ads_journey_stage_sort_v1';
+let boardSort={};
+try{boardSort=JSON.parse(localStorage.getItem(boardSortKey)||'{}')||{};}catch(_){boardSort={};}
+function stageSortConfig(stage){const setting=boardSort[stage]||{};return{mode:setting.mode==='date'?'date':'franchise',order:setting.order==='new'?'new':'old'};}
+function stageSortTimestamp(stage,journey){
+  const inquiry=journey._ad_inquiry||{};
+  const first=(...values)=>values.map(value=>Number(value)||0).find(value=>value>0)||0;
+  if(stage==='inquiry')return first(inquiry.first_message_at,inquiry.created_at,journey.created_at);
+  if(stage==='inquiry-followup')return first(journey.last_activity_at,journey.updated_at,journey.created_at,inquiry.first_message_at);
+  if(stage==='scheduled'||stage==='awaiting-outcome'||stage==='followup')return first(journey.next_action_at,journey.last_activity_at,journey.updated_at,journey.created_at);
+  if(stage==='enrollment')return first(journey.enrolled_at,journey.last_activity_at,journey.updated_at,journey.created_at);
+  return first(journey.updated_at,journey.created_at);
+}
+function setupBoardSortControls(){
+  const heading=document.querySelector('.journey-board-section>.board-heading');
+  if(heading)heading.remove();
+  if(!document.getElementById('journey-board-sort-style')){
+    const style=document.createElement('style');style.id='journey-board-sort-style';
+    style.textContent='.journey-stage-sort{display:flex;align-items:center;gap:5px;padding:6px 8px;border-bottom:1px solid rgba(155,187,204,.27);background:#1b3145}.journey-stage-sort button{border:1px solid #547084;border-radius:6px;background:#304b60;color:#fff;font:700 10px inherit;font-size:10px;line-height:1.1;padding:6px 5px;cursor:pointer;white-space:nowrap;flex:1;min-width:0}.journey-stage-sort button:hover{background:#41647b}.journey-stage-sort button:focus-visible{outline:2px solid #cbe6ec;outline-offset:2px}';
+    document.head.appendChild(style);
+  }
+  document.querySelectorAll('.journey-column').forEach(column=>{
+    const stage=column.dataset.stage;if(column.querySelector('.journey-stage-sort'))return;
+    const bar=document.createElement('div');bar.className='journey-stage-sort';
+    const mode=document.createElement('button'),order=document.createElement('button');
+    mode.type='button';order.type='button';
+    mode.setAttribute('aria-label','Switch franchise or date sorting');
+    order.setAttribute('aria-label','Switch oldest or newest first');
+    const refresh=()=>{const config=stageSortConfig(stage);mode.textContent=config.mode==='franchise'?'By Franchise':'By Date';order.textContent=config.order==='old'?'Old First':'New First';mode.title='Click to toggle franchise and date sorting';order.title='Click to reverse date order';};
+    const set=(key,value)=>{boardSort[stage]={...stageSortConfig(stage),[key]:value};try{localStorage.setItem(boardSortKey,JSON.stringify(boardSort));}catch(_){}refresh();renderBoard(boardJourneys);};
+    mode.addEventListener('click',()=>set('mode',stageSortConfig(stage).mode==='franchise'?'date':'franchise'));
+    order.addEventListener('click',()=>set('order',stageSortConfig(stage).order==='old'?'new':'old'));
+    bar.append(mode,order);column.querySelector('header')?.insertAdjacentElement('afterend',bar);refresh();
+  });
+}
+setupBoardSortControls();
 function renderBoard(journeys){
   const grouped=new Map(),desiredIds=new Set(journeys.map(journey=>String(journey.id)));
   journeys.forEach(journey=>{const stage=normalizeStage(journey.current_stage);if(!grouped.has(stage))grouped.set(stage,[]);grouped.get(stage).push(journey);});
@@ -160,7 +197,11 @@ function renderBoard(journeys){
     const list=column.querySelector('.journey-column-list');
     const rows=grouped.get(stage)||[];
     const locationName=journey=>String(journeyLocation(journey)||'Unknown location').trim()||'Unknown location';
-    rows.sort((a,b)=>locationName(a).localeCompare(locationName(b),undefined,{sensitivity:'base',numeric:true})||compareStageJourneys(stage,a,b));
+    const sort=stageSortConfig(stage),dateCompare=(a,b)=>{
+      const ta=stageSortTimestamp(stage,a),tb=stageSortTimestamp(stage,b);
+      return (sort.order==='old'?ta-tb:tb-ta)||(Number(a.id)-Number(b.id))*(sort.order==='old'?1:-1);
+    };
+    rows.sort((a,b)=>(sort.mode==='franchise'?locationName(a).localeCompare(locationName(b),undefined,{sensitivity:'base',numeric:true}):0)||dateCompare(a,b));
     list.querySelectorAll('.location-divider').forEach(divider=>divider.remove());
     let previousLocation='';
     rows.forEach((journey,index)=>{
@@ -174,7 +215,7 @@ function renderBoard(journeys){
         window.dispatchEvent(new CustomEvent('journey-card-added',{detail:{row,journey}}));
       }
       const location=locationName(journey);
-      if(index===0||location.toLocaleLowerCase()!==previousLocation.toLocaleLowerCase()){
+      if(sort.mode==='franchise'&&(index===0||location.toLocaleLowerCase()!==previousLocation.toLocaleLowerCase())){
         const divider=document.createElement('div');divider.className='location-divider';divider.textContent=location;divider.setAttribute('aria-label','Location: '+location);list.appendChild(divider);
       }
       list.appendChild(row);
