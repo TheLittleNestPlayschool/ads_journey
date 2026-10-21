@@ -139,23 +139,55 @@ function initJourneyPanel(){
   const manualForm=document.createElement('form');
   manualForm.id='journeyManualMessageForm';
   manualForm.className='journey-manual-message-form';
-  manualForm.innerHTML='<label for="journeyManualMessageText">Parent message from Messenger</label><textarea id="journeyManualMessageText" rows="2" maxlength="3000" placeholder="Paste the parent’s message here…" aria-label="Paste incoming parent message" required></textarea><div class="journey-manual-message-footer"><span id="journeyManualMessageStatus" role="status"></span><button id="journeyManualMessageSave" class="journey-primary" type="submit">Save Parent Message</button></div>';
+  manualForm.innerHTML='<label for="journeyManualMessageText">Parent message from Messenger</label><textarea id="journeyManualMessageText" rows="2" maxlength="3000" placeholder="Paste the parent’s message here…" aria-label="Paste incoming parent message" required></textarea><label class="journey-manual-time-toggle"><input id="journeyManualTimeOverride" type="checkbox"> Set original message date & time</label><div id="journeyManualTimeFields" class="journey-manual-time-fields" hidden><label>Date<input id="journeyManualOriginalDate" type="date"></label><label>Time<input id="journeyManualOriginalTime" type="time" step="60"></label><small>Philippine time · This changes the message timestamp, not when it was recorded.</small></div><div class="journey-manual-message-footer"><span id="journeyManualMessageStatus" role="status"></span><button id="journeyManualMessageSave" class="journey-primary" type="submit">Save Parent Message</button></div>';
   conversationView.appendChild(manualForm);
   const manualText=document.getElementById('journeyManualMessageText'),manualStatus=document.getElementById('journeyManualMessageStatus'),manualSave=document.getElementById('journeyManualMessageSave');
+  const manualTimeOverride=document.getElementById('journeyManualTimeOverride'),manualTimeFields=document.getElementById('journeyManualTimeFields'),manualOriginalDate=document.getElementById('journeyManualOriginalDate'),manualOriginalTime=document.getElementById('journeyManualOriginalTime');
   let manualSaving=false;
-  function resetManualComposer(){manualText.value='';manualStatus.textContent='';manualSaving=false;manualSave.disabled=false;manualSave.textContent='Save Parent Message';}
+  /*   Backfilled message times are Manila-local; created_at remains the Xano entry time */
+  function manilaDateTimeNow(){
+    const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Manila',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
+    const v=key=>parts.find(p=>p.type===key)?.value||'';
+    return {date:v('year')+'-'+v('month')+'-'+v('day'),time:v('hour')+':'+v('minute')};
+  }
+  function resetManualTimestamp(){
+    manualTimeOverride.checked=false;manualTimeFields.hidden=true;manualOriginalDate.value='';manualOriginalTime.value='';
+  }
+  manualTimeOverride.addEventListener('change',()=>{
+    manualTimeFields.hidden=!manualTimeOverride.checked;
+    if(manualTimeOverride.checked){
+      const now=manilaDateTimeNow();
+      if(!manualOriginalDate.value)manualOriginalDate.value=now.date;
+      if(!manualOriginalTime.value)manualOriginalTime.value=now.time;
+      manualOriginalDate.focus();
+    }
+    manualStatus.textContent='';
+  });
+  function originalMessageTimestamp(){
+    if(!manualTimeOverride.checked)return null;
+    const date=manualOriginalDate.value,time=manualOriginalTime.value;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time))throw Error('Select the original message date and time.');
+    const [year,month,day]=date.split('-').map(Number),[hour,minute]=time.split(':').map(Number);
+    const at=Date.UTC(year,month-1,day,hour,minute)-8*60*60*1000;
+    if(!Number.isFinite(at)||new Date(at+8*60*60*1000).toISOString().slice(0,16)!==date+'T'+time)throw Error('Enter a valid original message date and time.');
+    if(at>Date.now()+60000)throw Error('The original message time cannot be in the future.');
+    return at;
+  }
+  function resetManualComposer(){manualText.value='';manualStatus.textContent='';manualSaving=false;manualSave.disabled=false;manualSave.textContent='Save Parent Message';resetManualTimestamp();}
   manualForm.addEventListener('submit',async event=>{
     event.preventDefault();
     const message=manualText.value.trim(),inquiryId=conversationInquiryId,journeyId=Number(demo.journeyId)||0;
     if(manualSaving||!message||!inquiryId||!journeyId)return;
     if(!lockOwned||lockPending||lockJourneyId!==journeyId){manualStatus.textContent='Take Control to record parent messages';return;}
+    let messageTimestamp=null;
+    try{messageTimestamp=originalMessageTimestamp();}catch(error){manualStatus.textContent=error.message;return;}
     manualSaving=true;manualSave.disabled=true;manualSave.textContent='Saving…';manualStatus.textContent='';
     try{
-      const response=await fetch(API+'/ad_messenger_manual_receive',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_inquiry_id:inquiryId,message_text:message})});
+      const response=await fetch(API+'/ad_messenger_manual_receive',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({...{ad_inquiry_id:inquiryId,message_text:message},...(messageTimestamp===null?{}:{message_timestamp:messageTimestamp})})});
       const result=await response.json().catch(()=>({}));
       if(!response.ok||!result.message?.id)throw new Error(result.message?.message||result.error||'Unable to save the parent message');
       if(conversationInquiryId===inquiryId&&Number(demo.journeyId)===journeyId){
-        manualText.value='';manualStatus.textContent='Parent message recorded';if(!replyManualMode||!replyEditor.value.trim())applyResponseMatches(result.response_matches_v2||result.response_matches,result.response_matches);
+        manualText.value='';resetManualTimestamp();manualStatus.textContent=messageTimestamp===null?'Parent message recorded':'Parent message recorded at its original date and time';if(!replyManualMode||!replyEditor.value.trim())applyResponseMatches(result.response_matches_v2||result.response_matches,result.response_matches);
         conversationFingerprint='';await loadMessengerConversation(inquiryId,false);
       }
     }catch(error){manualStatus.textContent=error.message||'Unable to save the parent message';}
