@@ -181,7 +181,7 @@ function initJourneyPanel(){
   /*   reply assistance: approved matches, editable draft, and one-action copy + record*/
   const replyEditor=document.getElementById('journeyAssistanceReplyText'),replyStatus=document.getElementById('journeyReplyAssistStatus'),replyCopyRecord=document.getElementById('journeyReplyCopyRecord'),replyMatchLabel=document.getElementById('journeyReplyMatchLabel'),replyLanguage=document.getElementById('journeyReplyLanguage'),replyAlternatives=document.getElementById('journeyReplyAlternatives'),replySearch=document.getElementById('journeyReplySearch'),replySearchResults=document.getElementById('journeyReplySearchResults'),replyModeLabel=document.getElementById('journeyReplyModeLabel'),replyWriteOwn=document.getElementById('journeyReplyWriteOwn'),replyEmojiToggle=document.getElementById('journeyReplyEmojiToggle'),replyEmojiMenu=document.getElementById('journeyReplyEmojiMenu'),replyQuickForm=document.getElementById('journeyReplyQuickForm'),replyOnlineForm=document.getElementById('journeyReplyOnlineForm');
   /*   Outgoing historical times await Xano's ad_reply_record_sent timestamp support */
-  const outgoingTimestampEnabled=false;
+  const outgoingTimestampEnabled=true;
   const replyOriginalDate=document.getElementById('journeyReplyOriginalDate'),replyOriginalTime=document.getElementById('journeyReplyOriginalTime');
   function resetReplyTimestamp(){replyOriginalDate.value='';replyOriginalTime.value='';}
   document.getElementById('journeyReplyTimeClear').addEventListener('click',resetReplyTimestamp);
