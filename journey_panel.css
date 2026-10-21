@@ -777,3 +777,6 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-time-clear{flex:0 0 22px;width:22px;height:27px;padding:0;background:transparent;border:1px solid #c7d2d5;border-radius:5px;color:#506b74;font-size:15px;line-height:1;cursor:pointer}
 .journey-time-clear:hover{background:#edf5f2}
 @media(max-width:1100px){.journey-time-override-row{flex-wrap:wrap}.journey-time-override-label{flex-basis:100%;max-width:100%}.journey-time-override-row input{width:auto}}
+
+/*   Show original sent time and later audit entry time without crowding the message */
+.journey-message-recorded{display:block;margin-top:2px;color:#74828c;font-size:9px;font-weight:400}
