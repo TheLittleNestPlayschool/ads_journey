@@ -261,5 +261,14 @@ document.querySelector('#reengagementModal .modal-close')?.addEventListener('cli
 document.addEventListener('visibilitychange',()=>{if(document.hidden){++lockSeq;stopRenewal();lockOwned=false;lockId=0;if(!detail.hidden)lockUI('Control must be checked when you return');}else if(!modal.hidden&&!detail.hidden){const id=Number(detail.dataset.journeyId);if(id)takeLock(id);}});
 window.addEventListener('journey-sync-refresh',refresh);
 badge.hidden=false;
-refresh();
+/*   The dashboard restores its franchise selection asynchronously. Load the count once it is ready, without opening the queue. */
+let countSelectionKey='';
+function refreshCountForSelection(){
+  const ids=selected().map(Number).sort((a,b)=>a-b),key=ids.join(',');
+  if(!key||key===countSelectionKey)return;
+  countSelectionKey=key;refresh();
+}
+refreshCountForSelection();
+const countReadyPoll=setInterval(refreshCountForSelection,1000);
+window.addEventListener('pageshow',refreshCountForSelection);
 })();
