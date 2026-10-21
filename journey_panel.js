@@ -2,6 +2,27 @@ function initJourneyPanel(){
   const API='https://x58r-xped-p4y6.n7e.xano.io/api:0Ddhs4dT';
   const demo={facebookName:'',location:'',franchiseId:null,journeyId:null,stage:'Inquiry',status:'New',next:'Continue conversation'};
   let stage2State=null;let parentConfirmationState=null;
+  /*   Keep the recorded confirmation message ID for status-only recovery */
+  const confirmationRetryKey=id=>'ads_journey_confirmation_retry_'+id;
+  function pendingConfirmationRef(id,scheduledAt){
+    try{const ref=JSON.parse(sessionStorage.getItem(confirmationRetryKey(id))||'null');return ref&&Number(ref.journeyId)===Number(id)&&Number(ref.scheduledAt)===Number(scheduledAt)&&Number(ref.messageId)>0&&Date.now()-Number(ref.recordedAt)<7*86400000?ref:null;}catch(_){return null;}
+  }
+  function rememberConfirmationRef(id,scheduledAt,messageId){try{sessionStorage.setItem(confirmationRetryKey(id),JSON.stringify({journeyId:id,scheduledAt,messageId,recordedAt:Date.now()}));}catch(_){}}
+  function clearConfirmationRef(id){try{sessionStorage.removeItem(confirmationRetryKey(id));}catch(_){}}
+  async function readConfirmationStatus(id,scheduledAt){
+    const response=await window.fetch(API+'/ad_parent_confirmation_status?ad_journey_id='+encodeURIComponent(id),{headers:{Authorization:'Bearer '+journeyToken},cache:'no-store'});
+    if(!response.ok)throw Error('Unable to verify confirmation status (HTTP '+response.status+').');
+    const data=await response.json();
+    return Boolean(data.confirmed)&&Number(data.scheduled_at)===Number(scheduledAt);
+  }
+  async function saveConfirmationReference(id,scheduledAt,messageId){
+    const response=await window.fetch(API+'/ad_parent_confirmation_sent',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:id,message_id:messageId,scheduled_at:scheduledAt})});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok||data.success===false||data.error||data.code){
+      const message=typeof data.message==='string'?data.message:(typeof data.error==='string'?data.error:(typeof data.error?.message==='string'?data.error.message:'Confirmation endpoint failed.'));
+      throw Error('HTTP '+response.status+': '+message);
+    }
+  }
   const journeyToken=localStorage.getItem('ads_journey_token');
   /*   shared confirmation and success flow for changes made in the Journey workspace*/
   const JOURNEY_MUTATIONS={
@@ -361,17 +382,25 @@ function initJourneyPanel(){
         console.warn('Reply recording failed:',response.status,result.code||'',details);
         throw new Error('Recording failed (HTTP '+response.status+'): '+details);
       }
-      let confirmationSaveFailed=false;
+      let confirmationSaveFailed=false,confirmationError='';
       if(isConfirmation&&stage2State){
+        const scheduledAt=stage2State.scheduledFor;
+        rememberConfirmationRef(journeyId,scheduledAt,result.message.id);
         try{
-          const saved=await fetch(API+'/ad_parent_confirmation_sent',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:journeyId,message_id:result.message.id,scheduled_at:stage2State.scheduledFor})});
-          const state=await saved.json().catch(()=>({}));
-          if(!saved.ok||state.success===false||state.error||state.code)throw Error('Confirmation status not saved');
-          parentConfirmationState=true;showParentConfirmationGate();window.dispatchEvent(new Event('parent-confirmation-recorded'));
-        }catch(_){confirmationSaveFailed=true;}
+          await saveConfirmationReference(journeyId,scheduledAt,result.message.id);
+          parentConfirmationState=true;clearConfirmationRef(journeyId);showParentConfirmationGate();window.dispatchEvent(new Event('parent-confirmation-recorded'));
+        }catch(error){
+          confirmationError=error.message||'Unknown confirmation error';
+          console.warn('Parent confirmation status save failed:',confirmationError);
+          try{
+            if(await readConfirmationStatus(journeyId,scheduledAt)){
+              parentConfirmationState=true;clearConfirmationRef(journeyId);showParentConfirmationGate();window.dispatchEvent(new Event('parent-confirmation-recorded'));confirmationError='';
+            }else confirmationSaveFailed=true;
+          }catch(_){confirmationSaveFailed=true;}
+        }
       }
       if(session===replySession&&journeyId===Number(demo.journeyId)&&inquiryId===conversationInquiryId){
-        replyEditor.value='';replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyMatchLabel.textContent=replyManualMode?'Write another message when needed':'Reply recorded · Select another approved reply when needed';replyStatus.textContent=confirmationSaveFailed?'Message recorded, but parent confirmation status was NOT saved. Please check the appointment before proceeding.':'Copied & recorded. Paste and send it in Facebook Messenger';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
+        replyEditor.value='';replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyMatchLabel.textContent=replyManualMode?'Write another message when needed':'Reply recorded · Select another approved reply when needed';replyStatus.textContent=confirmationSaveFailed?'Message recorded, but confirmation status could not be verified. Do NOT record the message again. Use Retry Saving Confirmation in the appointment panel. '+confirmationError:'Copied & recorded. Paste and send it in Facebook Messenger';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
         conversationFingerprint='';await loadMessengerConversation(inquiryId,false);conversationList.scrollTop=conversationList.scrollHeight;
       }
     }catch(error){if(session===replySession)replyStatus.textContent='Copied, but recording was not confirmed. Check Conversation before retrying. '+(error.message||'');}
@@ -998,10 +1027,10 @@ function initJourneyPanel(){
   async function loadParentConfirmation(scheduledFor){
     parentConfirmationState=null;const journeyId=Number(demo.journeyId);
     try{
-      const response=await fetch(API+'/ad_parent_confirmation_status?ad_journey_id='+journeyId,{headers:{Authorization:'Bearer '+journeyToken},cache:'no-store'});
-      if(!response.ok)throw Error('UNAVAILABLE');const data=await response.json();
+      const confirmed=await readConfirmationStatus(journeyId,scheduledFor);
       if(Number(demo.journeyId)!==journeyId)return;
-      parentConfirmationState=Boolean(data.confirmed)&&Number(data.scheduled_at)===Number(scheduledFor);
+      parentConfirmationState=confirmed;
+      if(confirmed)clearConfirmationRef(journeyId);
     }catch(_){parentConfirmationState=null;}
     showParentConfirmationGate();
   }
@@ -1010,8 +1039,10 @@ function initJourneyPanel(){
     const block=document.getElementById('parentConfirmationBlock'),sent=Boolean(stage2State.franchiseSent),cancelled=Boolean(stage2State.cancelled);
     const pending=parentConfirmationState!==true;
     block.hidden=cancelled||!pending;
-    document.getElementById('parentConfirmationExplanation').textContent=sent?'Franchise details were already sent, but parent confirmation is not recorded for this appointment. Check Messenger before sending to avoid a duplicate.':'Send the confirmed details to the parent before the franchise handoff.';
-    document.getElementById('parentConfirmationMessage').textContent=parentConfirmationState===null?'Unable to verify confirmation status. Please check Messenger before recording a send.':'';
+    const retry=pendingConfirmationRef(Number(demo.journeyId),stage2State.scheduledFor),shareButton=document.getElementById('shareParentConfirmation');
+    shareButton.textContent=retry?'Retry Saving Confirmation':'Share Confirmation';
+    document.getElementById('parentConfirmationExplanation').textContent=retry?'The confirmation message has already been recorded. Retry only its status save; do not send or record another copy.':sent?'Franchise details were already sent, but parent confirmation is not recorded for this appointment. Check Messenger before sending to avoid a duplicate.':'Send the confirmed details to the parent before the franchise handoff.';
+    document.getElementById('parentConfirmationMessage').textContent=parentConfirmationState===null?'Unable to verify confirmation status. Check Messenger before proceeding.':'';
     if(sent||cancelled){
       document.getElementById('franchiseHandoffActions').hidden=true;
       document.getElementById('markFranchiseSent').hidden=true;
@@ -1030,8 +1061,23 @@ function initJourneyPanel(){
     document.getElementById('handoffStatus').textContent=pending?'Parent confirmation needed':'Ready to send';
     document.getElementById('journeyNextAction').textContent=pending?'Share Confirmation with Parent':'Send Details to Franchise';
   }
-  document.getElementById('shareParentConfirmation').addEventListener('click',()=>{
-    if(!stage2State)return;const x=stage2State,d=new Date(x.scheduledFor);
+  document.getElementById('shareParentConfirmation').addEventListener('click',async()=>{
+    if(!stage2State)return;const x=stage2State,d=new Date(x.scheduledFor),journeyId=Number(demo.journeyId);
+    const retry=pendingConfirmationRef(journeyId,x.scheduledFor);
+    if(retry){
+      const status=document.getElementById('parentConfirmationMessage'),button=document.getElementById('shareParentConfirmation');
+      if(!lockOwned||lockPending||lockJourneyId!==journeyId){status.textContent='Take Control before retrying the status save.';return;}
+      button.disabled=true;status.textContent='Checking the existing confirmation before retrying…';
+      try{
+        if(!await readConfirmationStatus(journeyId,x.scheduledFor))await saveConfirmationReference(journeyId,x.scheduledFor,retry.messageId);
+        await loadParentConfirmation(x.scheduledFor);
+        if(parentConfirmationState!==true)throw Error('Confirmation is still not verified.');
+        status.textContent='';replyStatus.textContent='Previously recorded confirmation verified. No new message was created.';
+        window.dispatchEvent(new Event('parent-confirmation-recorded'));
+      }catch(error){status.textContent='Unable to save confirmation status. Do not record the message again. '+(error.message||'');}
+      finally{button.disabled=false;}
+      return;
+    }
     const rows=['👩 Parent: '+x.parent,'👧 Child: '+x.child,'🎂 Age: '+x.age,'📅 Date: '+d.toLocaleDateString([],{month:'long',day:'numeric',year:'numeric'}),'🕘 Time: '+d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})].join('\n');
     replyManualMode=true;replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=true;replySavedSuggestion=null;
     replyQuickFormDrafts={taglish:'Hi po! ❤️ Thank you for sending your details.\n\nConfirmed na po ang '+x.typeLabel.toLowerCase()+' schedule ng little one ninyo! 🌷\n\n'+rows+'\n\nSee you po! 💕',english:'Hi! ❤️ Your little one’s '+x.typeLabel.toLowerCase()+' is confirmed! 🌷\n\n'+rows+'\n\nSee you soon! 💕'};
