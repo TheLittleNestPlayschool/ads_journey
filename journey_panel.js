@@ -95,6 +95,7 @@ function initJourneyPanel(){
       <div class="journey-reply-heading"><div class="journey-reply-heading-main"><h4 id="journeyReplyModeLabel">Suggested reply</h4><button id="journeyReplyWriteOwn" class="journey-reply-own-toggle journey-reply-toggle" type="button" aria-pressed="false">Write my own</button></div><div class="journey-reply-emoji-wrap"><button id="journeyReplyEmojiToggle" class="journey-reply-emoji-toggle" type="button" aria-label="Insert emoji" aria-expanded="false" aria-controls="journeyReplyEmojiMenu" title="Add emoji">😊 <span aria-hidden="true">▾</span></button><div id="journeyReplyEmojiMenu" class="journey-reply-emoji-menu" role="group" aria-label="Choose an emoji" hidden><button type="button" data-emoji="😊" aria-label="Smiling face">😊</button><button type="button" data-emoji="❤️" aria-label="Red heart">❤️</button><button type="button" data-emoji="🥰" aria-label="Smiling face with hearts">🥰</button><button type="button" data-emoji="👍" aria-label="Thumbs up">👍</button><button type="button" data-emoji="🎉" aria-label="Celebration">🎉</button></div></div><button id="journeyReplyLanguage" class="journey-reply-toggle journey-reply-language-toggle" type="button" value="taglish">Taglish</button></div>
       <p id="journeyReplyMatchLabel" class="journey-reply-match-label"></p>
       <textarea id="journeyAssistanceReplyText" rows="8" maxlength="3000" placeholder="" aria-label="Editable reply to parent"></textarea>
+      <div class="journey-time-override-row" role="group" aria-label="Outgoing message original time"><span class="journey-time-override-label" title="Leave blank to use current time">Use Other Date and Time</span><input id="journeyReplyOriginalDate" type="date" aria-label="Outgoing message date"><input id="journeyReplyOriginalTime" type="time" step="60" aria-label="Outgoing message time"><button id="journeyReplyTimeClear" type="button" class="journey-time-clear" title="Clear date/time to use now" aria-label="Clear outgoing date and time">×</button></div>
       <button id="journeyReplyCopyRecord" class="journey-primary journey-reply-copy-record" type="button" disabled>Copy &amp; Record Sent</button>
       <p id="journeyReplyAssistStatus" class="journey-reply-assist-status" role="status"></p>
     </section>
@@ -139,40 +140,24 @@ function initJourneyPanel(){
   const manualForm=document.createElement('form');
   manualForm.id='journeyManualMessageForm';
   manualForm.className='journey-manual-message-form';
-  manualForm.innerHTML='<label for="journeyManualMessageText">Parent message from Messenger</label><textarea id="journeyManualMessageText" rows="2" maxlength="3000" placeholder="Paste the parent’s message here…" aria-label="Paste incoming parent message" required></textarea><label class="journey-manual-time-toggle"><input id="journeyManualTimeOverride" type="checkbox"> Set original message date & time</label><div id="journeyManualTimeFields" class="journey-manual-time-fields" hidden><label>Date<input id="journeyManualOriginalDate" type="date"></label><label>Time<input id="journeyManualOriginalTime" type="time" step="60"></label><small>Philippine time · This changes the message timestamp, not when it was recorded.</small></div><div class="journey-manual-message-footer"><span id="journeyManualMessageStatus" role="status"></span><button id="journeyManualMessageSave" class="journey-primary" type="submit">Save Parent Message</button></div>';
+  manualForm.innerHTML='<label for="journeyManualMessageText">Parent message from Messenger</label><textarea id="journeyManualMessageText" rows="2" maxlength="3000" placeholder="Paste the parent’s message here…" aria-label="Paste incoming parent message" required></textarea><div class="journey-time-override-row" role="group" aria-label="Parent message original time"><span class="journey-time-override-label" title="Leave blank to use current time">Use Other Date and Time</span><input id="journeyManualOriginalDate" type="date" aria-label="Parent message date"><input id="journeyManualOriginalTime" type="time" step="60" aria-label="Parent message time"><button id="journeyManualTimeClear" type="button" class="journey-time-clear" title="Clear date/time to use now" aria-label="Clear parent message date and time">×</button></div><div class="journey-manual-message-footer"><span id="journeyManualMessageStatus" role="status"></span><button id="journeyManualMessageSave" class="journey-primary" type="submit">Save Parent Message</button></div>';
   conversationView.appendChild(manualForm);
   const manualText=document.getElementById('journeyManualMessageText'),manualStatus=document.getElementById('journeyManualMessageStatus'),manualSave=document.getElementById('journeyManualMessageSave');
-  const manualTimeOverride=document.getElementById('journeyManualTimeOverride'),manualTimeFields=document.getElementById('journeyManualTimeFields'),manualOriginalDate=document.getElementById('journeyManualOriginalDate'),manualOriginalTime=document.getElementById('journeyManualOriginalTime');
+  const manualOriginalDate=document.getElementById('journeyManualOriginalDate'),manualOriginalTime=document.getElementById('journeyManualOriginalTime');
   let manualSaving=false;
-  /*   Backfilled message times are Manila-local; created_at remains the Xano entry time */
-  function manilaDateTimeNow(){
-    const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Manila',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
-    const v=key=>parts.find(p=>p.type===key)?.value||'';
-    return {date:v('year')+'-'+v('month')+'-'+v('day'),time:v('hour')+':'+v('minute')};
-  }
-  function resetManualTimestamp(){
-    manualTimeOverride.checked=false;manualTimeFields.hidden=true;manualOriginalDate.value='';manualOriginalTime.value='';
-  }
-  manualTimeOverride.addEventListener('change',()=>{
-    manualTimeFields.hidden=!manualTimeOverride.checked;
-    if(manualTimeOverride.checked){
-      const now=manilaDateTimeNow();
-      if(!manualOriginalDate.value)manualOriginalDate.value=now.date;
-      if(!manualOriginalTime.value)manualOriginalTime.value=now.time;
-      manualOriginalDate.focus();
-    }
-    manualStatus.textContent='';
-  });
-  function originalMessageTimestamp(){
-    if(!manualTimeOverride.checked)return null;
-    const date=manualOriginalDate.value,time=manualOriginalTime.value;
-    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time))throw Error('Select the original message date and time.');
+  /*   Manual and outgoing historical times are Manila-local; blank uses now */
+  function originalMessageTimestamp(dateInput,timeInput){
+    const date=dateInput.value,time=timeInput.value;
+    if(!date&&!time)return null;
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time))throw Error('Choose both date and time, or clear both to use now.');
     const [year,month,day]=date.split('-').map(Number),[hour,minute]=time.split(':').map(Number);
     const at=Date.UTC(year,month-1,day,hour,minute)-8*60*60*1000;
-    if(!Number.isFinite(at)||new Date(at+8*60*60*1000).toISOString().slice(0,16)!==date+'T'+time)throw Error('Enter a valid original message date and time.');
-    if(at>Date.now()+60000)throw Error('The original message time cannot be in the future.');
+    if(!Number.isFinite(at)||new Date(at+8*60*60*1000).toISOString().slice(0,16)!==date+'T'+time)throw Error('Enter a valid date and time.');
+    if(at>Date.now()+60000)throw Error('Message date/time cannot be in the future.');
     return at;
   }
+  function resetManualTimestamp(){manualOriginalDate.value='';manualOriginalTime.value='';}
+  document.getElementById('journeyManualTimeClear').addEventListener('click',resetManualTimestamp);
   function resetManualComposer(){manualText.value='';manualStatus.textContent='';manualSaving=false;manualSave.disabled=false;manualSave.textContent='Save Parent Message';resetManualTimestamp();}
   manualForm.addEventListener('submit',async event=>{
     event.preventDefault();
@@ -180,7 +165,7 @@ function initJourneyPanel(){
     if(manualSaving||!message||!inquiryId||!journeyId)return;
     if(!lockOwned||lockPending||lockJourneyId!==journeyId){manualStatus.textContent='Take Control to record parent messages';return;}
     let messageTimestamp=null;
-    try{messageTimestamp=originalMessageTimestamp();}catch(error){manualStatus.textContent=error.message;return;}
+    try{messageTimestamp=originalMessageTimestamp(manualOriginalDate,manualOriginalTime);}catch(error){manualStatus.textContent=error.message;return;}
     manualSaving=true;manualSave.disabled=true;manualSave.textContent='Saving…';manualStatus.textContent='';
     try{
       const response=await fetch(API+'/ad_messenger_manual_receive',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_inquiry_id:inquiryId,message_text:message,...(messageTimestamp===null?{}:{message_timestamp:messageTimestamp})})});
@@ -195,6 +180,11 @@ function initJourneyPanel(){
   });
   /*   reply assistance: approved matches, editable draft, and one-action copy + record*/
   const replyEditor=document.getElementById('journeyAssistanceReplyText'),replyStatus=document.getElementById('journeyReplyAssistStatus'),replyCopyRecord=document.getElementById('journeyReplyCopyRecord'),replyMatchLabel=document.getElementById('journeyReplyMatchLabel'),replyLanguage=document.getElementById('journeyReplyLanguage'),replyAlternatives=document.getElementById('journeyReplyAlternatives'),replySearch=document.getElementById('journeyReplySearch'),replySearchResults=document.getElementById('journeyReplySearchResults'),replyModeLabel=document.getElementById('journeyReplyModeLabel'),replyWriteOwn=document.getElementById('journeyReplyWriteOwn'),replyEmojiToggle=document.getElementById('journeyReplyEmojiToggle'),replyEmojiMenu=document.getElementById('journeyReplyEmojiMenu'),replyQuickForm=document.getElementById('journeyReplyQuickForm'),replyOnlineForm=document.getElementById('journeyReplyOnlineForm');
+  /*   Outgoing historical times await Xano's ad_reply_record_sent timestamp support */
+  const outgoingTimestampEnabled=false;
+  const replyOriginalDate=document.getElementById('journeyReplyOriginalDate'),replyOriginalTime=document.getElementById('journeyReplyOriginalTime');
+  function resetReplyTimestamp(){replyOriginalDate.value='';replyOriginalTime.value='';}
+  document.getElementById('journeyReplyTimeClear').addEventListener('click',resetReplyTimestamp);
   let replyQuestionId=0,replyTemplateId=0,replyMatches=[],replyQuestions=[],replyQuestionsLoaded=false,replyQuestionsLoading=false,replySending=false,replyPreviewRequest=0,replySession=0,replyManualMode=false,replySavedSuggestion=null,replyTaglishDraft='',replyEnglishDraft='',replyQuickFormActive=false,replyQuickFormDrafts={taglish:'',english:''};
   function replyPlainText(value){return String(value||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<\/p\s*>/gi,'\n').replace(/<[^>]*>/g,'').replace(/&nbsp;/gi,' ').trim();}
   /*   English uses only values that Xano resolved in the Taglish reply*/
@@ -219,7 +209,7 @@ function initJourneyPanel(){
   }
   function resetReplyAssistance(){
     replyEmojiRange=null;closeReplyEmojiMenu();
-    replySession++;replyPreviewRequest++;replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replyMatches=[];replySending=false;replyManualMode=false;replySavedSuggestion=null;replyEditor.value='';replyLanguage.value='taglish';renderReplyLanguageButton();replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='';replyStatus.textContent='';replyCopyRecord.textContent='Copy & Record Sent';replySearch.value='';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
+    replySession++;replyPreviewRequest++;replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replyMatches=[];replySending=false;replyManualMode=false;replySavedSuggestion=null;replyEditor.value='';replyLanguage.value='taglish';renderReplyLanguageButton();replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='';replyStatus.textContent='';resetReplyTimestamp();replyCopyRecord.textContent='Copy & Record Sent';replySearch.value='';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
   }
   function createReplyChoice(question){
     const button=document.createElement('button');button.type='button';button.className='journey-reply-choice';button.textContent=question.question_label||('Reply #'+question.id);
@@ -398,6 +388,9 @@ function initJourneyPanel(){
     const isConfirmation=replyQuickFormActive&&replyMatchLabel.textContent.startsWith('Appointment confirmation');
     if(replySending||!message||(!replyManualMode&&!questionId&&!templateId)||!journeyId||!inquiryId)return;
     if(!lockOwned||lockPending||lockJourneyId!==journeyId){replyStatus.textContent='Take Control before recording replies';return;}
+    let messageTimestamp=null;
+    try{messageTimestamp=originalMessageTimestamp(replyOriginalDate,replyOriginalTime);}catch(error){replyStatus.textContent=error.message;return;}
+    if(messageTimestamp!==null&&!outgoingTimestampEnabled){replyStatus.textContent='Outgoing date/time needs one Xano endpoint change first (ad_reply_record_sent). Nothing has been recorded.';return;}
     const session=++replySession;replySending=true;replyCopyRecord.textContent='Copying…';replyStatus.textContent='';updateReplyButton();
     try{
       /*   clipboard write must happen during the user click, before network requests*/
@@ -407,7 +400,7 @@ function initJourneyPanel(){
     try{
       if(session!==replySession||journeyId!==Number(demo.journeyId)||inquiryId!==conversationInquiryId)return;
       replyCopyRecord.textContent='Recording…';
-      const response=await fetch(API+'/ad_reply_record_sent',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:journeyId,ad_inquiry_id:inquiryId,response_text:message,question_id:templateId?0:questionId,language,reply_source:replyQuickFormActive&&replyMatchLabel.textContent.startsWith('Appointment confirmation')?'parent_appointment_confirmation':templateId?'ad_response_template_'+templateId:(questionId?'reply_assistant_manual':'admin_composed')})});
+      const response=await fetch(API+'/ad_reply_record_sent',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:journeyId,ad_inquiry_id:inquiryId,response_text:message,question_id:templateId?0:questionId,language,reply_source:replyQuickFormActive&&replyMatchLabel.textContent.startsWith('Appointment confirmation')?'parent_appointment_confirmation':templateId?'ad_response_template_'+templateId:(questionId?'reply_assistant_manual':'admin_composed'),...(messageTimestamp===null?{}:{message_timestamp:messageTimestamp})})});
       const result=await response.json().catch(()=>({}));
       if(!response.ok||!result.message?.id){
         const details=typeof result.message==='string'?result.message:(typeof result.error==='string'?result.error:(typeof result.error?.message==='string'?result.error.message:(typeof result.code==='string'?result.code:'Server did not return a saved message')));
@@ -432,7 +425,7 @@ function initJourneyPanel(){
         }
       }
       if(session===replySession&&journeyId===Number(demo.journeyId)&&inquiryId===conversationInquiryId){
-        replyEditor.value='';replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyMatchLabel.textContent=replyManualMode?'Write another message when needed':'Reply recorded · Select another approved reply when needed';replyStatus.textContent=confirmationSaveFailed?'Message recorded, but confirmation status could not be verified. Do NOT record the message again. Use Retry Saving Confirmation in the appointment panel. '+confirmationError:'Copied & recorded. Paste and send it in Facebook Messenger';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
+        replyEditor.value='';resetReplyTimestamp();replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyMatchLabel.textContent=replyManualMode?'Write another message when needed':'Reply recorded · Select another approved reply when needed';replyStatus.textContent=confirmationSaveFailed?'Message recorded, but confirmation status could not be verified. Do NOT record the message again. Use Retry Saving Confirmation in the appointment panel. '+confirmationError:'Copied & recorded. Paste and send it in Facebook Messenger';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
         conversationFingerprint='';await loadMessengerConversation(inquiryId,false);conversationList.scrollTop=conversationList.scrollHeight;
       }
     }catch(error){if(session===replySession)replyStatus.textContent='Copied, but recording was not confirmed. Check Conversation before retrying. '+(error.message||'');}
