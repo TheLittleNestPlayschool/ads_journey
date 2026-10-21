@@ -785,3 +785,11 @@ body:has(#journeyPanel.open){overflow:hidden}
 @keyframes journey-conversation-saved-focus{0%,40%{box-shadow:0 0 0 3px rgba(76,135,115,.34)}100%{box-shadow:0 0 0 0 rgba(76,135,115,0)}}
 .journey-message-just-saved .journey-message-bubble{animation:journey-conversation-saved-focus 3.4s ease-out}
 @media(prefers-reduced-motion:reduce){.journey-message-just-saved .journey-message-bubble{animation:none;outline:2px solid rgba(76,135,115,.38)}}
+
+/*   Compact 12-hour Messenger message time controls */
+.journey-time-simple{display:flex;align-items:center;gap:3px;flex:1 1 155px;min-width:145px}
+.journey-time-override-row .journey-time-simple select,.journey-time-override-row .journey-time-simple input{height:30px;min-width:0;width:auto;flex:1 1 38px;padding:3px;border:1px solid #c7d2d5;border-radius:6px;background:#fff;color:#2a3f4d;font-size:11px;font-family:inherit;text-align:center}
+.journey-time-override-row .journey-time-simple select:last-of-type{flex:1 1 43px}
+.journey-time-override-row .journey-time-simple input{flex:0 1 34px;width:34px}
+.journey-time-simple>span{font-weight:700;color:#48616c}
+.journey-time-override-row .journey-time-simple input[type="hidden"]{display:none}
