@@ -180,7 +180,7 @@ function setupBoardSortControls(){
     mode.type='button';order.type='button';
     mode.setAttribute('aria-label','Switch franchise or date sorting');
     order.setAttribute('aria-label','Switch oldest or newest first');
-    const refresh=()=>{const config=stageSortConfig(stage);mode.textContent=config.mode==='franchise'?'By Franchise':'By Date';order.textContent=config.order==='old'?'Old First':'New First';mode.title='Click to toggle franchise and date sorting';order.title='Click to reverse date order';};
+    const refresh=()=>{const config=stageSortConfig(stage);mode.textContent=config.mode==='franchise'?'By Franchise':'By Date';order.textContent=config.order==='old'?'New First':'Old First';mode.title='Click to toggle franchise and date sorting';order.title='Click to reverse date order';};
     const set=(key,value)=>{boardSort[stage]={...stageSortConfig(stage),[key]:value};try{localStorage.setItem(boardSortKey,JSON.stringify(boardSort));}catch(_){}refresh();renderBoard(boardJourneys);};
     mode.addEventListener('click',()=>set('mode',stageSortConfig(stage).mode==='franchise'?'date':'franchise'));
     order.addEventListener('click',()=>set('order',stageSortConfig(stage).order==='old'?'new':'old'));
