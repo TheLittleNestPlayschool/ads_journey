@@ -524,7 +524,13 @@ function initJourneyPanel(){
         const bubble=document.createElement('div');bubble.className='journey-message-bubble';
         const body=document.createElement('div');body.className='journey-message-text';body.textContent=item.message_text||'Message without text';
         const meta=document.createElement('div');meta.className='journey-message-meta';
-        meta.textContent=(outgoing?'Playschool':'Parent')+(conversationDate(item.message_timestamp||item.created_at)?' · '+conversationDate(item.message_timestamp||item.created_at):'');
+        const occurredAt=Number(item.message_timestamp)||Number(item.created_at)||0,recordedAt=Number(item.created_at)||0;
+        const originalTime=conversationDate(occurredAt),recordedTime=conversationDate(recordedAt);
+        meta.textContent=(outgoing?'Playschool':'Parent')+(originalTime?' · Sent '+originalTime:'');
+        /*   Show the audit entry time separately when an older Messenger message was added later */
+        if(originalTime&&recordedTime&&Math.abs(recordedAt-occurredAt)>120000){
+          const recorded=document.createElement('span');recorded.className='journey-message-recorded';recorded.textContent='Recorded '+recordedTime;meta.appendChild(recorded);
+        }
         bubble.append(body,meta);line.appendChild(bubble);fragment.appendChild(line);
       });
       conversationList.replaceChildren(fragment);
