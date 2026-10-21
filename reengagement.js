@@ -91,11 +91,11 @@ records=Array.isArray(data.stage1b_records)?data.stage1b_records:[];
 for(const sentId of justSent){const current=records.find(item=>Number(item.id)===sentId);if(!current||classify(current)==='awaiting')justSent.delete(sentId);}
 try{const lockRes=await fetch(API+'/ad_journey_lock_status?'+params,{cache:'no-store',headers:{Authorization:'Bearer '+localStorage.getItem('ads_journey_token')}});if(!lockRes.ok)throw Error('Lock status unavailable');const lockData=await lockRes.json();if(id!==request)return;lockMap=new Map((Array.isArray(lockData.journey_locks)?lockData.journey_locks:[]).map(item=>[Number(item.id),item]));}catch(_error){if(id!==request)return;lockMap=new Map();}
 draw(data);
-}catch(err){if(id!==request)return;badge.hidden=true;if(!modal.hidden)body.innerHTML='<div class="reengagement-empty">'+e(err.message)+'</div>';}
+}catch(err){if(id!==request)return;badge.hidden=false;if(!modal.hidden)body.innerHTML='<div class="reengagement-empty">'+e(err.message)+'</div>';}
 }
 function draw(data){
 const due=Number(data.due_count)||0;
-badge.textContent=String(due);badge.hidden=due===0;
+badge.textContent=String(due);badge.hidden=false;
 document.getElementById('reDue').textContent=due;
 document.getElementById('reScheduled').textContent=Number(data.scheduled_count)||0;
 document.getElementById('reAwaiting').textContent=Number(data.awaiting_reply_count)||0;
@@ -260,5 +260,6 @@ if(event.target.closest('.journey-card[data-journey-id]')&&!event.target.closest
 document.querySelector('#reengagementModal .modal-close')?.addEventListener('click',()=>releaseLock());
 document.addEventListener('visibilitychange',()=>{if(document.hidden){++lockSeq;stopRenewal();lockOwned=false;lockId=0;if(!detail.hidden)lockUI('Control must be checked when you return');}else if(!modal.hidden&&!detail.hidden){const id=Number(detail.dataset.journeyId);if(id)takeLock(id);}});
 window.addEventListener('journey-sync-refresh',refresh);
+badge.hidden=false;
 refresh();
 })();
