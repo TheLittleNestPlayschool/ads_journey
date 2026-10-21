@@ -798,3 +798,11 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-time-override-row{gap:6px}
 .journey-time-override-row .journey-original-time-text{flex:0 0 92px;width:92px;min-width:92px;height:30px;padding:4px 7px;font-size:11px;text-align:center}
 .journey-time-override-row input[type="date"]{flex:1 1 110px;width:110px;min-width:90px}
+
+/*   Direct-entry Messenger time: typed hour, typed minute, AM/PM toggle */
+.journey-time-override-row .journey-time-entry{display:flex;align-items:center;gap:4px;flex:0 0 auto;min-width:0}
+.journey-time-override-row .journey-time-entry input[type="text"]{flex:0 0 38px;width:38px;min-width:38px;height:30px;padding:3px 4px;text-align:center;font-size:11px}
+.journey-time-colon{font-weight:700;color:#48616c}
+.journey-time-override-row .journey-time-period{height:30px;min-width:39px;padding:3px 6px;border:1px solid #c7d2d5;border-radius:6px;background:#fff;color:#2a3f4d;font-size:11px;cursor:pointer}
+.journey-time-override-row .journey-time-period:hover{background:#e9f2ef}
+.journey-time-override-row .journey-time-entry input[type="hidden"]{display:none}
