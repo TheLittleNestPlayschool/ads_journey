@@ -793,3 +793,8 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-time-override-row .journey-time-simple input{flex:0 1 34px;width:34px}
 .journey-time-simple>span{font-weight:700;color:#48616c}
 .journey-time-override-row .journey-time-simple input[type="hidden"]{display:none}
+
+/*   Simple original Messenger date and typed time field */
+.journey-time-override-row{gap:6px}
+.journey-time-override-row .journey-original-time-text{flex:0 0 92px;width:92px;min-width:92px;height:30px;padding:4px 7px;font-size:11px;text-align:center}
+.journey-time-override-row input[type="date"]{flex:1 1 110px;width:110px;min-width:90px}
