@@ -424,6 +424,7 @@ function initJourneyPanel(){
         console.warn('Reply recording failed:',response.status,result.code||'',details);
         throw new Error('Recording failed (HTTP '+response.status+'): '+details);
       }
+      if(messageTimestamp!==null&&Math.abs((Number(result.message.message_timestamp)||0)-messageTimestamp)>60000)throw new Error('Message was recorded, but Xano did not retain the selected original date/time. Check the backend timestamp mapping before adding it again.');
       let confirmationSaveFailed=false,confirmationError='';
       if(isConfirmation&&stage2State){
         const scheduledAt=stage2State.scheduledFor;
