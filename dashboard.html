@@ -25,7 +25,7 @@
   </section>
   <div class="topbar-actions">
     <button id="newInquiryButton" class="secondary-button" type="button">+ New Inquiry</button>
-    <button id="reengagementButton" class="secondary-button reengagement-button" type="button">Re-engagement <span id="reengagementDueBadge" class="reengagement-due-badge" hidden>0</span></button>
+    <button id="reengagementButton" class="secondary-button reengagement-button" type="button">Re-engagement <span id="reengagementDueBadge" class="reengagement-due-badge">0</span></button>
     <button id="journeySearchButton" class="secondary-button" type="button">Search</button>
     <div class="filter-wrap">
       <button id="franchiseFilterButton" class="filter-button" type="button">Franchises: All Locations <span>▾</span></button>
@@ -84,7 +84,8 @@
         <div class="journey-column-list"></div>
       </section>
       <section class="journey-column" data-stage="enrollment">
-        <header><div class="stage5-title-stack"><span class="column-kicker">Stage 5</span><button id="fwHeaderToggle" class="fw-header-toggle" type="button" aria-label="Switch to Enrollment view" title="Switch to Enrollment view">⇄ Enrollment</button><h3 hidden style="display:none">Enrollment</h3></div><span class="column-count">0</span></header>
+        <header><div class="stage5-title-stack"><span class="column-kicker">Stage 5</span><h3>Enrollment</h3></div><span class="column-count">0</span></header>
+        <div class="stage5-view-switch"><button id="fwHeaderToggle" class="fw-header-toggle" type="button" aria-label="Switch to Enrollment view" title="Switch to Enrollment view">⇄ Enrollment</button></div>
         <section id="franchiseWorkspace" class="franchise-workspace" role="region" aria-label="Franchise groups" hidden>
           <div id="fwGroupOverview" class="fw-group-overview">
             <div class="fw-groups-head"><strong>Quick selections</strong><button id="fwReloadGroups" type="button" title="Reload saved groups" aria-label="Reload saved groups">↻</button></div>
