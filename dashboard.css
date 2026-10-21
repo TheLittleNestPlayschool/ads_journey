@@ -609,3 +609,11 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 .fw-all-button.active>span:first-child,.fw-group-item.active .fw-group-name{color:#163f34}
 .fw-all-button.active .fw-active-marker,.fw-group-item.active .fw-active-marker{color:#fff}
 .fw-all-button.active #fwAllCount{color:#245640}
+
+/*   Stage 5 header aligns with other journey stages; workspace toggle matches sort controls */
+.journey-column[data-stage="enrollment"] .stage5-title-stack{display:block;min-width:0}
+.journey-column[data-stage="enrollment"] .stage5-title-stack h3{display:block!important;margin:0}
+.journey-column[data-stage="enrollment"] .stage5-view-switch{padding:6px 8px;border-bottom:1px solid rgba(155,187,204,.27);background:#1b3145}
+.journey-column[data-stage="enrollment"] .stage5-view-switch .fw-header-toggle{display:block;width:100%;min-height:28px;border:1px solid #547084;border-radius:6px;background:#304b60;color:#fff;font-size:10px;line-height:1.1;font-weight:700;padding:6px 8px;text-align:center}
+.journey-column[data-stage="enrollment"] .stage5-view-switch .fw-header-toggle:hover{background:#41647b;border-color:#7194a7}
+.journey-column[data-stage="enrollment"] .stage5-view-switch .fw-header-toggle:before{content:none}
