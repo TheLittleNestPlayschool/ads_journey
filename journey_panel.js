@@ -162,7 +162,7 @@ function initJourneyPanel(){
   function wireOriginalTime(stem){
     const hidden=document.getElementById(stem+'Time'),hour=document.getElementById(stem+'Hour'),minute=document.getElementById(stem+'Minute'),period=document.getElementById(stem+'Period');
     const sync=()=>{
-      minute.value=minute.value.replace(/\\D/g,'').slice(0,2);
+      minute.value=minute.value.replace(/\D/g,'').slice(0,2);
       if(hour.value&&minute.value.length===2&&Number(minute.value)<60){
         const h=Number(hour.value)%12+(period.value==='PM'?12:0);
         hidden.value=String(h).padStart(2,'0')+':'+minute.value;
