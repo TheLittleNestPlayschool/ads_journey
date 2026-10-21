@@ -132,6 +132,7 @@ function initJourneyPanel(){
   let conversationInquiryId=0;
   let conversationFingerprint='';
   let conversationLoading=false;
+  let conversationFocusMessageId=0;
   const CONVERSATION_REFRESH_MS=5000;
   const conversationList=document.createElement('div');
   conversationList.className='journey-conversation-list';
@@ -173,7 +174,7 @@ function initJourneyPanel(){
       if(!response.ok||!result.message?.id)throw new Error(result.message?.message||result.error||'Unable to save the parent message');
       if(conversationInquiryId===inquiryId&&Number(demo.journeyId)===journeyId){
         manualText.value='';resetManualTimestamp();manualStatus.textContent=messageTimestamp===null?'Parent message recorded':'Parent message recorded at its original date and time';if(!replyManualMode||!replyEditor.value.trim())applyResponseMatches(result.response_matches_v2||result.response_matches,result.response_matches);
-        conversationFingerprint='';await loadMessengerConversation(inquiryId,false);
+        conversationFingerprint='';await loadMessengerConversation(inquiryId,false,result.message.id);
       }
     }catch(error){manualStatus.textContent=error.message||'Unable to save the parent message';}
     finally{manualSaving=false;manualSave.disabled=false;manualSave.textContent='Save Parent Message';}
@@ -426,7 +427,7 @@ function initJourneyPanel(){
       }
       if(session===replySession&&journeyId===Number(demo.journeyId)&&inquiryId===conversationInquiryId){
         replyEditor.value='';resetReplyTimestamp();replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyMatchLabel.textContent=replyManualMode?'Write another message when needed':'Reply recorded · Select another approved reply when needed';replyStatus.textContent=confirmationSaveFailed?'Message recorded, but confirmation status could not be verified. Do NOT record the message again. Use Retry Saving Confirmation in the appointment panel. '+confirmationError:'Copied & recorded. Paste and send it in Facebook Messenger';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
-        conversationFingerprint='';await loadMessengerConversation(inquiryId,false);conversationList.scrollTop=conversationList.scrollHeight;
+        conversationFingerprint='';await loadMessengerConversation(inquiryId,false,result.message.id);
       }
     }catch(error){if(session===replySession)replyStatus.textContent='Copied, but recording was not confirmed. Check Conversation before retrying. '+(error.message||'');}
     finally{if(session===replySession){replySending=false;replyCopyRecord.textContent='Copy & Record Sent';updateReplyButton();}}
@@ -442,7 +443,7 @@ function initJourneyPanel(){
   }
   function stopConversationRefresh(){
     if(conversationTimer!==null){clearInterval(conversationTimer);conversationTimer=null;}
-    conversationInquiryId=0;conversationFingerprint='';conversationRequest++;
+    conversationInquiryId=0;conversationFingerprint='';conversationFocusMessageId=0;conversationRequest++;
   }
   function startConversationRefresh(inquiryId){
     stopConversationRefresh();conversationInquiryId=inquiryId;
@@ -490,7 +491,18 @@ function initJourneyPanel(){
     }else{const done=document.createElement('p');done.className='journey-submission-handled';done.textContent='Schedule recorded · submission retained for history';bubble.appendChild(done);}
     line.appendChild(bubble);return line;
   }
-  async function loadMessengerConversation(inquiryId,initial=false){
+  function showNewlySavedConversationMessage(){
+    if(!conversationFocusMessageId)return;
+    const id=String(conversationFocusMessageId);
+    const match=Array.from(conversationList.querySelectorAll('[data-conversation-message-id]')).find(node=>node.dataset.conversationMessageId===id);
+    if(!match)return;
+    const viewport=conversationList.getBoundingClientRect(),row=match.getBoundingClientRect();
+    conversationList.scrollTop+=row.top-viewport.top-(conversationList.clientHeight-row.height)/2;
+    match.classList.add('journey-message-just-saved');
+    conversationFocusMessageId=0;
+  }
+  async function loadMessengerConversation(inquiryId,initial=false,focusMessageId=0){
+    if(focusMessageId)conversationFocusMessageId=Number(focusMessageId)||0;
     if(conversationLoading)return;
     const request=++conversationRequest;conversationLoading=true;
     if(initial){setJourneyRightView('conversation');conversationNotice('Loading conversation…');}
@@ -512,7 +524,7 @@ function initJourneyPanel(){
         ...forms.map(item=>({kind:'form',item,timestamp:Number(item.submitted_at||item.created_at)||0}))
       ].sort((a,b)=>a.timestamp-b.timestamp);
       const fingerprint=JSON.stringify(timeline.map(({kind,item,timestamp})=>kind==='form'?[kind,item.id,item.status,timestamp]:[kind,item.id,item.message_id,item.message_text,item.direction,timestamp]));
-      if(fingerprint===conversationFingerprint)return;
+      if(fingerprint===conversationFingerprint){showNewlySavedConversationMessage();return;}
       conversationFingerprint=fingerprint;
       if(!timeline.length){conversationNotice('No conversation messages or parent forms recorded yet.');return;}
       const nearBottom=conversationList.scrollHeight-conversationList.scrollTop-conversationList.clientHeight<70,previousScroll=conversationList.scrollTop;
@@ -520,7 +532,7 @@ function initJourneyPanel(){
       timeline.forEach(({kind,item})=>{
         if(kind==='form'){fragment.appendChild(renderParentSubmission(item));return;}
         const outgoing=item.direction==='outbound'||item.direction==='outgoing';
-        const line=document.createElement('div');line.className='journey-message-row '+(outgoing?'outgoing':'incoming');
+        const line=document.createElement('div');line.className='journey-message-row '+(outgoing?'outgoing':'incoming');line.dataset.conversationMessageId=String(item.id);
         const bubble=document.createElement('div');bubble.className='journey-message-bubble';
         const body=document.createElement('div');body.className='journey-message-text';body.textContent=item.message_text||'Message without text';
         const meta=document.createElement('div');meta.className='journey-message-meta';
@@ -535,6 +547,7 @@ function initJourneyPanel(){
       });
       conversationList.replaceChildren(fragment);
       conversationList.scrollTop=initial||nearBottom?conversationList.scrollHeight:previousScroll;
+      showNewlySavedConversationMessage();
     }catch(error){if(request===conversationRequest&&initial)conversationNotice('Unable to load Messenger conversation. Please reopen this inquiry.');}
     finally{conversationLoading=false;}
   }
