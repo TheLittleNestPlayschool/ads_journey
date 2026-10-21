@@ -183,7 +183,7 @@ function initJourneyPanel(){
     try{messageTimestamp=originalMessageTimestamp();}catch(error){manualStatus.textContent=error.message;return;}
     manualSaving=true;manualSave.disabled=true;manualSave.textContent='Saving…';manualStatus.textContent='';
     try{
-      const response=await fetch(API+'/ad_messenger_manual_receive',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({...{ad_inquiry_id:inquiryId,message_text:message},...(messageTimestamp===null?{}:{message_timestamp:messageTimestamp})})});
+      const response=await fetch(API+'/ad_messenger_manual_receive',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_inquiry_id:inquiryId,message_text:message,...(messageTimestamp===null?{}:{message_timestamp:messageTimestamp})})});
       const result=await response.json().catch(()=>({}));
       if(!response.ok||!result.message?.id)throw new Error(result.message?.message||result.error||'Unable to save the parent message');
       if(conversationInquiryId===inquiryId&&Number(demo.journeyId)===journeyId){
