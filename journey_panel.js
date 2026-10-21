@@ -158,7 +158,7 @@ function initJourneyPanel(){
     const hour=hour12%12+(parsed[3].toUpperCase()==='PM'?12:0);
     const [year,month,day]=date.split('-').map(Number);
     const at=Date.UTC(year,month-1,day,hour,minute)-8*60*60*1000;
-    if(!Number.isFinite(at)||new Date(at+8*60*60*1000).toISOString().slice(0,16)!==date+'T'+time)throw Error('Enter a valid date and time.');
+    if(!Number.isFinite(at)||new Date(at+8*60*60*1000).toISOString().slice(0,16)!==date+'T'+String(hour).padStart(2,'0')+':'+String(minute).padStart(2,'0'))throw Error('Enter a valid date and time.');
     if(at>Date.now()+60000)throw Error('Message date/time cannot be in the future.');
     return at;
   }
