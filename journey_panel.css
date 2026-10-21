@@ -767,3 +767,13 @@ body:has(#journeyPanel.open){overflow:hidden}
 .parent-confirmation-block{margin:9px 0;padding:15px;border:1px solid #e4cc9e;border-radius:11px;background:#fff8e9;color:#684d22;display:grid;gap:10px}
 .parent-confirmation-block[hidden]{display:none}
 .parent-confirmation-block strong{font-size:14px}.parent-confirmation-block p{font-size:12px;line-height:1.5;margin:0}.parent-confirmation-block small{font-size:11px}
+
+/*   Optional original message date/time for manual Messenger backfill */
+.journey-manual-time-toggle{display:flex;align-items:center;gap:7px;width:max-content;max-width:100%;font-size:10px;font-weight:700;color:#435f6a;cursor:pointer;text-transform:none!important;letter-spacing:normal!important}
+.journey-manual-time-toggle input[type="checkbox"]{width:14px;height:14px;margin:0;accent-color:#447c70;cursor:pointer;flex:none}
+.journey-manual-time-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;background:#edf5f2;border:1px solid #c6dad2;border-radius:8px;padding:8px 10px}
+.journey-manual-time-fields[hidden]{display:none!important}
+.journey-manual-time-fields label{display:flex;flex-direction:column;gap:4px;font-size:10px;font-weight:700;color:#41586a}
+.journey-manual-time-fields input{min-width:0;width:100%;box-sizing:border-box;min-height:32px;border-radius:6px;border:1px solid #adbac0;background:#fff;padding:5px 7px;font-size:11px;color:#243747}
+.journey-manual-time-fields input:focus{outline:2px solid rgba(68,124,112,.35);outline-offset:1px}
+.journey-manual-time-fields small{grid-column:1/-1;font-size:9px;line-height:1.4;color:#526974}
