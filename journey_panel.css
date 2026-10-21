@@ -780,3 +780,8 @@ body:has(#journeyPanel.open){overflow:hidden}
 
 /*   Show original sent time and later audit entry time without crowding the message */
 .journey-message-recorded{display:block;margin-top:2px;color:#74828c;font-size:9px;font-weight:400}
+
+/*   Briefly locate a newly saved message at its actual chronological position */
+@keyframes journey-conversation-saved-focus{0%,40%{box-shadow:0 0 0 3px rgba(76,135,115,.34)}100%{box-shadow:0 0 0 0 rgba(76,135,115,0)}}
+.journey-message-just-saved .journey-message-bubble{animation:journey-conversation-saved-focus 3.4s ease-out}
+@media(prefers-reduced-motion:reduce){.journey-message-just-saved .journey-message-bubble{animation:none;outline:2px solid rgba(76,135,115,.38)}}
