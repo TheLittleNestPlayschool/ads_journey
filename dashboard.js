@@ -354,15 +354,33 @@ async function openAttentionJourney(detail){
   const journeyId=Number(detail.journeyId)||0,franchiseId=Number(detail.franchiseId)||0;
   if(!journeyId)return;
   closeDashboardModals();
-  let card=document.querySelector('.journey-card[data-journey-id="'+CSS.escape(String(journeyId))+'"]');
+  const findCard=()=>document.querySelector('.journey-card[data-journey-id="'+CSS.escape(String(journeyId))+'"]');
+  let card=findCard();
   if(card){card.click();return;}
-  if(franchiseId&&!selectedFranchiseIds.has(franchiseId))return;
+  if(franchiseId&&!selectedFranchiseIds.has(franchiseId)){
+    selectedFranchiseIds.add(franchiseId);saveSelection();renderFranchiseList();updateFilterLabel();syncUsageFranchiseSelection('attention_open',franchiseId,true);
+  }
   await loadBoard();
-  card=document.querySelector('.journey-card[data-journey-id="'+CSS.escape(String(journeyId))+'"]');
+  card=findCard();
   if(card){card.click();return;}
+  if(typeof window.openStage1BJourney==='function'&&await window.openStage1BJourney(journeyId))return;
   openDashboardModal('journeySearchModal');
-  journeySearchInput.value=String(detail.inquiryId||journeyId);
-  journeySearchResults.innerHTML='<div class="search-empty">This Journey is not currently on the active board. Search by the parent name to view its record.</div>';
+  journeySearchInput.value='';
+  journeySearchResults.innerHTML='<div class="search-empty">Checking Journey #'+journeyId+'...</div>';
+  try{
+    const response=await fetch(`${API_BASE_URL}${DETAIL_ENDPOINT}?journey_id=${encodeURIComponent(journeyId)}`,{headers:{Authorization:`Bearer ${token}`}});
+    if(response.status===401){logout();return;}
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw Error(data.message||data.error||'Journey details unavailable');
+    const journey=data.journey||{},inquiry=data.inquiry||{};
+    const name=String(inquiry.facebook_name||detail.parentName||'').trim();
+    const stage=titleCase(journey.current_stage||'Unknown'),status=titleCase(journey.current_status||'Unknown');
+    journeySearchInput.value=name;
+    journeySearchResults.innerHTML='<div class="search-empty">Journey #'+escapeHtml(String(journeyId))+' ('+escapeHtml(name||'Parent name unavailable')+') is currently '+escapeHtml(stage)+' · '+escapeHtml(status)+'. The submitted form remains in Needs Attention until a schedule is saved. '+(name?'Use Search to view this record.':'Check the journey state in Xano.')+'</div>';
+    if(name)await runJourneySearch('attention_lookup');
+  }catch(error){
+    journeySearchResults.innerHTML='<div class="search-empty">Unable to retrieve Journey #'+escapeHtml(String(journeyId))+': '+escapeHtml(error.message)+'. The attention alert has not been cleared.</div>';
+  }
 }
 async function openExistingJourney(detail){
   const query=String(detail.query||'').trim();if(!query)return;
