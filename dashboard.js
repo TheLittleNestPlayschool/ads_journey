@@ -363,7 +363,7 @@ async function openAttentionJourney(detail){
   await loadBoard();
   card=findCard();
   if(card){card.click();return;}
-  if(typeof window.openStage1BJourney==='function'&&await window.openStage1BJourney(journeyId))return;
+  if(typeof window.openStage1BJourney==='function'&&await window.openStage1BJourney(journeyId,{fromAttention:true}))return;
   openDashboardModal('journeySearchModal');
   journeySearchInput.value='';
   journeySearchResults.innerHTML='<div class="search-empty">Checking Journey #'+journeyId+'...</div>';
