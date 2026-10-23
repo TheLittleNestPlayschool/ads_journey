@@ -123,7 +123,7 @@ return divider+'<div class="reengagement-item journey-card reengagement-card '+(
 }
 button.addEventListener('click',async()=>{await releaseLock();showQueueNotice('');modal.style.display='flex';modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();if(typeof openDashboardModal==='function')openDashboardModal('reengagementModal');else{modal.hidden=false;document.getElementById('dashboardModalBackdrop').hidden=false;}await refresh();});
 /*   Allow global Journey Search to open an active Stage 1B record directly*/
-window.openStage1BJourney=async journeyId=>{
+window.openStage1BJourney=async (journeyId,options={})=>{
 const id=Number(journeyId)||0;if(!id)return false;
 await refresh();
 const record=records.find(r=>Number(r.id)===id);
@@ -132,6 +132,7 @@ await releaseLock();
 modal.style.display='flex';modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();
 if(typeof openDashboardModal==='function')openDashboardModal('reengagementModal');else{modal.hidden=false;document.getElementById('dashboardModalBackdrop').hidden=false;}
 await showRecord(record);
+if(options.fromAttention){const action=detail.querySelector('[data-re-reactivate]');if(action)action.textContent='Reactivate to Schedule';const note=detail.querySelector('#reSendStatus');if(note)note.textContent='A parent form is waiting. Reactivate to Stage 1A to schedule the visit or free trial. The attention alert clears only after Save Schedule.';}
 return true;
 };
 body.addEventListener('click',event=>{const btn=event.target.closest('[data-re-id]');if(!btn)return;const record=records.find(r=>String(r.id)===btn.dataset.reId);if(!record)return;showRecord(record);});
