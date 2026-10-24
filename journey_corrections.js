@@ -35,7 +35,7 @@
   const hasControl=()=>panel.dataset.lockOwned==='true';
   const pretty=at=>new Date(Number(at)).toLocaleString('en-US',{timeZone:'Asia/Manila',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
   async function request(endpoint,body=null){
-    const response=await fetch(API+'/'+endpoint+(body?'':'?'),{method:body?'POST':'GET',headers:{Authorization:'Bearer '+token(),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
+    const response=await fetch(API+'/'+endpoint,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+token(),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});
     const result=await response.json().catch(()=>({}));
     if(!response.ok||body&&result.success!==true){
       if(response.status===404)throw Error('The correction endpoint has not been created in Xano yet.');
@@ -135,7 +135,7 @@
     }catch(e){error.textContent=e.message||'Correction failed.';}
     finally{pending=false;save.disabled=false;del.disabled=false;}
   }
-  field('journeyEditOriginalInquiry').addEventListener('click',()=>{if(originalInquiryAt&&originalInquiryId===currentInquiry())begin('inquiry');});
+  document.getElementById('journeyEditOriginalInquiry').addEventListener('click',()=>{if(originalInquiryAt&&originalInquiryId===currentInquiry())begin('inquiry');});
   field('journeyRecordCorrectionCancel').addEventListener('click',close);
   form.addEventListener('submit',e=>{e.preventDefault();submitCorrection('update');});
   del.addEventListener('click',()=>{
