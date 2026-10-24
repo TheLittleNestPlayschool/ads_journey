@@ -418,3 +418,4 @@ const inquiryStyle=document.createElement('link');inquiryStyle.rel='stylesheet';
 const inquiryScript=document.createElement('script');inquiryScript.src='inquiry_modal.js?v=20261015-sort-selected';document.body.appendChild(inquiryScript);
 
 
+
