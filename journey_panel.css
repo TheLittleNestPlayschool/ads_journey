@@ -807,3 +807,28 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-time-override-row .journey-time-period:hover{background:#e9f2ef}
 .journey-time-override-row .journey-time-entry input[type="hidden"]{display:none}
 
+/*   Parent Journey correction controls — admin-entered records only*/
+.journey-original-inquiry-correction{display:flex;align-items:center;gap:8px;margin-top:2px;font-size:10px;color:#62727b}
+.journey-original-inquiry-correction[hidden]{display:none!important}
+.journey-original-inquiry-correction button{border:0;background:transparent;padding:0;color:#336f78;font:700 10px Arial,Helvetica,sans-serif;text-decoration:underline;cursor:pointer}
+.journey-message-bubble{position:relative}
+.journey-record-correct-button{float:right;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;background:rgba(255,255,255,.62);color:#526b75;border-radius:6px;width:25px;height:24px;padding:0;margin:-4px -7px 4px 7px;font-size:18px;line-height:1;cursor:pointer}
+.journey-record-correct-button:hover,.journey-record-correct-button:focus-visible{background:#fff;border-color:#b9cbd0;color:#1d4751;outline:none}
+.journey-record-correction-dialog{width:min(460px,calc(100vw - 40px));max-height:calc(100vh - 35px);overflow:auto;box-sizing:border-box;border:1px solid #d1d7d6;border-radius:13px;background:#fbfaf7;color:#263b4a;padding:22px;box-shadow:0 20px 55px rgba(0,18,33,.28);font-family:Arial,Helvetica,sans-serif}
+.journey-record-correction-dialog h3{font-size:20px;margin:2px 0 8px;color:#253d50}
+.journey-record-correction-help{font-size:12px;line-height:1.5;color:#63727e;margin:0 0 14px}
+.journey-record-correction-dialog label{display:flex;flex-direction:column;gap:5px;margin:0 0 12px;font-size:11px;font-weight:700;color:#435d67}
+.journey-record-correction-dialog label[hidden]{display:none!important}
+.journey-record-correction-dialog textarea,.journey-record-correction-dialog input,.journey-record-correction-dialog select{font:12px Arial,Helvetica,sans-serif;color:#2a4250;background:#fff;border:1px solid #bdcad0;border-radius:7px;box-sizing:border-box;padding:8px;min-height:36px}
+.journey-record-correction-dialog label>textarea,.journey-record-correction-dialog label>input,.journey-record-correction-dialog label>select{width:100%}
+.journey-record-correction-dialog textarea{resize:vertical;min-height:115px;line-height:1.55}
+.journey-record-correction-clock{display:flex;align-items:center;gap:9px}
+.journey-record-correction-clock input{max-width:66px;text-align:center}
+.journey-record-correction-clock select{width:80px}
+.journey-record-correction-error{min-height:14px;margin:0 0 8px;color:#a43b36;font-size:11px;line-height:1.4}
+.journey-record-correction-actions{display:flex;align-items:center;gap:9px}
+.journey-record-correction-actions button{border:1px solid #bacbd2;background:#fff;color:#375465;min-height:35px;border-radius:8px;padding:7px 12px;font:700 11px Arial,Helvetica,sans-serif;cursor:pointer}
+.journey-record-correction-actions button:disabled{opacity:.5;cursor:not-allowed}
+.journey-record-correction-actions .journey-record-correction-save{background:#385f61;border-color:#385f61;color:#fff}
+.journey-record-correction-actions .journey-record-correction-delete{border-color:#d8b3ad;color:#9b3d34;background:#fff5f3}
+.journey-record-correction-spacer{flex:1}
