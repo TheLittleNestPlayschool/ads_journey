@@ -832,3 +832,4 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-record-correction-actions .journey-record-correction-save{background:#385f61;border-color:#385f61;color:#fff}
 .journey-record-correction-actions .journey-record-correction-delete{border-color:#d8b3ad;color:#9b3d34;background:#fff5f3}
 .journey-record-correction-spacer{flex:1}
+
