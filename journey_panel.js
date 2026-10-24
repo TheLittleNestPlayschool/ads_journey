@@ -1178,3 +1178,4 @@ function initJourneyPanel(){
   function formatDateTime(value){const timestamp=Number(value)||0;if(!timestamp)return'—';const date=new Date(timestamp);return`${date.toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'})} · ${date.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`;}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initJourneyPanel);else initJourneyPanel();
+
