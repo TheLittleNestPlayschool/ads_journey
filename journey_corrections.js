@@ -153,3 +153,4 @@
   new MutationObserver(onPanelChange).observe(panel,{attributes:true,attributeFilter:['class','data-journey-id','data-inquiry-id']});
   onPanelChange();addMessageActions();
 })();
+
