@@ -43,7 +43,7 @@ const today=new Date(+tp.year,+tp.month-1,+tp.day);let chosen=new Date(today),mo
 const key=d=>[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
 const itemKey=(d,id)=>key(d)+'|'+id;
 const list=v=>Array.isArray(v)?v:(v?.items||v?.records||v?.franchises||v?.franchise||[]);
-const daySessions=d=>sessions.filter(s=>s.scheduled_days?.some(n=>String(n).toLowerCase()===dnames[d.getDay()].toLowerCase())).sort((a,b)=>String(a.start_time_slot).localeCompare(String(b.start_time_slot)));
+const daySessions=d=>{const eligible=sessions.filter(s=>s.scheduled_days?.some(n=>String(n).toLowerCase()===dnames[d.getDay()].toLowerCase()));eligible.sort((a,b)=>(String(b.description||'').toLowerCase()==='full session')-(String(a.description||'').toLowerCase()==='full session')||(b.scheduled_days?.length||0)-(a.scheduled_days?.length||0));const slots=new Map();for(const s of eligible){const slot=String(s.start_time_slot)+'|'+String(s.end_time_slot);if(!slots.has(slot))slots.set(slot,s)}return [...slots.values()].sort((a,b)=>String(a.start_time_slot).localeCompare(String(b.start_time_slot)))};
 const get=(d,id)=>edited.get(itemKey(d,id))||records.get(itemKey(d,id));
 const changedDate=()=>[...edited.keys()].some(k=>k.startsWith(key(chosen)+'|'));
 const dirty=()=>edited.size>0;
