@@ -272,7 +272,7 @@ function initJourneyPanel(){
       replyTemplateId=newTemplate?Number(data.selected_template.id):0;replyQuestionId=newTemplate?0:Number(preferred.id);
       replyLanguage.value='taglish';renderReplyLanguageButton();
       replyMatchLabel.textContent=newTemplate?(data.selected_template.template_name||preferred.intent_name||('Template #'+replyTemplateId)):(preferred.question_label||('Reply #'+preferred.id));
-      replyEditor.value=replyPlainText(data.response_text);replyTaglishDraft=replyEditor.value;replyEnglishDraft=newTemplate?replyEnglishFromTemplate(data.selected_template,data.response_text):'';
+      replyEditor.value=replyPlainText(data.response_text);replyTaglishDraft=replyEditor.value;replyEnglishDraft=newTemplate?replyEnglishFromTemplate(data.selected_template,data.response_text):replyEnglishFromTemplate({taglish_text:preferred.taglish_format,english_text:preferred.english_format},data.response_text);
       replyStatus.textContent=(newTemplate?'New response library':'Saved reply library')+' · Review and edit before copying';
     }else{
       replyQuestionId=0;replyTemplateId=0;replyEditor.value='';
@@ -351,7 +351,7 @@ function initJourneyPanel(){
     }catch(e){replyStatus.textContent=e.message||'Could not prepare the form link. No link was sent.';}
     finally{parentFormLinkLoading=false;replyOnlineForm.disabled=false;replyOnlineForm.textContent='Parent Form Link';}
   });
-  replyEditor.addEventListener('input',()=>{if(replyQuickFormActive)replyQuickFormDrafts[replyLanguage.value]=replyEditor.value;if(replyTemplateId&&!replyManualMode){if(replyLanguage.value==='english')replyEnglishDraft=replyEditor.value;else replyTaglishDraft=replyEditor.value;}updateReplyButton();});
+  replyEditor.addEventListener('input',()=>{if(replyQuickFormActive)replyQuickFormDrafts[replyLanguage.value]=replyEditor.value;if((replyTemplateId||replyQuestionId)&&!replyManualMode){if(replyLanguage.value==='english')replyEnglishDraft=replyEditor.value;else replyTaglishDraft=replyEditor.value;}updateReplyButton();});
   replyLanguage.addEventListener('click',()=>{
     if(replySending)return;
     const before=replyLanguage.value,after=before==='english'?'taglish':'english';
@@ -363,7 +363,7 @@ function initJourneyPanel(){
       replyLanguage.value=after;renderReplyLanguageButton();replyEditor.value=translation;replyStatus.textContent='Review and edit before copying';updateReplyButton();return;
     }
     replyLanguage.value=after;renderReplyLanguageButton();
-    if(replyQuestionId){const chosen=replyMatches.concat(replyQuestions).find(q=>Number(q.id)===replyQuestionId)||{id:replyQuestionId,question_label:replyMatchLabel.textContent};loadReplyPreview(chosen);}
+    if(replyQuestionId){const translation=after==='english'?replyEnglishDraft:replyTaglishDraft;if(translation){replyEditor.value=translation;replyStatus.textContent='Review and edit before copying';updateReplyButton();}else{const chosen=replyMatches.concat(replyQuestions).find(q=>Number(q.id)===replyQuestionId)||{id:replyQuestionId,question_label:replyMatchLabel.textContent};loadReplyPreview(chosen);}}
   });
   replyCopyRecord.addEventListener('click',async()=>{
     const message=replyEditor.value.trim(),questionId=replyQuestionId,templateId=replyTemplateId,language=replyLanguage.value,journeyId=Number(demo.journeyId)||0,inquiryId=conversationInquiryId;
