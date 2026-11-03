@@ -189,6 +189,7 @@ const data=await response.json();if(!Array.isArray(data?.pending_updates))throw 
 if(request!==activeRequest)return;badge.hidden=data.pending_updates.length===0;badge.textContent=String(data.pending_updates.length);badge.title=data.pending_updates.length+' calendar submissions pending';
 }catch(error){if(request===activeRequest){badge.hidden=false;badge.textContent='!';badge.title='Unable to check pending calendar updates'}}}
 window.refreshCalendarPending=refreshCalendarPending;
+window.addEventListener('message',event=>{if(event.origin===location.origin&&event.data?.type==='ads-calendar-pending-changed')refreshCalendarPending()});
 refreshCalendarPending();
 setInterval(()=>{if(!document.hidden)refreshCalendarPending()},45000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCalendarPending()});
