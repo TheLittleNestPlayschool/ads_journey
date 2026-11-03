@@ -89,18 +89,21 @@ function initJourneyPanel(){
   const assistance=document.createElement('aside');
   assistance.className='journey-assistance';
   assistance.setAttribute('aria-label','Reply assistance');
-  assistance.innerHTML=`<div class="journey-assistance-head"><h3>Reply Assistance</h3></div>
+  assistance.innerHTML=`<div class="journey-assistance-head"><h3>Reply Assistant</h3></div>
   <div class="journey-assistance-body">
     <section class="journey-assistance-section journey-assistance-editor-section">
       <div class="journey-reply-heading"><div class="journey-reply-heading-main"><h4 id="journeyReplyModeLabel">Suggested reply</h4><button id="journeyReplyWriteOwn" class="journey-reply-own-toggle journey-reply-toggle" type="button" aria-pressed="false">Write my own</button></div><div class="journey-reply-emoji-wrap"><button id="journeyReplyEmojiToggle" class="journey-reply-emoji-toggle" type="button" aria-label="Insert emoji" aria-expanded="false" aria-controls="journeyReplyEmojiMenu" title="Add emoji">😊 <span aria-hidden="true">▾</span></button><div id="journeyReplyEmojiMenu" class="journey-reply-emoji-menu" role="group" aria-label="Choose an emoji" hidden><button type="button" data-emoji="😊" aria-label="Smiling face">😊</button><button type="button" data-emoji="❤️" aria-label="Red heart">❤️</button><button type="button" data-emoji="🥰" aria-label="Smiling face with hearts">🥰</button><button type="button" data-emoji="👍" aria-label="Thumbs up">👍</button><button type="button" data-emoji="🎉" aria-label="Celebration">🎉</button></div></div><button id="journeyReplyLanguage" class="journey-reply-toggle journey-reply-language-toggle" type="button" value="taglish">Taglish</button></div>
       <p id="journeyReplyMatchLabel" class="journey-reply-match-label"></p>
       <textarea id="journeyAssistanceReplyText" rows="8" maxlength="3000" placeholder="" aria-label="Editable reply to parent"></textarea>
-      <div class="journey-time-override-row" role="group" aria-label="Outgoing message original time"><span class="journey-time-override-label" title="Leave blank to use current time">Use Other Date and Time</span><input id="journeyReplyOriginalDate" type="date" aria-label="Outgoing message date"><span class="journey-time-entry"><input id="journeyReplyOriginalHour" type="text" inputmode="numeric" maxlength="2" placeholder="Hr" aria-label="Hour 1 to 12"><span class="journey-time-colon">:</span><input id="journeyReplyOriginalMinute" type="text" inputmode="numeric" maxlength="2" placeholder="Min" aria-label="Minute 0 to 59"><button id="journeyReplyOriginalPeriod" type="button" class="journey-time-period" aria-label="Toggle AM PM" aria-pressed="false">AM</button><input id="journeyReplyOriginalTime" type="hidden"></span><button id="journeyReplyTimeClear" type="button" class="journey-time-clear" title="Clear date/time to use now" aria-label="Clear outgoing date and time">×</button></div>
+      <p class="journey-reply-editor-hint">Approved suggestions appear after saving a parent message. Review or edit before sending.</p>
+      <details id="journeyReplyTimeDetails" class="journey-reply-time-details"><summary>Use original date &amp; time <span>For messages entered later</span></summary>
+        <div class="journey-time-override-row" role="group" aria-label="Outgoing message original time"><input id="journeyReplyOriginalDate" type="date" aria-label="Outgoing message date"><span class="journey-time-entry"><input id="journeyReplyOriginalHour" type="text" inputmode="numeric" maxlength="2" placeholder="Hr" aria-label="Hour 1 to 12"><span class="journey-time-colon">:</span><input id="journeyReplyOriginalMinute" type="text" inputmode="numeric" maxlength="2" placeholder="Min" aria-label="Minute 0 to 59"><button id="journeyReplyOriginalPeriod" type="button" class="journey-time-period" aria-label="Toggle AM PM" aria-pressed="false">AM</button><input id="journeyReplyOriginalTime" type="hidden"></span><button id="journeyReplyTimeClear" type="button" class="journey-time-clear" title="Clear date/time to use now" aria-label="Clear outgoing date and time">×</button></div>
+      </details>
       <button id="journeyReplyCopyRecord" class="journey-primary journey-reply-copy-record" type="button" disabled>Copy &amp; Record Sent</button>
       <p id="journeyReplyAssistStatus" class="journey-reply-assist-status" role="status"></p>
     </section>
-    <section class="journey-reply-hidden-alternatives" hidden><div id="journeyReplyAlternatives"></div></section>
-    <section class="journey-assistance-section journey-reply-library"><div class="journey-reply-library-title"><h4>Search saved replies</h4><button id="journeyReplyQuickForm" class="journey-reply-quick-form" type="button" title="Existing text form for Messenger">Text Form</button><button id="journeyReplyOnlineForm" class="journey-reply-quick-form" type="button" title="Create a private parent information form link">Parent Form Link</button><span id="journeyReplySearchCount"></span></div><input id="journeyReplySearch" class="journey-reply-search" type="search" placeholder="Search tuition, schedule, location…" aria-label="Search saved replies"><div id="journeyReplyTopics" class="journey-reply-topics"><button type="button" data-topic="tuition">Tuition</button><button type="button" data-topic="schedule">Schedule</button><button type="button" data-topic="location">Location</button><button type="button" data-topic="trial">Free trial</button></div><div id="journeyReplySearchResults" class="journey-reply-options"></div></section>
+    <section class="journey-assistance-section journey-reply-actions"><h4>Parent details</h4><button id="journeyReplyOnlineForm" class="journey-reply-quick-form" type="button" title="Create a private parent information form link">Parent Form Link</button></section>
+    <section class="journey-assistance-section journey-reply-library"><button id="journeyReplyChoose" class="journey-reply-choose" type="button" aria-expanded="false" aria-controls="journeyReplyLibraryContent">Choose another approved reply <span aria-hidden="true">▾</span></button><div id="journeyReplyLibraryContent" hidden><div class="journey-reply-library-title"><h4>Saved replies</h4><span id="journeyReplySearchCount"></span></div><input id="journeyReplySearch" class="journey-reply-search" type="search" placeholder="Search approved replies…" aria-label="Search saved replies"><div id="journeyReplySearchResults" class="journey-reply-options"></div><div id="journeyReplyAlternatives" class="journey-reply-options"></div></div></section>
   </div>`;
   document.getElementById('journeyPanel').appendChild(assistance);
   /*   conversation and journey history switcher*/
@@ -203,7 +206,7 @@ function initJourneyPanel(){
     finally{manualSaving=false;manualSave.disabled=false;manualSave.textContent='Save Parent Message';}
   });
   /*   reply assistance: approved matches, editable draft, and one-action copy + record*/
-  const replyEditor=document.getElementById('journeyAssistanceReplyText'),replyStatus=document.getElementById('journeyReplyAssistStatus'),replyCopyRecord=document.getElementById('journeyReplyCopyRecord'),replyMatchLabel=document.getElementById('journeyReplyMatchLabel'),replyLanguage=document.getElementById('journeyReplyLanguage'),replyAlternatives=document.getElementById('journeyReplyAlternatives'),replySearch=document.getElementById('journeyReplySearch'),replySearchResults=document.getElementById('journeyReplySearchResults'),replyModeLabel=document.getElementById('journeyReplyModeLabel'),replyWriteOwn=document.getElementById('journeyReplyWriteOwn'),replyEmojiToggle=document.getElementById('journeyReplyEmojiToggle'),replyEmojiMenu=document.getElementById('journeyReplyEmojiMenu'),replyQuickForm=document.getElementById('journeyReplyQuickForm'),replyOnlineForm=document.getElementById('journeyReplyOnlineForm');
+  const replyEditor=document.getElementById('journeyAssistanceReplyText'),replyStatus=document.getElementById('journeyReplyAssistStatus'),replyCopyRecord=document.getElementById('journeyReplyCopyRecord'),replyMatchLabel=document.getElementById('journeyReplyMatchLabel'),replyLanguage=document.getElementById('journeyReplyLanguage'),replyAlternatives=document.getElementById('journeyReplyAlternatives'),replySearch=document.getElementById('journeyReplySearch'),replySearchResults=document.getElementById('journeyReplySearchResults'),replyModeLabel=document.getElementById('journeyReplyModeLabel'),replyWriteOwn=document.getElementById('journeyReplyWriteOwn'),replyEmojiToggle=document.getElementById('journeyReplyEmojiToggle'),replyEmojiMenu=document.getElementById('journeyReplyEmojiMenu'),replyOnlineForm=document.getElementById('journeyReplyOnlineForm');
   /*   Outgoing historical times await Xano's ad_reply_record_sent timestamp support */
   const outgoingTimestampEnabled=true;
   const replyOriginalDate=document.getElementById('journeyReplyOriginalDate'),replyOriginalTime=document.getElementById('journeyReplyOriginalTime');
@@ -233,7 +236,7 @@ function initJourneyPanel(){
   }
   function resetReplyAssistance(){
     replyEmojiRange=null;closeReplyEmojiMenu();
-    replySession++;replyPreviewRequest++;replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replyMatches=[];replySending=false;replyManualMode=false;replySavedSuggestion=null;replyEditor.value='';replyLanguage.value='taglish';renderReplyLanguageButton();replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='';replyStatus.textContent='';resetReplyTimestamp();replyCopyRecord.textContent='Copy & Record Sent';replySearch.value='';showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
+    replySession++;replyPreviewRequest++;replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replyMatches=[];replySending=false;replyManualMode=false;replySavedSuggestion=null;replyEditor.value='';replyLanguage.value='taglish';renderReplyLanguageButton();replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='';replyStatus.textContent='';resetReplyTimestamp();replyCopyRecord.textContent='Copy & Record Sent';replySearch.value='';replyLibraryContent.hidden=true;replyChoose.setAttribute('aria-expanded','false');showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();
   }
   function createReplyChoice(question){
     const button=document.createElement('button');button.type='button';button.className='journey-reply-choice';button.textContent=question.question_label||('Reply #'+question.id);
@@ -247,9 +250,8 @@ function initJourneyPanel(){
     alternatives.forEach(q=>replyAlternatives.appendChild(createReplyChoice(q)));
   }
   function renderReplySearch(){
-    const count=document.getElementById('journeyReplySearchCount'),topics=document.getElementById('journeyReplyTopics');
+    const count=document.getElementById('journeyReplySearchCount');
     replySearchResults.replaceChildren();const query=replySearch.value.trim().toLowerCase(),words=query.split(/\s+/).filter(Boolean);
-    topics.hidden=Boolean(query);
     if(!replyQuestionsLoaded){count.textContent='';const item=document.createElement('span');item.className='journey-assistance-muted';item.textContent=replyQuestionsLoading?'Loading saved replies…':'Saved replies unavailable';replySearchResults.appendChild(item);return;}
     const results=words.length?replyQuestions.filter(q=>{const value=[q.question_label,q.search_keywords,q.admin_action_notes].join(' ').toLowerCase();return words.every(word=>value.includes(word));}):replyMatches.filter(q=>Number(q.id)!==replyQuestionId);
     count.textContent=words.length?results.length+' found':results.length?'Related replies':'';
@@ -297,7 +299,7 @@ function initJourneyPanel(){
       replyStatus.textContent=(newTemplate?'New response library':'Saved reply library')+' · Review and edit before copying';
     }else{
       replyQuestionId=0;replyTemplateId=0;replyEditor.value='';
-      replyMatchLabel.textContent='No automatic match · Search a saved reply below';replyStatus.textContent='';
+      replyMatchLabel.textContent='No automatic match · Choose an approved reply or write your own';replyStatus.textContent='';
     }
     renderReplyOptions();renderReplySearch();updateReplyButton();
   }
@@ -344,25 +346,6 @@ function initJourneyPanel(){
   });
   document.addEventListener('click',event=>{if(!replyEmojiMenu.hidden&&!event.target.closest('.journey-reply-emoji-wrap'))closeReplyEmojiMenu();});
   document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!replyEmojiMenu.hidden){event.stopPropagation();closeReplyEmojiMenu();replyEmojiToggle.focus();}});
-  /*   Easy parent reply: one answer per line, no copying of a blank form*/
-  function parentDetailsRequest(language,kind){
-    const appointment=kind==='trial'?'free trial':'visit';
-    if(language==='english')return 'Hi! 😊 To help us arrange your '+appointment+', please send these details:\n\n1. Parent’s name\n2. Address and city\n3. Child’s name\n4. Child’s age (years or months)\n5. Preferred '+appointment+' date and time (if known)\n\nJust reply with your answers in the same order, one per line. There’s no need to copy this message. Thank you! ❤️';
-    return 'Hi po! 😊 Para ma-arrange namin ang inyong '+appointment+', paki-send lang po ng details:\n\n1. Parent’s name\n2. Address at city\n3. Child’s name\n4. Age ni little one (years or months)\n5. Preferred '+appointment+' date at time (if known)\n\nReply lang po ng answers in the same order, one per line. No need i-copy itong message. Salamat po! ❤️';
-  }
-  replyQuickForm.addEventListener('click',()=>{
-    if(replySending||!demo.journeyId)return;
-    if(replyEditor.value.trim()&&!replyQuickFormActive&&!window.confirm('Replace the current unsent reply with the parent information request?'))return;
-    const kind=document.querySelector('input[name="visitType"]:checked')?.value==='trial'?'trial':'visit';
-    if(!replyManualMode&&(replyQuestionId||replyTemplateId)){replySavedSuggestion={id:replyQuestionId,templateId:replyTemplateId,text:replyEditor.value,label:replyMatchLabel.textContent,language:replyLanguage.value};}
-    ++replyPreviewRequest;replyEmojiRange=null;closeReplyEmojiMenu();
-    replyManualMode=true;replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=true;
-    replyQuickFormDrafts={taglish:parentDetailsRequest('taglish',kind),english:parentDetailsRequest('english',kind)};
-    replyEditor.value=replyQuickFormDrafts[replyLanguage.value];
-    replyMatchLabel.textContent='Parent can reply with answers on separate lines — no copying needed';
-    replyStatus.textContent='Review this request, then use Copy & Record Sent';
-    showReplyMode();renderReplyOptions();renderReplySearch();updateReplyButton();replyEditor.focus();
-  });
   /*   Online form links are created only by the authenticated Xano API*/
   function parentFormLinkMessage(language,kind,url){
     const type=kind==='trial'?'free trial':'visit';
@@ -392,8 +375,9 @@ function initJourneyPanel(){
     finally{parentFormLinkLoading=false;replyOnlineForm.disabled=false;replyOnlineForm.textContent='Parent Form Link';}
   });
   replyEditor.addEventListener('input',()=>{if(replyQuickFormActive)replyQuickFormDrafts[replyLanguage.value]=replyEditor.value;if(replyTemplateId&&!replyManualMode){if(replyLanguage.value==='english')replyEnglishDraft=replyEditor.value;else replyTaglishDraft=replyEditor.value;}updateReplyButton();});
+  const replyChoose=document.getElementById('journeyReplyChoose'),replyLibraryContent=document.getElementById('journeyReplyLibraryContent');
+  replyChoose.addEventListener('click',()=>{const expanded=replyChoose.getAttribute('aria-expanded')!=='true';replyChoose.setAttribute('aria-expanded',String(expanded));replyLibraryContent.hidden=!expanded;if(expanded){loadReplyQuestions();replySearch.focus();}});
   replySearch.addEventListener('input',renderReplySearch);
-  document.getElementById('journeyReplyTopics').addEventListener('click',event=>{const button=event.target.closest('button[data-topic]');if(!button)return;replySearch.value=button.dataset.topic;renderReplySearch();replySearch.focus();});
   replyLanguage.addEventListener('click',()=>{
     if(replySending)return;
     const before=replyLanguage.value,after=before==='english'?'taglish':'english';
