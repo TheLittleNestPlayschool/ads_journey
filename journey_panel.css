@@ -877,3 +877,8 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel .journey-reply-alternatives-window{display:flex;flex-direction:column;gap:5px;padding:8px;border:1px solid #d8e0d8;border-radius:9px;background:#f5f7f2}
 .journey-panel .journey-reply-alternatives-window[hidden]{display:none!important}
 .journey-panel .journey-reply-alternatives-window .journey-reply-choice{min-height:29px;padding:6px 9px;font-size:11px}
+
+/*   Alternative Replies uses the same bordered box as Suggested Reply*/
+.journey-panel .journey-reply-library{display:flex!important;flex-direction:column;flex:0 0 auto}
+.journey-panel .journey-reply-alternatives-window{display:flex;flex-direction:column;gap:7px;box-sizing:border-box;width:100%;min-height:145px;max-height:190px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:11px 12px;border:1px solid #c7d5d1;border-radius:9px;background:#fffefa}
+.journey-panel .journey-reply-alternatives-window .journey-reply-choice{background:#fff;border-color:#d8e0db;min-height:36px;padding:9px 10px;line-height:1.45}
