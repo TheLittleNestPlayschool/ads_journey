@@ -863,3 +863,17 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel #journeyReplyLibraryContent{margin-top:10px;padding:10px;border:1px solid #e1e3db;border-radius:9px;background:#fffefa}
 .journey-panel #journeyReplyAlternatives:empty{display:none}
 .journey-panel #journeyReplyAlternatives{margin-top:9px}
+
+/*   fixed Reply Assistant panel with scrolling reply text only*/
+.journey-panel .journey-assistance{min-height:0;overflow:hidden}
+.journey-panel .journey-assistance-body{min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:11px}
+.journey-panel .journey-assistance-editor-section{min-height:0;flex:1 1 auto;display:flex;flex-direction:column;padding-bottom:10px}
+.journey-panel .journey-reply-heading,.journey-panel .journey-reply-match-label,.journey-panel .journey-reply-time-details,.journey-panel .journey-reply-copy-record,.journey-panel .journey-reply-assist-status{flex:0 0 auto}
+.journey-panel #journeyAssistanceReplyText{flex:1 1 auto;min-height:85px;max-height:none;height:auto;resize:none;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain}
+.journey-panel .journey-reply-actions{flex:0 0 auto;padding-bottom:10px}
+.journey-panel .journey-reply-library{flex:0 0 auto;padding:0;border:0}
+.journey-panel .journey-reply-library:has(.journey-reply-alternatives-window[hidden]){display:none}
+.journey-panel .journey-reply-library h4{margin:0 0 7px;font-size:11px;color:#4e625c}
+.journey-panel .journey-reply-alternatives-window{display:flex;flex-direction:column;gap:5px;padding:8px;border:1px solid #d8e0d8;border-radius:9px;background:#f5f7f2}
+.journey-panel .journey-reply-alternatives-window[hidden]{display:none!important}
+.journey-panel .journey-reply-alternatives-window .journey-reply-choice{min-height:29px;padding:6px 9px;font-size:11px}
