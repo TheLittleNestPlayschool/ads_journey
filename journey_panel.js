@@ -198,7 +198,7 @@ function initJourneyPanel(){
       const result=await response.json().catch(()=>({}));
       if(!response.ok||!result.message?.id)throw new Error(result.message?.message||result.error||'Unable to save the parent message');
       if(conversationInquiryId===inquiryId&&Number(demo.journeyId)===journeyId){
-        manualText.value='';resetManualTimestamp();manualStatus.textContent=messageTimestamp===null?'Parent message recorded':'Parent message recorded';if(!replyManualMode||!replyEditor.value.trim())applyResponseMatches(result.response_matches_v2||result.response_matches,result.response_matches);
+        manualText.value='';resetManualTimestamp();manualStatus.textContent=messageTimestamp===null?'Parent message recorded':'Parent message recorded';if(!replyManualMode||!replyEditor.value.trim()){const master=result.response_matches,v2=result.response_matches_v2;const useMaster=Boolean(master?.preferred_match?.id&&master?.response_text);const useV2=Boolean(v2?.preferred_intent?.is_active!==false&&v2?.selected_template?.is_active!==false);applyResponseMatches(useMaster?master:(useV2?v2||master:master),master);}
         conversationFingerprint='';await loadMessengerConversation(inquiryId,false,result.message.id);
       }
     }catch(error){manualStatus.textContent=error.message||'Unable to save the parent message';}
