@@ -882,3 +882,10 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel .journey-reply-library{display:flex!important;flex-direction:column;flex:0 0 auto}
 .journey-panel .journey-reply-alternatives-window{display:flex;flex-direction:column;gap:7px;box-sizing:border-box;width:100%;min-height:145px;max-height:190px;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:11px 12px;border:1px solid #c7d5d1;border-radius:9px;background:#fffefa}
 .journey-panel .journey-reply-alternatives-window .journey-reply-choice{background:#fff;border-color:#d8e0db;min-height:36px;padding:9px 10px;line-height:1.45}
+
+/*   split fixed panel height between suggested and alternative reply boxes*/
+.journey-panel .journey-assistance-editor-section{flex:1 1 57%;min-height:0}
+.journey-panel #journeyAssistanceReplyText{flex:1 1 auto;min-height:110px;max-height:none}
+.journey-panel .journey-reply-library{flex:1 1 32%;min-height:135px;overflow:hidden}
+.journey-panel .journey-reply-alternatives-window,
+.journey-panel #journeyReplyAlternatives:empty{display:flex;flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;background:#fffefa;border:1px solid #c7d5d1;border-radius:9px}
