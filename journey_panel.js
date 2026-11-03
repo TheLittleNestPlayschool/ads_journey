@@ -245,8 +245,7 @@ function initJourneyPanel(){
   function renderReplyOptions(){
     replyAlternatives.replaceChildren();
     const alternatives=replyMatches.filter(q=>Number(q.id)!==replyQuestionId).slice(0,3);
-    if(!alternatives.length){replyAlternatives.hidden=true;return;}
-    replyAlternatives.hidden=false;
+    if(!alternatives.length)return;
     alternatives.forEach(q=>replyAlternatives.appendChild(createReplyChoice(q)));
   }
   async function loadReplyPreview(question){
