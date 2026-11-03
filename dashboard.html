@@ -24,7 +24,7 @@
     <div class="summary-card"><span class="summary-value">0</span><span class="summary-label">Enrolled</span></div>
   </section>
   <div class="topbar-actions">
-    <button id="calendarButton" class="secondary-button" type="button" onclick="const w=document.getElementById('calendarWindow');if(!w.dataset.initialized){w.querySelector('iframe').src='calendar.html?embedded=1&fresh='+Date.now();w.dataset.initialized='1'}w.hidden=false">Calendar</button>
+    <button id="calendarButton" class="secondary-button" type="button" onclick="const w=document.getElementById('calendarWindow');if(!w.dataset.initialized){w.querySelector('iframe').src='calendar.html?embedded=1&fresh='+Date.now();w.dataset.initialized='1'}w.hidden=false;window.refreshCalendarPending?.()">Calendar <span id="calendarPendingCount" class="calendar-pending-badge" hidden></span></button>
     <button id="newInquiryButton" class="secondary-button" type="button">+ New Inquiry</button>
     <button id="reengagementButton" class="secondary-button reengagement-button" type="button">Re-engagement <span id="reengagementDueBadge" class="reengagement-due-badge">0</span></button>
     <button id="journeySearchButton" class="secondary-button" type="button">Search</button>
@@ -166,10 +166,34 @@
 <script src="parent_form_attention.js?v=20261018-franchise-scope"></script>
 <script src="stage2_confirmation_attention.js?v=20261019-handoff-repair"></script>
 <section id="calendarWindow" aria-label="Session Availability Calendar" hidden style="position:fixed;right:12px;top:66px;width:50vw;height:min(540px,calc(100vh - 80px));z-index:130;background:#fffdf9;border:1px solid #ded6ca;border-radius:15px;box-shadow:0 20px 70px rgba(33,28,22,.25);overflow:hidden">
-<div style="height:37px;display:flex;align-items:center;justify-content:space-between;padding:4px 12px;background:#eef2ed;border-bottom:1px solid #ded6ca"><strong style="font-size:12px">Session Availability Calendar</strong><button class="secondary-button" type="button" onclick="document.getElementById('calendarWindow').hidden=true" style="padding:5px 9px">✕ Close</button></div>
+<div style="height:37px;display:flex;align-items:center;justify-content:space-between;padding:4px 12px;background:#eef2ed;border-bottom:1px solid #ded6ca"><strong style="font-size:12px">Session Availability Calendar</strong><button class="secondary-button" type="button" onclick="document.getElementById('calendarWindow').hidden=true;window.refreshCalendarPending?.()" style="padding:5px 9px">✕ Close</button></div>
 <iframe src="calendar.html?embedded=1" title="Session Availability Calendar" style="width:100%;height:calc(100% - 37px);border:0;background:#f4efe7"></iframe>
 </section>
 <style>#calendarWindow[hidden]{display:none!important}</style>
+<style>
+/*   Ads Journey calendar pending submission badge*/
+.calendar-pending-badge{display:inline-flex;align-items:center;justify-content:center;min-width:21px;height:21px;padding:1px 6px;margin-left:5px;background:#b85a43;color:white;border-radius:14px;font-weight:800;font-size:11px;vertical-align:middle}
+.calendar-pending-badge[hidden]{display:none!important}
+</style>
+<script>
+/*   Live pending submissions count for calendar*/
+(function(){
+const badge=document.getElementById('calendarPendingCount');
+let activeRequest=0;
+async function refreshCalendarPending(){
+const token=localStorage.getItem('ads_journey_token');if(!token){badge.hidden=true;return}
+const request=++activeRequest;
+try{const response=await fetch('https://x58r-xped-p4y6.n7e.xano.io/api:izED7dHy/ad_calendar_pending_updates',{headers:{Authorization:'Bearer '+token,Accept:'application/json'}});
+if(!response.ok)throw new Error('Pending count unavailable');
+const data=await response.json();if(!Array.isArray(data?.pending_updates))throw new Error('Invalid pending count');
+if(request!==activeRequest)return;badge.hidden=data.pending_updates.length===0;badge.textContent=String(data.pending_updates.length);badge.title=data.pending_updates.length+' calendar submissions pending';
+}catch(error){if(request===activeRequest){badge.hidden=false;badge.textContent='!';badge.title='Unable to check pending calendar updates'}}}
+window.refreshCalendarPending=refreshCalendarPending;
+refreshCalendarPending();
+setInterval(()=>{if(!document.hidden)refreshCalendarPending()},45000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshCalendarPending()});
+})();
+</script>
 </body>
 </html>
 
