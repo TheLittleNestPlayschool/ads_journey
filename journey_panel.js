@@ -670,8 +670,8 @@ function initJourneyPanel(){
   /*   Stage 4 managed follow-up uses confirmed sends, not ordinary outgoing replies*/
   const stage4FollowUpBlock=document.createElement('div');
   stage4FollowUpBlock.id='stage4FollowUpBlock';stage4FollowUpBlock.className='waiting-block';stage4FollowUpBlock.hidden=true;
-  stage4FollowUpBlock.innerHTML='<span>Managed parent follow-up</span><strong id="stage4FollowUpHeadline"></strong><p id="stage4FollowUpExplanation"></p><div class="handoff-actions"><button id="stage4FollowUpSentButton" class="journey-primary" type="button" hidden>Confirm Follow-up Sent</button></div><p id="stage4FollowUpFeedback" role="status"></p>';
-  document.getElementById('handoffCard').insertBefore(stage4FollowUpBlock,document.getElementById('handoffDetailsToggle'));
+  stage4FollowUpBlock.innerHTML='<span>Managed parent follow-up</span><div><strong id="stage4FollowUpHeadline"></strong><p id="stage4FollowUpExplanation"></p></div><div id="stage4FinalFollowUp" class="waiting-block" hidden><strong id="stage4FinalFollowUpHeadline">Final follow-up</strong><p id="stage4FinalFollowUpExplanation"></p></div><div class="handoff-actions"><button id="stage4FollowUpSentButton" class="journey-primary" type="button" hidden>Confirm Follow-up Sent</button></div><p id="stage4FollowUpFeedback" role="status"></p>';
+  document.getElementById('handoffCard').insertBefore(stage4FollowUpBlock,document.getElementById('parentConfirmationBlock'));
   function setupActionDock(){
     document.getElementById('stage1DockActions').appendChild(document.getElementById('saveScheduleButton'));
     document.getElementById('scheduleActionCard').appendChild(document.getElementById('stage1DockActions'));
@@ -1069,25 +1069,35 @@ function initJourneyPanel(){
   }
   async function loadStage2Detail(render=true){if(!demo.journeyId)return null;try{const response=await fetch(`${API}/ad_journey_detail?journey_id=${encodeURIComponent(demo.journeyId)}`,{headers:{Authorization:`Bearer ${journeyToken}`}});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.message||data.error||'Unable to load journey details.');rebuildStage2(data,render);setRescheduleDefaults();document.getElementById('rescheduleNote').value=stage2State?.note||'';if(demo.franchiseId)await loadSessions(demo.franchiseId,'rescheduleSession',stage2State?.sessionId||0);else document.getElementById('rescheduleSession').innerHTML='<option value="0">None</option>';return data;}catch(error){document.getElementById('handoffCard').hidden=true;return null;}}
   function renderStage4FollowUp(journey,events){
-    const block=stage4FollowUpBlock,button=document.getElementById('stage4FollowUpSentButton'),headline=document.getElementById('stage4FollowUpHeadline'),explanation=document.getElementById('stage4FollowUpExplanation'),feedback=document.getElementById('stage4FollowUpFeedback');
-    block.hidden=false;button.hidden=true;button.dataset.followUpNumber='';feedback.textContent='';
-    if(journey.is_closed||journey.is_dormant){headline.textContent='Follow-up unavailable';explanation.textContent='This journey is closed or Dormant. It cannot accept a follow-up confirmation until reactivated.';return;}
+    const block=stage4FollowUpBlock,button=document.getElementById('stage4FollowUpSentButton'),headline=document.getElementById('stage4FollowUpHeadline'),explanation=document.getElementById('stage4FollowUpExplanation'),finalStep=document.getElementById('stage4FinalFollowUp'),finalHeadline=document.getElementById('stage4FinalFollowUpHeadline'),finalExplanation=document.getElementById('stage4FinalFollowUpExplanation'),feedback=document.getElementById('stage4FollowUpFeedback');
+    block.hidden=false;button.hidden=true;button.dataset.followUpNumber='';finalStep.hidden=true;feedback.textContent='';
+    if(journey.is_closed||journey.is_dormant){headline.textContent='Follow-up unavailable';explanation.textContent='This journey is closed or Dormant. Reactivate it before confirming another follow-up.';return;}
     if(['no_show','cancelled','not_interested'].includes(journey.current_status)){headline.textContent='Manual follow-up';explanation.textContent='This outcome is not in the managed follow-up cycle. Use Update Parent Status to manage the next action.';return;}
     const managed=events.filter(event=>event.event_type==='follow_up_completed'&&event.event_data?.stage4_cycle==='managed');
-    const first=managed.some(event=>Number(event.event_data?.follow_up_number)===1),final=managed.some(event=>Number(event.event_data?.follow_up_number)===2);
+    const firstEvent=managed.find(event=>Number(event.event_data?.follow_up_number)===1),finalEvent=managed.find(event=>Number(event.event_data?.follow_up_number)===2);
     const due=Number(journey.next_action_at)||0,waiting=journey.current_status==='awaiting_parent_reply';
-    let title='',description='',number=0;
-    if(!first&&!final){
-      title='First Stage 4 follow-up';description='If the follow-up has already been sent through Messenger, confirm it here. Otherwise, send it first, record the message in Conversation, then confirm. Confirmation starts the 72-hour wait.';number=1;
-    }else if(first&&!final&&waiting&&journey.next_action_type==='follow_up_parent'){
-      if(due&&due>Date.now()){title='Waiting for parent reply';description='Final follow-up due '+formatDateTime(due)+'. No action needed until then.';}
-      else{title='Final follow-up due';description='Send the final follow-up in Messenger, record the outgoing message, then confirm it here.';number=2;}
-    }else if(final&&waiting&&journey.next_action_type==='none'){
-      title='Final follow-up sent';description='Waiting for a parent reply. If there is no response, Dormant is due '+formatDateTime(due)+'.';
-    }else if(first||final){
-      title='Managed follow-up paused';description='The parent replied or their follow-up status changed. Continue the conversation; the automatic cycle is stopped.';
-    }else return;
-    block.hidden=false;headline.textContent=title;explanation.textContent=description;
+    let number=0;
+    if(!firstEvent&&!finalEvent){
+      headline.textContent='First Stage 4 follow-up';
+      explanation.textContent='Send the first follow-up through Messenger, record it in Conversation, then confirm it here. If already sent, confirm the existing message. This starts the 72-hour wait.';number=1;
+    }else{
+      const firstAt=Number(firstEvent?.event_at)||Number(firstEvent?.created_at)||0;
+      headline.textContent='First Stage 4 follow-up · Sent'+(firstAt?' '+formatDateTime(firstAt):'');
+      explanation.textContent='Confirmed sent. This step is complete.';
+      finalStep.hidden=false;
+      if(finalEvent){
+        const finalAt=Number(finalEvent.event_at)||Number(finalEvent.created_at)||0;
+        finalHeadline.textContent='Final follow-up · Sent'+(finalAt?' '+formatDateTime(finalAt):'');
+        finalExplanation.textContent=waiting&&journey.next_action_type==='none'?(due?'No parent response: moves to Dormant after '+formatDateTime(due)+'.':'Waiting 36 hours for a parent response before Dormant.'):'Follow-up completed. The countdown is stopped because the parent replied or their status changed.';
+      }else if(waiting&&journey.next_action_type==='follow_up_parent'){
+        finalHeadline.textContent='Final follow-up';
+        if(due&&due>Date.now())finalExplanation.textContent='Due '+formatDateTime(due)+'. Waiting for a parent reply; no follow-up needed yet.';
+        else{finalExplanation.textContent='Due now. Send the final follow-up through Messenger, record it in Conversation, then confirm it here. The 36-hour wait begins after confirmation.';number=2;}
+      }else{
+        finalHeadline.textContent='Final follow-up · Paused';
+        finalExplanation.textContent='The parent replied or their status changed. Continue the conversation; no automatic follow-up is due.';
+      }
+    }
     button.hidden=!number;button.disabled=!number;button.dataset.followUpNumber=String(number||'');
     if(number)button.textContent=number===1?'Confirm First Follow-up Sent':'Confirm Final Follow-up Sent';
   }
