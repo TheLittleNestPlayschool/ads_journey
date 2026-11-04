@@ -1076,8 +1076,8 @@ function initJourneyPanel(){
     const first=managed.some(event=>Number(event.event_data?.follow_up_number)===1),final=managed.some(event=>Number(event.event_data?.follow_up_number)===2);
     const due=Number(journey.next_action_at)||0,waiting=journey.current_status==='awaiting_parent_reply';
     let title='',description='',number=0;
-    if(!first&&journey.current_status==='follow_up_due'&&journey.next_action_type==='follow_up_parent'){
-      title='Initial follow-up due';description='Send the first follow-up in Messenger, record the outgoing message in the conversation, then confirm it here.';number=1;
+    if(!first&&!final){
+      title='First Stage 4 follow-up';description='If the follow-up has already been sent through Messenger, confirm it here. Otherwise, send it first, record the message in Conversation, then confirm. Confirmation starts the 72-hour wait.';number=1;
     }else if(first&&!final&&waiting&&journey.next_action_type==='follow_up_parent'){
       if(due&&due>Date.now()){title='Waiting for parent reply';description='Final follow-up due '+formatDateTime(due)+'. No action needed until then.';}
       else{title='Final follow-up due';description='Send the final follow-up in Messenger, record the outgoing message, then confirm it here.';number=2;}
