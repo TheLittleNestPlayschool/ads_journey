@@ -565,6 +565,8 @@ function initJourneyPanel(){
       if(!timeline.length){conversationNotice('No conversation messages or parent forms recorded yet.');return;}
       const nearBottom=conversationList.scrollHeight-conversationList.scrollTop-conversationList.clientHeight<70,previousScroll=conversationList.scrollTop;
       const fragment=document.createDocumentFragment();
+      let signedInAdmin={};try{signedInAdmin=JSON.parse(localStorage.getItem('ads_journey_user')||'{}')||{};}catch(_){}
+      const signedInName=String(signedInAdmin.name||signedInAdmin.full_name||signedInAdmin.email||'Admin').trim();
       timeline.forEach(({kind,item})=>{
         if(kind==='form'){fragment.appendChild(renderParentSubmission(item));return;}
         const outgoing=item.direction==='outbound'||item.direction==='outgoing';
@@ -574,7 +576,8 @@ function initJourneyPanel(){
         const meta=document.createElement('div');meta.className='journey-message-meta';
         const occurredAt=Number(item.message_timestamp)||Number(item.created_at)||0,recordedAt=Number(item.created_at)||0;
         const originalTime=conversationDate(occurredAt),recordedTime=conversationDate(recordedAt);
-        meta.textContent=(outgoing?'Playschool':'Parent')+(originalTime?' · Sent '+originalTime:'');
+        const outgoingName=String(item._ad_user?.name||item._ad_user?.full_name||item.ad_user_name||signedInName).trim();
+        meta.textContent=(outgoing?outgoingName:'Parent')+(originalTime?' · Sent '+originalTime:'');
         /*   Show the audit entry time separately when an older Messenger message was added later */
         if(originalTime&&recordedTime&&Math.abs(recordedAt-occurredAt)>120000){
           const recorded=document.createElement('span');recorded.className='journey-message-recorded';recorded.textContent='Recorded '+recordedTime;meta.appendChild(recorded);
