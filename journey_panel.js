@@ -202,7 +202,7 @@ function initJourneyPanel(){
       if(!response.ok||!result.message?.id)throw new Error(result.message?.message||result.error||'Unable to save the parent message');
       if(conversationInquiryId===inquiryId&&Number(demo.journeyId)===journeyId){
         manualText.value='';resetManualTimestamp();manualStatus.textContent='Parent message recorded';
-        if(!replyManualMode||!replyEditor.value.trim())void loadApprovedReplyForMessage(message,journeyId,inquiryId);
+        if(!replyManualMode||!replyEditor.value.trim())void loadApprovedReplyForMessage(message,journeyId,inquiryId,result.response_matches,result.response_matches_v2);
         conversationFingerprint='';await loadMessengerConversation(inquiryId,false,result.message.id);
       }
     }catch(error){manualStatus.textContent=error.message||'Unable to save the parent message';}
@@ -308,7 +308,7 @@ function initJourneyPanel(){
     replyEditor.value='';replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='No exact approved reply found';
     replyStatus.textContent='Write your own reply if needed.';showReplyMode();renderReplyOptions();updateReplyButton();
   }
-  async function loadApprovedReplyForMessage(message,journeyId,inquiryId){
+  async function loadApprovedReplyForMessage(message,journeyId,inquiryId,legacyMaster=null,legacyV2=null){
     const request=++replyMatchRequest,session=replySession;
     replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replySavedSuggestion=null;replyMatches=[];
     replyEditor.value='';replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='';
@@ -322,9 +322,16 @@ function initJourneyPanel(){
       else showNoApprovedSalesIntent();
     }catch(error){
       if(request!==replyMatchRequest||session!==replySession||Number(demo.journeyId)!==journeyId||conversationInquiryId!==inquiryId)return;
-      replyMatchLabel.textContent='Approved reply lookup unavailable';
-      replyStatus.textContent='Unable to check approved replies ('+(error.message||'network error')+'). You can write your own reply.';
-      updateReplyButton();
+      const hasLegacyMaster=Boolean(legacyMaster?.preferred_match?.id&&legacyMaster?.response_text);
+      const hasLegacyV2=Boolean(legacyV2?.selected_template?.id&&legacyV2?.preferred_intent?.id&&legacyV2?.response_text);
+      if(hasLegacyMaster||hasLegacyV2){
+        applyResponseMatches(hasLegacyMaster?legacyMaster:legacyV2,legacyMaster);
+        replyStatus.textContent='New master-intent lookup unavailable ('+(error.message||'network error')+'). Existing reply library shown instead.';
+      }else{
+        replyMatchLabel.textContent='Approved reply lookup unavailable';
+        replyStatus.textContent='Unable to check approved replies ('+(error.message||'network error')+'). You can write your own reply.';
+        updateReplyButton();
+      }
     }
   }
   replyWriteOwn.addEventListener('click',()=>{
