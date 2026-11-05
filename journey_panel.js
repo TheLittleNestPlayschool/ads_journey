@@ -1,5 +1,7 @@
 function initJourneyPanel(){
   const API='https://x58r-xped-p4y6.n7e.xano.io/api:0Ddhs4dT';
+  /*   Approved-answer lookup; update this URL if ai_intellegence uses a separate Xano API group base*/
+  const AI_MATCH_ENDPOINT=API+'/ai_match_parent_expression';
   const demo={facebookName:'',location:'',franchiseId:null,journeyId:null,stage:'Inquiry',status:'New',next:'Continue conversation'};
   let stage2State=null;let parentConfirmationState=null;
   /*   Keep the recorded confirmation message ID for status-only recovery */
@@ -199,7 +201,8 @@ function initJourneyPanel(){
       const result=await response.json().catch(()=>({}));
       if(!response.ok||!result.message?.id)throw new Error(result.message?.message||result.error||'Unable to save the parent message');
       if(conversationInquiryId===inquiryId&&Number(demo.journeyId)===journeyId){
-        manualText.value='';resetManualTimestamp();manualStatus.textContent=messageTimestamp===null?'Parent message recorded':'Parent message recorded';if(!replyManualMode||!replyEditor.value.trim()){const master=result.response_matches,v2=result.response_matches_v2;const useMaster=Boolean(master?.preferred_match?.id&&master?.response_text);const useV2=Boolean(v2?.preferred_intent?.is_active!==false&&v2?.selected_template?.is_active!==false);applyResponseMatches(useMaster?master:(useV2?v2||master:master),master);}
+        manualText.value='';resetManualTimestamp();manualStatus.textContent='Parent message recorded';
+        if(!replyManualMode||!replyEditor.value.trim())void loadApprovedReplyForMessage(message,journeyId,inquiryId);
         conversationFingerprint='';await loadMessengerConversation(inquiryId,false,result.message.id);
       }
     }catch(error){manualStatus.textContent=error.message||'Unable to save the parent message';}
@@ -212,7 +215,7 @@ function initJourneyPanel(){
   const replyOriginalDate=document.getElementById('journeyReplyOriginalDate'),replyOriginalTime=document.getElementById('journeyReplyOriginalTime');
   function resetReplyTimestamp(){replyOriginalDate.value='';clearReplyTimeEntry();}
   document.getElementById('journeyReplyTimeClear').addEventListener('click',resetReplyTimestamp);
-  let replyQuestionId=0,replyTemplateId=0,replyMatches=[],replySending=false,replyPreviewRequest=0,replySession=0,replyManualMode=false,replySavedSuggestion=null,replyTaglishDraft='',replyEnglishDraft='',replyQuickFormActive=false,replyQuickFormDrafts={taglish:'',english:''};
+  let replyQuestionId=0,replyTemplateId=0,replyMasterIntentId=0,replyMatchRequest=0,replyMatches=[],replySending=false,replyPreviewRequest=0,replySession=0,replyManualMode=false,replySavedSuggestion=null,replyTaglishDraft='',replyEnglishDraft='',replyQuickFormActive=false,replyQuickFormDrafts={taglish:'',english:''};
   function replyPlainText(value){return String(value||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<\/p\s*>/gi,'\n').replace(/<[^>]*>/g,'').replace(/&nbsp;/gi,' ').trim();}
   /*   English uses only values that Xano resolved in the Taglish reply*/
   function replyEnglishFromTemplate(template,rendered){
@@ -227,7 +230,7 @@ function initJourneyPanel(){
     return invalid?'':replyPlainText(english);
   }
   function renderReplyLanguageButton(){const current=replyLanguage.value==='english'?'English':'Taglish',next=current==='English'?'Taglish':'English';replyLanguage.textContent=next;replyLanguage.title='Switch to '+next;replyLanguage.setAttribute('aria-label','Switch reply from '+current+' to '+next);}
-  function updateReplyButton(){replyCopyRecord.disabled=replySending||(!replyQuestionId&&!replyTemplateId&&!replyManualMode)||!replyEditor.value.trim();}
+  function updateReplyButton(){replyCopyRecord.disabled=replySending||(!replyQuestionId&&!replyTemplateId&&!replyMasterIntentId&&!replyManualMode)||!replyEditor.value.trim();}
   function showReplyMode(){
     replyModeLabel.textContent=replyQuickFormActive?'Parent details request':replyManualMode?'Your message':'Suggested reply';
     replyWriteOwn.textContent=replyManualMode?'Use suggested reply':'Write my own';
@@ -236,7 +239,7 @@ function initJourneyPanel(){
   }
   function resetReplyAssistance(){
     replyEmojiRange=null;closeReplyEmojiMenu();
-    replySession++;replyPreviewRequest++;replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replyMatches=[];replySending=false;replyManualMode=false;replySavedSuggestion=null;replyEditor.value='';replyLanguage.value='taglish';renderReplyLanguageButton();replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='';replyStatus.textContent='';resetReplyTimestamp();replyCopyRecord.textContent='Copy & Record Sent';showReplyMode();renderReplyOptions();updateReplyButton();
+    replySession++;replyPreviewRequest++;replyMatchRequest++;replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replyMatches=[];replySending=false;replyManualMode=false;replySavedSuggestion=null;replyEditor.value='';replyLanguage.value='taglish';renderReplyLanguageButton();replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='';replyStatus.textContent='';resetReplyTimestamp();replyCopyRecord.textContent='Copy & Record Sent';showReplyMode();renderReplyOptions();updateReplyButton();
   }
   function createReplyChoice(question){
     const button=document.createElement('button');button.type='button';button.className='journey-reply-choice';button.textContent=question.question_label||('Reply #'+question.id);
@@ -252,7 +255,7 @@ function initJourneyPanel(){
   async function loadReplyPreview(question){
     replyEmojiRange=null;closeReplyEmojiMenu();
     const id=Number(question?.id)||0,journeyId=Number(demo.journeyId)||0,inquiryId=conversationInquiryId,request=++replyPreviewRequest;
-    replyManualMode=false;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyTemplateId=0;showReplyMode();replyQuestionId=id;replyEditor.value='';replyMatchLabel.textContent=question?.question_label||('Reply #'+id);replyStatus.textContent='Preparing reply…';updateReplyButton();renderReplyOptions();
+    replyManualMode=false;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyTemplateId=0;replyMasterIntentId=0;showReplyMode();replyQuestionId=id;replyEditor.value='';replyMatchLabel.textContent=question?.question_label||('Reply #'+id);replyStatus.textContent='Preparing reply…';updateReplyButton();renderReplyOptions();
     if(!id||!demo.franchiseId){replyStatus.textContent='Branch information is required to prepare this reply';return;}
     try{
       const response=await fetch(API+'/nf_response_preview',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({question_id:id,franchise_id:Number(demo.franchiseId),language:replyLanguage.value})});
@@ -266,7 +269,7 @@ function initJourneyPanel(){
   function applyResponseMatches(data,legacyData){
     replyEmojiRange=null;closeReplyEmojiMenu();
     const newTemplate=Boolean(data?.selected_template?.id&&data?.preferred_intent?.id&&data?.response_text);
-    replySession++;replyPreviewRequest++;replyManualMode=false;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;showReplyMode();
+    replySession++;replyPreviewRequest++;replyMasterIntentId=0;replyManualMode=false;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;showReplyMode();
     replyMatches=Array.isArray(legacyData?.matches)?legacyData.matches:(newTemplate?[]:(Array.isArray(data?.matches)?data.matches:[]));
     const preferred=newTemplate?data.preferred_intent:data?.preferred_match;
     if(preferred?.id){
@@ -281,19 +284,59 @@ function initJourneyPanel(){
     }
     renderReplyOptions();updateReplyButton();
   }
+  /*   Exact matching uses only the newly saved parent message, not previous conversation or journey history*/
+  function approvedSalesReply(html){
+    const branch=String(demo.location||'').trim().replace(/\\s+branch$/i,'').trim();
+    if(/%branch_name%/i.test(String(html||''))&&!branch)return '';
+    return replyPlainText(String(html||'').replace(/%branch_name%/gi,branch));
+  }
+  function applyApprovedSalesIntent(intent){
+    replyEmojiRange=null;closeReplyEmojiMenu();replySession++;replyPreviewRequest++;
+    replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=Number(intent.id)||0;
+    replyManualMode=false;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyMatches=[];
+    replyTaglishDraft=approvedSalesReply(intent.taglish_format);replyEnglishDraft=approvedSalesReply(intent.english_format);
+    replyLanguage.value=replyTaglishDraft?'taglish':'english';renderReplyLanguageButton();
+    replyEditor.value=replyLanguage.value==='english'?replyEnglishDraft:replyTaglishDraft;
+    replyMatchLabel.textContent=(intent.question_label||'Approved reply')+' · Approved sales response';
+    replyStatus.textContent=replyEditor.value?'Exact approved match · Review and edit before copying':'This reply needs branch details before it can be used.';
+    showReplyMode();renderReplyOptions();updateReplyButton();
+  }
+  function showNoApprovedSalesIntent(){
+    replyEmojiRange=null;closeReplyEmojiMenu();replySession++;replyPreviewRequest++;
+    replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyManualMode=false;replySavedSuggestion=null;replyMatches=[];
+    replyEditor.value='';replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='No exact approved reply found';
+    replyStatus.textContent='Write your own reply if needed.';showReplyMode();renderReplyOptions();updateReplyButton();
+  }
+  async function loadApprovedReplyForMessage(message,journeyId,inquiryId){
+    const request=++replyMatchRequest,session=replySession;
+    replyStatus.textContent='Checking approved replies…';
+    try{
+      const response=await fetch(AI_MATCH_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({message_text:message})});
+      const intent=await response.json().catch(()=>null);
+      if(request!==replyMatchRequest||session!==replySession||Number(demo.journeyId)!==journeyId||conversationInquiryId!==inquiryId||!panel.classList.contains('open')||replyManualMode||replyQuickFormActive)return;
+      if(!response.ok)throw Error('HTTP '+response.status);
+      if(intent?.id&&intent.is_active!==false&&(intent.taglish_format||intent.english_format))applyApprovedSalesIntent(intent);
+      else showNoApprovedSalesIntent();
+    }catch(error){
+      if(request!==replyMatchRequest||session!==replySession||Number(demo.journeyId)!==journeyId||conversationInquiryId!==inquiryId)return;
+      replyMatchLabel.textContent='Approved reply lookup unavailable';
+      replyStatus.textContent='Unable to check approved replies ('+(error.message||'network error')+'). You can write your own reply.';
+      updateReplyButton();
+    }
+  }
   replyWriteOwn.addEventListener('click',()=>{
     if(replySending)return;
     replyEmojiRange=null;closeReplyEmojiMenu();
     ++replyPreviewRequest;
     replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};
     if(!replyManualMode){
-      replySavedSuggestion=(replyQuestionId||replyTemplateId)?{id:replyQuestionId,templateId:replyTemplateId,text:replyEditor.value,label:replyMatchLabel.textContent,language:replyLanguage.value}:null;
-      replyManualMode=true;replyQuestionId=0;replyTemplateId=0;replyEditor.value='';replyMatchLabel.textContent='Write a personal reply in your own words';replyStatus.textContent='';
+      replySavedSuggestion=(replyQuestionId||replyTemplateId||replyMasterIntentId)?{id:replyQuestionId,templateId:replyTemplateId,masterIntentId:replyMasterIntentId,text:replyEditor.value,label:replyMatchLabel.textContent,language:replyLanguage.value,taglishDraft:replyTaglishDraft,englishDraft:replyEnglishDraft}:null;
+      replyManualMode=true;replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyEditor.value='';replyMatchLabel.textContent='Write a personal reply in your own words';replyStatus.textContent='';
     }else{
       replyManualMode=false;
       if(replySavedSuggestion){
-        replyQuestionId=replySavedSuggestion.id;replyTemplateId=replySavedSuggestion.templateId||0;replyEditor.value=replySavedSuggestion.text;replyMatchLabel.textContent=replySavedSuggestion.label;replyLanguage.value=replySavedSuggestion.language;renderReplyLanguageButton();replyStatus.textContent='Review and edit before copying';
-      }else{replyQuestionId=0;replyTemplateId=0;replyEditor.value='';replyMatchLabel.textContent='';replyStatus.textContent='';}
+        replyQuestionId=replySavedSuggestion.id;replyTemplateId=replySavedSuggestion.templateId||0;replyMasterIntentId=replySavedSuggestion.masterIntentId||0;replyTaglishDraft=replySavedSuggestion.taglishDraft||'';replyEnglishDraft=replySavedSuggestion.englishDraft||'';replyEditor.value=replySavedSuggestion.text;replyMatchLabel.textContent=replySavedSuggestion.label;replyLanguage.value=replySavedSuggestion.language;renderReplyLanguageButton();replyStatus.textContent='Review and edit before copying';
+      }else{replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyEditor.value='';replyMatchLabel.textContent='';replyStatus.textContent='';}
       replySavedSuggestion=null;
     }
     showReplyMode();renderReplyOptions();updateReplyButton();replyEditor.focus();
@@ -345,19 +388,19 @@ function initJourneyPanel(){
       if(journeyId!==Number(demo.journeyId)||inquiryId!==Number(conversationInquiryId))return;
       const url=new URL('https://forms.thelittle-nest.com/');url.searchParams.set('t',ticket);
       ++replyPreviewRequest;replyEmojiRange=null;closeReplyEmojiMenu();
-      replyManualMode=true;replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=true;replySavedSuggestion=null;
+      replyManualMode=true;replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyQuickFormActive=true;replySavedSuggestion=null;
       replyQuickFormDrafts={taglish:parentFormLinkMessage('taglish',kind,url.href),english:parentFormLinkMessage('english',kind,url.href)};
       replyEditor.value=replyQuickFormDrafts[replyLanguage.value];replyMatchLabel.textContent='Personalized form link · Review before sending';replyStatus.textContent='Link ready. Use Copy & Record Sent, then send it through Messenger.';
       showReplyMode();renderReplyOptions();updateReplyButton();
     }catch(e){replyStatus.textContent=e.message||'Could not prepare the form link. No link was sent.';}
     finally{parentFormLinkLoading=false;replyOnlineForm.disabled=false;replyOnlineForm.textContent='Parent Form Link';}
   });
-  replyEditor.addEventListener('input',()=>{if(replyQuickFormActive)replyQuickFormDrafts[replyLanguage.value]=replyEditor.value;if((replyTemplateId||replyQuestionId)&&!replyManualMode){if(replyLanguage.value==='english')replyEnglishDraft=replyEditor.value;else replyTaglishDraft=replyEditor.value;}updateReplyButton();});
+  replyEditor.addEventListener('input',()=>{if(replyQuickFormActive)replyQuickFormDrafts[replyLanguage.value]=replyEditor.value;if((replyTemplateId||replyQuestionId||replyMasterIntentId)&&!replyManualMode){if(replyLanguage.value==='english')replyEnglishDraft=replyEditor.value;else replyTaglishDraft=replyEditor.value;}updateReplyButton();});
   replyLanguage.addEventListener('click',()=>{
     if(replySending)return;
     const before=replyLanguage.value,after=before==='english'?'taglish':'english';
     if(replyManualMode){if(replyQuickFormActive){replyQuickFormDrafts[before]=replyEditor.value;replyEditor.value=replyQuickFormDrafts[after];updateReplyButton();}replyLanguage.value=after;renderReplyLanguageButton();return;}
-    if(replyTemplateId){
+    if(replyTemplateId||replyMasterIntentId){
       if(before==='english')replyEnglishDraft=replyEditor.value;else replyTaglishDraft=replyEditor.value;
       const translation=after==='english'?replyEnglishDraft:replyTaglishDraft;
       if(!translation){replyStatus.textContent='This translation is not ready. Choose a saved reply or write your own.';return;}
@@ -367,9 +410,9 @@ function initJourneyPanel(){
     if(replyQuestionId){const translation=after==='english'?replyEnglishDraft:replyTaglishDraft;if(translation){replyEditor.value=translation;replyStatus.textContent='Review and edit before copying';updateReplyButton();}else{const chosen=replyMatches.concat(replyQuestions).find(q=>Number(q.id)===replyQuestionId)||{id:replyQuestionId,question_label:replyMatchLabel.textContent};loadReplyPreview(chosen);}}
   });
   replyCopyRecord.addEventListener('click',async()=>{
-    const message=replyEditor.value.trim(),questionId=replyQuestionId,templateId=replyTemplateId,language=replyLanguage.value,journeyId=Number(demo.journeyId)||0,inquiryId=conversationInquiryId;
+    const message=replyEditor.value.trim(),questionId=replyQuestionId,templateId=replyTemplateId,masterIntentId=replyMasterIntentId,language=replyLanguage.value,journeyId=Number(demo.journeyId)||0,inquiryId=conversationInquiryId;
     const isConfirmation=replyQuickFormActive&&replyMatchLabel.textContent.startsWith('Appointment confirmation');
-    if(replySending||!message||(!replyManualMode&&!questionId&&!templateId)||!journeyId||!inquiryId)return;
+    if(replySending||!message||(!replyManualMode&&!questionId&&!templateId&&!masterIntentId)||!journeyId||!inquiryId)return;
     if(!lockOwned||lockPending||lockJourneyId!==journeyId){replyStatus.textContent='Take Control before recording replies';return;}
     let messageTimestamp=null;
     try{validateTimeEntry('journeyReplyOriginal',replyOriginalDate);messageTimestamp=originalMessageTimestamp(replyOriginalDate,replyOriginalTime);}catch(error){replyStatus.textContent=error.message;return;}
@@ -408,7 +451,7 @@ function initJourneyPanel(){
         }
       }
       if(session===replySession&&journeyId===Number(demo.journeyId)&&inquiryId===conversationInquiryId){
-        replyEditor.value='';resetReplyTimestamp();replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyMatchLabel.textContent=replyManualMode?'Write another message when needed':'Reply recorded · Select another approved reply when needed';replyStatus.textContent=confirmationSaveFailed?'Message recorded, but confirmation status could not be verified. Do NOT record the message again. Use Retry Saving Confirmation in the appointment panel. '+confirmationError:'Copied & recorded. Paste and send it in Facebook Messenger';showReplyMode();renderReplyOptions();updateReplyButton();
+        replyEditor.value='';resetReplyTimestamp();replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyMatchLabel.textContent=replyManualMode?'Write another message when needed':'Reply recorded · Select another approved reply when needed';replyStatus.textContent=confirmationSaveFailed?'Message recorded, but confirmation status could not be verified. Do NOT record the message again. Use Retry Saving Confirmation in the appointment panel. '+confirmationError:'Copied & recorded. Paste and send it in Facebook Messenger';showReplyMode();renderReplyOptions();updateReplyButton();
         conversationFingerprint='';await loadMessengerConversation(inquiryId,false,result.message.id);
       }
     }catch(error){if(session===replySession)replyStatus.textContent='Copied, but recording was not confirmed. Check Conversation before retrying. '+(error.message||'');}
@@ -974,7 +1017,7 @@ function initJourneyPanel(){
       if(!response.ok)throw new Error(data.message||data.error||data.detail||'Unable to save schedule.');
       /*   Prepare parent confirmation from the successfully saved schedule */
       const rows=['👩 Parent: '+parent,'👧 Child: '+child,'🎂 Age: '+age,'📅 Date: '+formatDate(date),'🕘 Time: '+formatTime(time)].join('\n');
-      replyManualMode=true;replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=true;replySavedSuggestion=null;
+      replyManualMode=true;replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyQuickFormActive=true;replySavedSuggestion=null;
       replyQuickFormDrafts={
         taglish:'Hi po! ❤️ Thank you for sending your details.\n\nConfirmed na po ang '+(type==='trial'?'free trial':'visit')+' schedule ng little one ninyo! 🌷\n\n'+rows+'\n\nSee you po! 💕',
         english:'Hi! ❤️ Thank you for sending your details.\n\nYour little one’s '+(type==='trial'?'free trial':'visit')+' is confirmed! 🌷\n\n'+rows+'\n\nWe look forward to seeing you! 💕'
@@ -1159,7 +1202,7 @@ function initJourneyPanel(){
       return;
     }
     const rows=['👩 Parent: '+x.parent,'👧 Child: '+x.child,'🎂 Age: '+x.age,'📅 Date: '+d.toLocaleDateString([],{month:'long',day:'numeric',year:'numeric'}),'🕘 Time: '+d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})].join('\n');
-    replyManualMode=true;replyQuestionId=0;replyTemplateId=0;replyQuickFormActive=true;replySavedSuggestion=null;
+    replyManualMode=true;replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyQuickFormActive=true;replySavedSuggestion=null;
     replyQuickFormDrafts={taglish:'Hi po! ❤️ Thank you for sending your details.\n\nConfirmed na po ang '+x.typeLabel.toLowerCase()+' schedule ng little one ninyo! 🌷\n\n'+rows+'\n\nSee you po! 💕',english:'Hi! ❤️ Your little one’s '+x.typeLabel.toLowerCase()+' is confirmed! 🌷\n\n'+rows+'\n\nSee you soon! 💕'};
     replyLanguage.value='taglish';renderReplyLanguageButton();replyEditor.value=replyQuickFormDrafts.taglish;replyMatchLabel.textContent='Appointment confirmation · Review before sending';replyStatus.textContent='Copy & Record Sent, then send through Messenger.';showReplyMode();renderReplyOptions();updateReplyButton();replyEditor.focus();
   });
