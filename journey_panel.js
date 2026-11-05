@@ -255,6 +255,7 @@ function initJourneyPanel(){
   async function loadReplyPreview(question){
     replyEmojiRange=null;closeReplyEmojiMenu();
     const id=Number(question?.id)||0,journeyId=Number(demo.journeyId)||0,inquiryId=conversationInquiryId,request=++replyPreviewRequest;
+    replyMatchRequest++;
     replyManualMode=false;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyTemplateId=0;replyMasterIntentId=0;showReplyMode();replyQuestionId=id;replyEditor.value='';replyMatchLabel.textContent=question?.question_label||('Reply #'+id);replyStatus.textContent='Preparing reply…';updateReplyButton();renderReplyOptions();
     if(!id||!demo.franchiseId){replyStatus.textContent='Branch information is required to prepare this reply';return;}
     try{
@@ -286,7 +287,7 @@ function initJourneyPanel(){
   }
   /*   Exact matching uses only the newly saved parent message, not previous conversation or journey history*/
   function approvedSalesReply(html){
-    const branch=String(demo.location||'').trim().replace(/\\s+branch$/i,'').trim();
+    const branch=String(demo.location||'').trim().replace(/\s+branch$/i,'').trim();
     if(/%branch_name%/i.test(String(html||''))&&!branch)return '';
     return replyPlainText(String(html||'').replace(/%branch_name%/gi,branch));
   }
@@ -309,7 +310,9 @@ function initJourneyPanel(){
   }
   async function loadApprovedReplyForMessage(message,journeyId,inquiryId){
     const request=++replyMatchRequest,session=replySession;
-    replyStatus.textContent='Checking approved replies…';
+    replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replySavedSuggestion=null;replyMatches=[];
+    replyEditor.value='';replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='';
+    renderReplyOptions();updateReplyButton();replyStatus.textContent='Checking approved replies…';
     try{
       const response=await fetch(AI_MATCH_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({message_text:message})});
       const intent=await response.json().catch(()=>null);
@@ -326,6 +329,7 @@ function initJourneyPanel(){
   }
   replyWriteOwn.addEventListener('click',()=>{
     if(replySending)return;
+    replyMatchRequest++;
     replyEmojiRange=null;closeReplyEmojiMenu();
     ++replyPreviewRequest;
     replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};
