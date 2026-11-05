@@ -1,7 +1,7 @@
 function initJourneyPanel(){
   const API='https://x58r-xped-p4y6.n7e.xano.io/api:0Ddhs4dT';
   /*   Approved-answer lookup; update this URL if ai_intellegence uses a separate Xano API group base*/
-  const AI_MATCH_ENDPOINT=API+'/ai_match_parent_expression';
+  const AI_MATCH_ENDPOINT='https://x58r-xped-p4y6.n7e.xano.io/api:kyTUvcmr/ai_match_parent_expression';
   const demo={facebookName:'',location:'',franchiseId:null,journeyId:null,stage:'Inquiry',status:'New',next:'Continue conversation'};
   let stage2State=null;let parentConfirmationState=null;
   /*   Keep the recorded confirmation message ID for status-only recovery */
