@@ -606,8 +606,8 @@ function initJourneyPanel(){
   const lockStatus=document.getElementById('journeyLockStatus');
   const takeControlButton=document.getElementById('journeyTakeControl');
   const releaseControlButton=document.getElementById('journeyReleaseControl');
-  let lockJourneyId=0,lockOwned=false,lockPending=false,lockTimer=null,lockGeneration=0;
-  const LOCK_RENEW_MS=20000;
+  let lockJourneyId=0,lockOwned=false,lockPending=false,lockTimer=null,lockGeneration=0,lockNeedsRecheck=false,lockRenewGeneration=0;
+  const LOCK_RENEW_MS=20000,LOCK_TIMEOUT_MS=8000;
   function lockMessage(message){lockStatus.textContent=message;}
   function updateLockControls(){
     takeControlButton.hidden=lockOwned;releaseControlButton.hidden=!lockOwned;
@@ -615,56 +615,71 @@ function initJourneyPanel(){
     panel.dataset.lockOwned=lockOwned?'true':'false';
   }
   async function lockApi(endpoint,journeyId){
-    const response=await fetch(API+'/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:journeyId})});
-    const data=await response.json().catch(()=>({}));
-    if(!response.ok||data.success!==true)throw new Error(data.message||data.error||'Unable to change inquiry lock.');
-    return data;
+    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),LOCK_TIMEOUT_MS);
+    try{
+      const response=await fetch(API+'/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:journeyId}),signal:controller.signal});
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok||data.success!==true)throw new Error(data.message||data.error||'Unable to change inquiry lock.');
+      return data;
+    }catch(error){
+      if(error?.name==='AbortError')throw new Error('Lock request timed out. Use Take Control to retry.');
+      throw error;
+    }finally{clearTimeout(timeout);}
   }
   function stopLockRenewal(){if(lockTimer!==null){clearInterval(lockTimer);lockTimer=null;}}
   function loseLock(message){
-    stopLockRenewal();lockOwned=false;lockPending=false;lockJourneyId=0;lockMessage(message||'View only');updateLockControls();
+    ++lockGeneration;stopLockRenewal();lockNeedsRecheck=false;lockOwned=false;lockPending=false;lockJourneyId=0;lockMessage(message||'View only');updateLockControls();
   }
   async function releaseHeldLock(){
     const journeyId=lockOwned?lockJourneyId:0;
-    ++lockGeneration;stopLockRenewal();lockOwned=false;lockJourneyId=0;lockPending=false;lockMessage('View only');updateLockControls();
+    ++lockGeneration;stopLockRenewal();lockNeedsRecheck=false;lockOwned=false;lockJourneyId=0;lockPending=false;lockMessage('View only');updateLockControls();
     if(!journeyId)return;
     try{await lockApi('ad_journey_lock_release',journeyId);}
     catch(error){if(panel.classList.contains('open'))lockMessage('Release could not be confirmed; the lease will expire automatically.');}
   }
   async function renewHeldLock(generation){
-    if(!lockOwned||lockPending||!lockJourneyId||document.hidden)return;
-    const id=lockJourneyId;
+    if(generation!==lockGeneration||lockRenewGeneration===generation||!lockOwned||lockPending||!lockJourneyId||document.hidden)return;
+    const id=lockJourneyId;lockRenewGeneration=generation;
     try{
       await lockApi('ad_journey_lock_acquire',id);
       if(generation===lockGeneration&&lockOwned&&lockJourneyId===id)lockMessage('You have control');
-    }catch(error){if(generation===lockGeneration)loseLock('Control lost — take control again to edit.');}
+    }catch(error){if(generation===lockGeneration)loseLock('Control could not be verified — take control again to edit.');}
+    finally{if(lockRenewGeneration===generation)lockRenewGeneration=0;}
   }
   takeControlButton.addEventListener('click',async()=>{
     const id=Number(demo.journeyId)||0;
     if(!id||lockPending||lockOwned)return;
-    lockPending=true;updateLockControls();lockMessage('Taking control…');
+    lockNeedsRecheck=false;lockPending=true;updateLockControls();lockMessage('Taking control…');
     const generation=++lockGeneration;
     try{
       await lockApi('ad_journey_lock_acquire',id);
       if(generation!==lockGeneration||!panel.classList.contains('open')||Number(demo.journeyId)!==id){
-        try{await lockApi('ad_journey_lock_release',id);}catch(_error){}
+        /*   Do not release a newer acquisition of the same card from a stale response. */
+        if(!panel.classList.contains('open')||Number(demo.journeyId)!==id){
+          try{await lockApi('ad_journey_lock_release',id);}catch(_error){}
+        }
         return;
       }
       lockJourneyId=id;lockOwned=true;lockMessage('You have control');
       stopLockRenewal();lockTimer=setInterval(()=>renewHeldLock(generation),LOCK_RENEW_MS);
-    }catch(error){if(generation===lockGeneration)lockMessage(error.message||'Unable to take control.');}
+    }catch(error){if(generation===lockGeneration)lockMessage('View only — '+(error.message||'Unable to take control.'));}
     finally{if(generation===lockGeneration){lockPending=false;updateLockControls();}}
   });
   releaseControlButton.addEventListener('click',()=>{if(!lockPending)releaseHeldLock();});
-  /*   returning to an open panel must revalidate ownership before edits*/
+  /*   Revalidate only after a hidden tab returns, never on ordinary focus while owned. */
   async function revalidateVisibleLock(){
-    if(document.hidden||!panel.classList.contains('open')||!demo.journeyId||lockPending)return;
+    if(!lockNeedsRecheck||document.hidden||!panel.classList.contains('open')||!demo.journeyId||lockPending||lockOwned)return;
     const id=Number(demo.journeyId),generation=++lockGeneration;
-    stopLockRenewal();lockOwned=false;lockJourneyId=0;lockPending=true;
+    lockNeedsRecheck=false;stopLockRenewal();lockPending=true;
     lockMessage('Checking control…');updateLockControls();
     try{
       await lockApi('ad_journey_lock_acquire',id);
-      if(generation!==lockGeneration||!panel.classList.contains('open')||Number(demo.journeyId)!==id)return;
+      if(generation!==lockGeneration||!panel.classList.contains('open')||Number(demo.journeyId)!==id){
+        if(!panel.classList.contains('open')||Number(demo.journeyId)!==id){
+          try{await lockApi('ad_journey_lock_release',id);}catch(_error){}
+        }
+        return;
+      }
       lockJourneyId=id;lockOwned=true;lockMessage('You have control');
       lockTimer=setInterval(()=>renewHeldLock(generation),LOCK_RENEW_MS);
     }catch(error){if(generation===lockGeneration)lockMessage('View only — '+(error.message||'Unable to confirm control.'));}
@@ -672,8 +687,8 @@ function initJourneyPanel(){
   }
   document.addEventListener('visibilitychange',()=>{
     if(document.hidden){
-      if(!panel.classList.contains('open'))return;
-      ++lockGeneration;stopLockRenewal();lockOwned=false;lockJourneyId=0;lockPending=false;
+      if(!panel.classList.contains('open')||(!lockOwned&&!lockPending))return;
+      lockNeedsRecheck=true;++lockGeneration;stopLockRenewal();lockOwned=false;lockJourneyId=0;lockPending=false;
       lockMessage('Control will be checked when you return');updateLockControls();
     }else revalidateVisibleLock();
   });
@@ -966,7 +981,7 @@ function initJourneyPanel(){
     const saveButton=document.getElementById('saveScheduleButton');saveButton.textContent=isMessage?'Save to Stage 1A':isEnroll?'Confirm Enrolled':'Save Schedule';saveButton.dataset.action=isMessage?'saveParentMessageButton':isEnroll?'confirmEnrollmentButton':'saveScheduleButton';
   }
   async function open(row){closeCaptureReview();if(lockOwned&&lockJourneyId!==Number(row.dataset.journeyId))await releaseHeldLock();if(!lockOwned){lockMessage('Checking availability…');updateLockControls();}resetReplyAssistance();resetManualComposer();renderConversationAiCost(null);demo.facebookName=row.querySelector('.card-top strong')?.textContent.trim()||'Parent';demo.location=row.dataset.franchise||'';demo.franchiseId=Number(row.dataset.franchiseId)||null;demo.journeyId=Number(row.dataset.journeyId)||null;panel.dataset.journeyId=String(demo.journeyId||'');panel.dataset.inquiryId=String(row.dataset.inquiryId||'');updateLockControls();demo.stage=row.closest('.journey-column')?.querySelector('h3')?.textContent.trim()||'Inquiry';panel.dataset.stage=row.closest('.journey-column')?.dataset.stage||'inquiry';setActionDockStage(panel.dataset.stage);setQuickGuide(panel.dataset.stage);demo.status=row.querySelector('.priority')?.textContent.trim()||'Active';demo.next=row.querySelector('.card-next span')?.textContent.trim()||'None';stage2State=null;document.getElementById('journeyParentName').textContent=demo.facebookName;document.getElementById('journeyLocation').textContent=`${demo.location} · Facebook: ${demo.facebookName}`;document.getElementById('journeyChildName').textContent='';document.getElementById('journeyChildName').hidden=true;document.getElementById('journeyStage').textContent=friendlyStage(panel.dataset.stage||demo.stage);document.getElementById('journeyStatus').textContent=friendlyStatus(demo.status);document.getElementById('journeyNextAction').textContent=friendlyNext(demo.next,panel.dataset.stage||demo.stage);document.getElementById('scheduledWhere').textContent=demo.location;document.getElementById('scheduleActionCard').hidden=!['inquiry','inquiry-followup'].includes(panel.dataset.stage);document.getElementById('handoffCard').hidden=true;stage4FollowUpBlock.hidden=true;document.getElementById('enrollmentActionCard').hidden=true;document.getElementById('undoEnrollmentConfirm').hidden=true;document.getElementById('undoEnrollmentConfirm').style.display='none';document.getElementById('undoEnrollmentError').hidden=true;document.getElementById('undoEnrollmentNote').value='';document.getElementById('undoEnrollmentButton').hidden=false;document.getElementById('undoEnrollmentButton').disabled=false;document.getElementById('waitingBlock').hidden=true;document.getElementById('franchiseResultBlock').hidden=true;document.getElementById('franchiseResultNote').value='';document.getElementById('franchiseResultError').hidden=true;document.getElementById('stage2UpdateBlock').hidden=true;document.getElementById('rescheduleForm').hidden=true;document.getElementById('rescheduleForm').style.display='none';document.getElementById('cancelAppointmentForm').hidden=true;document.getElementById('cancelAppointmentForm').style.display='none';document.getElementById('cancelAppointmentNote').value='';setStage4DockDisabled(true);document.getElementById('enrolledForm').hidden=true;document.getElementById('enrolledForm').style.display='none';document.getElementById('enrolledNote').value='';document.getElementById('followUpLaterForm').hidden=true;document.getElementById('followUpLaterForm').style.display='none';document.getElementById('followUpNote').value='';document.getElementById('notInterestedForm').hidden=true;document.getElementById('notInterestedForm').style.display='none';document.getElementById('notInterestedNote').value='';setFollowUpDefaults();document.getElementById('markFranchiseSent').hidden=false;document.getElementById('cancelAppointment').hidden=false;document.getElementById('rescheduleAppointment').hidden=false;document.getElementById('cancelReschedule').hidden=false;document.querySelector('#rescheduleForm button[type="submit"]').textContent='Save New Schedule';document.getElementById('handoffDetailsToggle').hidden=true;document.getElementById('handoffDetailsToggle').setAttribute('aria-expanded','false');document.getElementById('copyMessageBlock').hidden=true;document.getElementById('franchiseHandoffActions').hidden=false;document.getElementById('copyFranchiseMessage').hidden=false;document.getElementById('handoffStatus').hidden=false;document.getElementById('handoffKicker').textContent='Franchise Handoff';document.getElementById('appointmentActionLabel').textContent='Update appointment';document.getElementById('handoffStatus').textContent='Ready to send';document.getElementById('scheduleForm').reset();document.getElementById('parentMessageNote').value='';document.getElementById('directEnrollNote').value='';document.getElementById('directEnrollError').hidden=true;setScheduleDefaults();setScheduleMode('trial');buildInitialTimeline(row);panel.classList.add('open');startConversationRefresh(Number(row.dataset.inquiryId)||0);panel.setAttribute('aria-hidden','false');backdrop.hidden=false;if(!lockOwned&&!lockPending)takeControlButton.click();if(['inquiry','inquiry-followup'].includes(panel.dataset.stage)){if(!demo.franchiseId)demo.franchiseId=await resolveFranchiseId(demo.location);if(demo.franchiseId)loadSessions(demo.franchiseId);else document.getElementById('scheduleSession').innerHTML='<option value="0">None</option>';await loadInquiryDetail();}else if(demo.stage==='Scheduled'){await loadStage2Detail();}else if(demo.stage==='Follow-up / Decision'){await loadFollowUpDetail();}else if(demo.stage==='Enrollment'){await loadEnrollmentDetail();}usageEvent('journey_opened',{module:'journey_panel',action:'open',target:'journey',journey_id:demo.journeyId,franchise_id:demo.franchiseId||0,stage:demo.stage,status:demo.status});}
-  function close(){closeCaptureReview();if(lockOwned)releaseHeldLock();else {++lockGeneration;stopLockRenewal();}stopConversationRefresh();panel.classList.remove('open');panel.setAttribute('aria-hidden','true');backdrop.hidden=true;}
+  function close(){closeCaptureReview();if(lockOwned)releaseHeldLock();else {++lockGeneration;stopLockRenewal();lockNeedsRecheck=false;}stopConversationRefresh();panel.classList.remove('open');panel.setAttribute('aria-hidden','true');backdrop.hidden=true;}
   function bindJourneyCard(row){if(!row||row.dataset.journeyBound==='true')return;row.dataset.journeyBound='true';row.style.cursor='pointer';row.addEventListener('click',()=>open(row));}
   document.querySelectorAll('.work-row').forEach(bindJourneyCard);
   window.addEventListener('journey-card-added',event=>bindJourneyCard(event.detail?.row));
