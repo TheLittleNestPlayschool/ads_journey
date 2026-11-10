@@ -11,7 +11,7 @@
 *{box-sizing:border-box}body{margin:0;min-height:100vh;padding:24px 14px 40px;background:radial-gradient(circle at 12% 2%,#dcebe4,transparent 35%),linear-gradient(140deg,#f9f6ef,#f0f5f0)}
 .shell{width:min(100%,560px);margin:auto}.brand{text-align:center;padding:14px 10px 22px}.nest-mark{width:52px;height:52px;display:grid;place-items:center;border-radius:18px;background:#dceae0;margin:0 auto 12px;font-size:25px}.eyebrow{text-transform:uppercase;letter-spacing:.15em;font-weight:800;font-size:10px;color:#557c6e}.brand h1{margin:7px 0;font-size:24px;letter-spacing:-.04em;color:#2d5450}.brand p{font-size:12px;color:#688078;margin:0}
 .card{padding:24px 24px 22px;background:#fffefa;border:1px solid #d6e1d9;box-shadow:0 14px 45px rgba(36,66,60,.09);border-radius:22px}.kicker{text-transform:uppercase;font-size:10px;letter-spacing:.11em;font-weight:800;color:#64877b}.card h2{font-size:23px;line-height:1.2;letter-spacing:-.03em;margin:8px 0;color:#25423d}.intro{font-size:13px;line-height:1.6;color:#587069;margin:0 0 19px}.branch{padding:10px 12px;border-radius:11px;background:#edf5f0;margin-bottom:17px;font-size:12px;font-weight:700;color:#39665b}
-.form{display:grid;gap:14px}.field{display:grid;gap:6px;min-width:0}.field label{font-size:12px;font-weight:750;color:#365651}.field label span{color:#b15b43}.field input,.field textarea{width:100%;height:43px;padding:11px 12px;border:1px solid #cbd9d2;border-radius:10px;background:#fff;font:inherit;font-size:14px;color:#25453f;outline-offset:2px}.field textarea{height:69px;resize:vertical}.field input:focus,.field textarea:focus{outline:2px solid #a2c7b7;border-color:#6b9d87}.hint{font-size:11px;color:#71827c;line-height:1.4}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.note{font-size:11px;line-height:1.55;color:#6c7b73;margin:0}.submit{width:100%;padding:14px;border:1px solid #4b8070;border-radius:11px;background:#446e61;color:white;font-weight:800;font-size:14px;cursor:pointer;transition:background .15s}.submit:hover:not(:disabled){background:#2e5b4e}.submit:disabled{opacity:.6;cursor:wait}.message{padding:14px 15px;border-radius:12px;font-size:12px;line-height:1.5;border:1px solid #cbdad1;background:#edf6f0;color:#31584e}.message.error{background:#fff1eb;border-color:#e3b7a5;color:#925443}.message[hidden],.form[hidden],.branch[hidden]{display:none!important}.footer{text-align:center;margin:17px auto;font-size:11px;line-height:1.6;color:#7b8b83}.success{text-align:center;padding:25px 8px}.success .check{font-size:36px}.success h2{margin:12px 0}.success p{font-size:13px;line-height:1.7;color:#5d776d}a{color:#306d5e}
+.form{display:grid;gap:14px}.field{display:grid;gap:6px;min-width:0}.field label{font-size:12px;font-weight:750;color:#365651}.field label span{color:#b15b43}.field input,.field textarea{width:100%;height:43px;padding:11px 12px;border:1px solid #cbd9d2;border-radius:10px;background:#fff;font:inherit;font-size:14px;color:#25453f;outline-offset:2px}.field textarea{height:69px;resize:vertical}.requested-session{padding:13px;border:1px solid #d6e1d9;background:#f1f6f2;border-radius:12px;display:grid;gap:10px}.requested-session[hidden]{display:none!important}.session-heading{font-size:12px;font-weight:800;color:#365651}.session-heading span{font-weight:400;color:#6c7b73}.field input:focus,.field textarea:focus{outline:2px solid #a2c7b7;border-color:#6b9d87}.hint{font-size:11px;color:#71827c;line-height:1.4}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.note{font-size:11px;line-height:1.55;color:#6c7b73;margin:0}.submit{width:100%;padding:14px;border:1px solid #4b8070;border-radius:11px;background:#446e61;color:white;font-weight:800;font-size:14px;cursor:pointer;transition:background .15s}.submit:hover:not(:disabled){background:#2e5b4e}.submit:disabled{opacity:.6;cursor:wait}.message{padding:14px 15px;border-radius:12px;font-size:12px;line-height:1.5;border:1px solid #cbdad1;background:#edf6f0;color:#31584e}.message.error{background:#fff1eb;border-color:#e3b7a5;color:#925443}.message[hidden],.form[hidden],.branch[hidden]{display:none!important}.footer{text-align:center;margin:17px auto;font-size:11px;line-height:1.6;color:#7b8b83}.success{text-align:center;padding:25px 8px}.success .check{font-size:36px}.success h2{margin:12px 0}.success p{font-size:13px;line-height:1.7;color:#5d776d}a{color:#306d5e}
 @media(max-width:420px){body{padding:10px 9px 25px}.brand{padding:10px 8px 18px}.brand h1{font-size:21px}.card{padding:19px 15px;border-radius:17px}.row{gap:9px}.field input,.field textarea{font-size:16px}}
 </style>
 </head>
@@ -27,8 +27,9 @@
 <form class="form" id="parentForm" hidden novalidate>
 <div class="field"><label for="parentName">Parent's full name <span>*</span></label><input id="parentName" name="parent_name" type="text" maxlength="120" autocomplete="name" required placeholder="Your name"></div>
 <div class="field"><label for="childName">Child's name <span>*</span></label><input id="childName" name="child_name" type="text" maxlength="120" required placeholder="Your little one's name"></div>
-<div class="row"><div class="field"><label for="ageYears">Age in years <span>*</span></label><input id="ageYears" name="age_years" type="number" min="0" max="12" step="1" required placeholder="0"></div><div class="field"><label for="ageMonths">Extra months <span>*</span></label><input id="ageMonths" name="age_months" type="number" min="0" max="11" step="1" value="0" required placeholder="0"></div></div>
+<div class="row"><div class="field"><label for="ageYears">Age in years <span>*</span></label><input id="ageYears" name="age_years" type="number" min="0" max="12" step="1" required placeholder="0"></div><div class="field"><label for="ageMonths">Extra months <span>*</span></label><input id="ageMonths" name="age_months" type="number" min="0" max="11" step="1" required placeholder="0"></div></div>
 <div class="field"><label for="city">City / Municipality <span>*</span></label><input id="city" name="city" type="text" maxlength="120" required placeholder="e.g. Tanauan City"></div>
+<div class="requested-session" id="requestedSession" hidden><div class="session-heading">Requested session <span>(not yet confirmed)</span></div><div class="row"><div class="field"><label for="preferredDate">Date</label><input id="preferredDate" name="preferred_date" type="date"></div><div class="field"><label for="preferredTime">Time</label><input id="preferredTime" name="preferred_time" type="time"></div></div><p class="note">These details are from our conversation. Please correct them if needed.</p></div>
 <div class="field"><label for="address">Street / Barangay / Address</label><input id="address" name="address" type="text" maxlength="240" placeholder="Where you live (optional)"></div>
 <div class="field"><label for="contactNumber">Contact number (optional)</label><input id="contactNumber" name="contact_number" type="tel" inputmode="tel" autocomplete="tel" maxlength="30" placeholder="09xx xxx xxxx"></div>
 <div class="field"><label for="parentNotes">Anything else you'd like us to know?</label><textarea id="parentNotes" name="notes" maxlength="700" placeholder="Optional"></textarea></div>
@@ -46,6 +47,18 @@ let accepted=false,busy=false;
 function notice(text,error=false){message.hidden=false;message.textContent=text;message.classList.toggle('error',error);}
 async function getJSON(response){return response.json().catch(()=>({}));}
 function string(v,max){return String(v||'').trim().slice(0,max);}
+function applyPrefill(data){
+if(!data||typeof data!=='object'||Array.isArray(data))return;
+for(const [key,id,max] of [['parent_name','parentName',120],['child_name','childName',120],['city','city',120]]){
+  if(typeof data[key]==='string')el(id).value=string(data[key],max);
+}
+for(const [key,id,max] of [['age_years','ageYears',12],['age_months','ageMonths',11]]){
+  if(Number.isInteger(data[key])&&data[key]>=0&&data[key]<=max)el(id).value=String(data[key]);
+}
+const date=typeof data.preferred_date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(data.preferred_date)?data.preferred_date:'';
+const time=typeof data.preferred_time==='string'&&/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(data.preferred_time)?data.preferred_time:'';
+if(date||time){el('preferredDate').value=date;el('preferredTime').value=time;el('requestedSession').hidden=false;}
+}
 async function initialize(){
 if(!/^[A-Za-z0-9_-]{24,160}$/.test(token)){notice('This form link is missing or invalid. Please ask the playschool for a new link.',true);return;}
 try{
@@ -54,6 +67,7 @@ const d=await getJSON(r);
 if(!r.ok||d.valid!==true||!['visit','trial'].includes(String(d.schedule_type||''))){notice(d.status==='expired'?'This link has expired. Please ask the playschool for a new one.':'This form link is not available. Please ask the playschool for a new link.',true);return;}
 accepted=true;
 if(d.branch_name){branch.textContent=string(d.branch_name,140);branch.hidden=false;}
+applyPrefill(d.prefill_data);
 message.hidden=true;form.hidden=false;
 }catch(_){notice('We could not open your form right now. Please try again later or message the playschool.',true);}
 }
@@ -65,7 +79,7 @@ if(!Number.isInteger(years)||years<0||years>12||!Number.isInteger(months)||month
 const parent=string(el('parentName').value,120),child=string(el('childName').value,120),city=string(el('city').value,120),phone=string(el('contactNumber').value,30);
 if(!parent||!child||!city){notice('Please complete the required details.',true);return;}
 if(phone&&phone.replace(/\D/g,'').length<7){notice('Please enter a valid contact number, or leave it blank.',true);return;}
-const payload={token,parent_name:parent,child_name:child,age_years:years,age_months:months,city,address:string(el('address').value,240),contact_number:phone,preferred_date:null,preferred_time:'',notes:string(el('parentNotes').value,700)};
+const payload={token,parent_name:parent,child_name:child,age_years:years,age_months:months,city,address:string(el('address').value,240),contact_number:phone,preferred_date:el('preferredDate').value||null,preferred_time:el('preferredTime').value||'',notes:string(el('parentNotes').value,700)};
 busy=true;submit.disabled=true;submit.textContent='Sending your details…';message.hidden=true;
 try{
 const r=await fetch(API+'/ad_parent_form_submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload),referrerPolicy:'no-referrer'});
