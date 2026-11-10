@@ -2,6 +2,7 @@ function initJourneyPanel(){
   const API='https://x58r-xped-p4y6.n7e.xano.io/api:0Ddhs4dT';
   /*   Approved-answer lookup; update this URL if ai_intellegence uses a separate Xano API group base*/
   const AI_MATCH_ENDPOINT='https://x58r-xped-p4y6.n7e.xano.io/api:kyTUvcmr/ai_match_parent_expression';
+  const AI_PROCESS_ENDPOINT_KEY='ads_journey_ai_process_endpoint';
   const demo={facebookName:'',location:'',franchiseId:null,journeyId:null,stage:'Inquiry',status:'New',next:'Continue conversation'};
   let stage2State=null;let parentConfirmationState=null;
   /*   Keep the recorded confirmation message ID for status-only recovery */
@@ -94,6 +95,7 @@ function initJourneyPanel(){
   assistance.setAttribute('aria-label','Reply assistance');
   assistance.innerHTML=`<div class="journey-assistance-head" style="justify-content:space-between;gap:10px"><h3>Reply Assistant</h3><div id="journeyAiCost" style="display:flex;flex-direction:column;align-items:flex-end;gap:1px;min-width:0;text-align:right;line-height:1.1" title="Estimated lifetime AI cost for this conversation"><span id="journeyAiCostValue" style="font-size:11px;font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap">AI Cost · —</span><span id="journeyAiTurnCount" style="font-size:9px;font-weight:600;opacity:.75;white-space:nowrap">—</span></div></div>
   <div class="journey-assistance-body">
+    <details id="journeyAiEndpointSetup" style="padding:6px 14px;border-bottom:1px solid #dae3dc"><summary id="journeyAiEndpointSummary" style="font-size:11px;cursor:pointer;color:#526f65">Connect Luna–Terra</summary><div style="display:grid;gap:7px;padding:9px 0"><label for="journeyAiEndpointInput" style="font-size:11px">Xano ai_process_message endpoint URL</label><input id="journeyAiEndpointInput" type="url" autocomplete="off" spellcheck="false" placeholder="https://...xano.io/api:.../ai_process_message" style="width:100%;min-width:0;padding:8px;font-size:11px;border:1px solid #cbd9d2;border-radius:8px"><button id="journeyAiEndpointSave" class="secondary-button" type="button" style="font-size:11px;padding:7px">Save AI connection</button><small id="journeyAiEndpointNotice" role="status" style="color:#607c6e"></small></div></details>
     <section class="journey-assistance-section journey-assistance-editor-section">
       <div class="journey-reply-heading"><div class="journey-reply-heading-main"><h4 id="journeyReplyModeLabel">Suggested reply</h4><button id="journeyReplyWriteOwn" class="journey-reply-own-toggle journey-reply-toggle" type="button" aria-pressed="false">Write my own</button></div><div class="journey-reply-emoji-wrap"><button id="journeyReplyEmojiToggle" class="journey-reply-emoji-toggle" type="button" aria-label="Insert emoji" aria-expanded="false" aria-controls="journeyReplyEmojiMenu" title="Add emoji">😊 <span aria-hidden="true">▾</span></button><div id="journeyReplyEmojiMenu" class="journey-reply-emoji-menu" role="group" aria-label="Choose an emoji" hidden><button type="button" data-emoji="😊" aria-label="Smiling face">😊</button><button type="button" data-emoji="❤️" aria-label="Red heart">❤️</button><button type="button" data-emoji="🥰" aria-label="Smiling face with hearts">🥰</button><button type="button" data-emoji="👍" aria-label="Thumbs up">👍</button><button type="button" data-emoji="🎉" aria-label="Celebration">🎉</button></div></div><button id="journeyReplyLanguage" class="journey-reply-toggle journey-reply-language-toggle" type="button" value="taglish">Taglish</button></div>
       <p id="journeyReplyMatchLabel" class="journey-reply-match-label"></p>
@@ -108,6 +110,20 @@ function initJourneyPanel(){
     <section class="journey-assistance-section journey-reply-library"><h4>Alternative replies</h4><div id="journeyReplyAlternatives" class="journey-reply-alternatives-window" role="region" aria-label="Alternative approved replies"></div></section>
   </div>`;
   document.getElementById('journeyPanel').appendChild(assistance);
+  /*   Configure the authenticated ai_reply_assistant endpoint without guessing its Xano group URL */
+  const aiEndpointInput=document.getElementById('journeyAiEndpointInput'),aiEndpointNotice=document.getElementById('journeyAiEndpointNotice'),aiEndpointSummary=document.getElementById('journeyAiEndpointSummary');
+  function validAiEndpoint(value){
+    try{const u=new URL(String(value||'').trim());return u.protocol==='https:'&&u.hostname===new URL(API).hostname&&/^\/api:[A-Za-z0-9_-]+\/ai_process_message\/?$/.test(u.pathname)&&!u.search&&!u.hash?u.href.replace(/\/$/,''):'';}catch(_){return '';}
+  }
+  function configuredAiEndpoint(){try{return validAiEndpoint(localStorage.getItem(AI_PROCESS_ENDPOINT_KEY));}catch(_){return '';}}
+  aiEndpointInput.value=configuredAiEndpoint();
+  aiEndpointSummary.textContent=configuredAiEndpoint()?'Luna–Terra · endpoint saved':'Connect Luna–Terra · setup required';
+  document.getElementById('journeyAiEndpointSave').addEventListener('click',()=>{
+    const url=validAiEndpoint(aiEndpointInput.value);
+    if(!url){aiEndpointNotice.textContent='Enter the exact HTTPS ai_process_message URL from this Xano workspace.';return;}
+    try{localStorage.setItem(AI_PROCESS_ENDPOINT_KEY,url);aiEndpointInput.value=url;aiEndpointSummary.textContent='Luna–Terra · endpoint saved';aiEndpointNotice.textContent='Saved for this browser. New parent messages will automatically call Luna–Terra.';}
+    catch(_){aiEndpointNotice.textContent='Browser could not save the connection.';}
+  });
   /*   Display the running conversation cost from the existing journey detail response*/
   function renderConversationAiCost(journey){
     const cost=Number(journey?.ai_total_cost_php),turns=Number(journey?.ai_turn_count);
@@ -209,7 +225,7 @@ function initJourneyPanel(){
       if(!response.ok||!result.message?.id)throw new Error(result.message?.message||result.error||'Unable to save the parent message');
       if(conversationInquiryId===inquiryId&&Number(demo.journeyId)===journeyId){
         manualText.value='';resetManualTimestamp();manualStatus.textContent='Parent message recorded';
-        if(!replyManualMode||!replyEditor.value.trim())void loadApprovedReplyForMessage(message,journeyId,inquiryId,result.response_matches,result.response_matches_v2);
+        if(!replyManualMode||!replyEditor.value.trim())void loadAiReplyForMessage(message,journeyId,inquiryId,result.message.id,result.response_matches,result.response_matches_v2);
         conversationFingerprint='';await loadMessengerConversation(inquiryId,false,result.message.id);
       }
     }catch(error){manualStatus.textContent=error.message||'Unable to save the parent message';}
@@ -222,7 +238,7 @@ function initJourneyPanel(){
   const replyOriginalDate=document.getElementById('journeyReplyOriginalDate'),replyOriginalTime=document.getElementById('journeyReplyOriginalTime');
   function resetReplyTimestamp(){replyOriginalDate.value='';clearReplyTimeEntry();}
   document.getElementById('journeyReplyTimeClear').addEventListener('click',resetReplyTimestamp);
-  let replyQuestionId=0,replyTemplateId=0,replyMasterIntentId=0,replyMatchRequest=0,replyMatches=[],replySending=false,replyPreviewRequest=0,replySession=0,replyManualMode=false,replySavedSuggestion=null,replyTaglishDraft='',replyEnglishDraft='',replyQuickFormActive=false,replyQuickFormDrafts={taglish:'',english:''};
+  let replyQuestionId=0,replyTemplateId=0,replyMasterIntentId=0,replyMatchRequest=0,replyMatches=[],replySending=false,replyPreviewRequest=0,replySession=0,replyManualMode=false,replyAiDraftActive=false,replySavedSuggestion=null,replyTaglishDraft='',replyEnglishDraft='',replyQuickFormActive=false,replyQuickFormDrafts={taglish:'',english:''};
   function replyPlainText(value){return String(value||'').replace(/<br\s*\/?\s*>/gi,'\n').replace(/<\/p\s*>/gi,'\n').replace(/<[^>]*>/g,'').replace(/&nbsp;/gi,' ').trim();}
   /*   English uses only values that Xano resolved in the Taglish reply*/
   function replyEnglishFromTemplate(template,rendered){
@@ -236,8 +252,8 @@ function initJourneyPanel(){
     let invalid=false;const english=target.replace(/%[a-z][a-z0-9_]*%/gi,key=>{if(!values.has(key.toLowerCase())){invalid=true;return key;}return values.get(key.toLowerCase());});
     return invalid?'':replyPlainText(english);
   }
-  function renderReplyLanguageButton(){const current=replyLanguage.value==='english'?'English':'Taglish',next=current==='English'?'Taglish':'English';replyLanguage.textContent=next;replyLanguage.title='Switch to '+next;replyLanguage.setAttribute('aria-label','Switch reply from '+current+' to '+next);}
-  function updateReplyButton(){replyCopyRecord.disabled=replySending||(!replyQuestionId&&!replyTemplateId&&!replyMasterIntentId&&!replyManualMode)||!replyEditor.value.trim();}
+  function renderReplyLanguageButton(){const current=replyLanguage.value==='english'?'English':'Taglish',next=current==='English'?'Taglish':'English';replyLanguage.disabled=replyAiDraftActive&&!replyManualMode;replyLanguage.textContent=replyAiDraftActive&&!replyManualMode?'AI language':next;replyLanguage.title=replyAiDraftActive&&!replyManualMode?'AI follows the parent\'s language':'Switch to '+next;replyLanguage.setAttribute('aria-label',replyAiDraftActive&&!replyManualMode?'AI-selected reply language':'Switch reply from '+current+' to '+next);}
+  function updateReplyButton(){replyCopyRecord.disabled=replySending||(!replyQuestionId&&!replyTemplateId&&!replyMasterIntentId&&!replyManualMode&&!replyAiDraftActive)||!replyEditor.value.trim();}
   function showReplyMode(){
     replyModeLabel.textContent=replyQuickFormActive?'Parent details request':replyManualMode?'Your message':'Suggested reply';
     replyWriteOwn.textContent=replyManualMode?'Use suggested reply':'Write my own';
@@ -246,7 +262,7 @@ function initJourneyPanel(){
   }
   function resetReplyAssistance(){
     replyEmojiRange=null;closeReplyEmojiMenu();
-    replySession++;replyPreviewRequest++;replyMatchRequest++;replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replyMatches=[];replySending=false;replyManualMode=false;replySavedSuggestion=null;replyEditor.value='';replyLanguage.value='taglish';renderReplyLanguageButton();replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='';replyStatus.textContent='';resetReplyTimestamp();replyCopyRecord.textContent='Copy & Record Sent';showReplyMode();renderReplyOptions();updateReplyButton();
+    replySession++;replyPreviewRequest++;replyMatchRequest++;replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replyMatches=[];replySending=false;replyManualMode=false;replyAiDraftActive=false;replySavedSuggestion=null;replyEditor.value='';replyLanguage.value='taglish';renderReplyLanguageButton();replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='';replyStatus.textContent='';resetReplyTimestamp();replyCopyRecord.textContent='Copy & Record Sent';showReplyMode();renderReplyOptions();updateReplyButton();
   }
   function createReplyChoice(question){
     const button=document.createElement('button');button.type='button';button.className='journey-reply-choice';button.textContent=question.question_label||('Reply #'+question.id);
@@ -263,7 +279,7 @@ function initJourneyPanel(){
     replyEmojiRange=null;closeReplyEmojiMenu();
     const id=Number(question?.id)||0,journeyId=Number(demo.journeyId)||0,inquiryId=conversationInquiryId,request=++replyPreviewRequest;
     replyMatchRequest++;
-    replyManualMode=false;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyTemplateId=0;replyMasterIntentId=0;showReplyMode();replyQuestionId=id;replyEditor.value='';replyMatchLabel.textContent=question?.question_label||('Reply #'+id);replyStatus.textContent='Preparing reply…';updateReplyButton();renderReplyOptions();
+    replyManualMode=false;replyAiDraftActive=false;renderReplyLanguageButton();replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyTemplateId=0;replyMasterIntentId=0;showReplyMode();replyQuestionId=id;replyEditor.value='';replyMatchLabel.textContent=question?.question_label||('Reply #'+id);replyStatus.textContent='Preparing reply…';updateReplyButton();renderReplyOptions();
     if(!id||!demo.franchiseId){replyStatus.textContent='Branch information is required to prepare this reply';return;}
     try{
       const response=await fetch(API+'/nf_response_preview',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({question_id:id,franchise_id:Number(demo.franchiseId),language:replyLanguage.value})});
@@ -277,7 +293,7 @@ function initJourneyPanel(){
   function applyResponseMatches(data,legacyData){
     replyEmojiRange=null;closeReplyEmojiMenu();
     const newTemplate=Boolean(data?.selected_template?.id&&data?.preferred_intent?.id&&data?.response_text);
-    replySession++;replyPreviewRequest++;replyMasterIntentId=0;replyManualMode=false;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;showReplyMode();
+    replySession++;replyPreviewRequest++;replyMasterIntentId=0;replyManualMode=false;replyAiDraftActive=false;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;showReplyMode();
     replyMatches=Array.isArray(legacyData?.matches)?legacyData.matches:(newTemplate?[]:(Array.isArray(data?.matches)?data.matches:[]));
     const preferred=newTemplate?data.preferred_intent:data?.preferred_match;
     if(preferred?.id){
@@ -301,7 +317,7 @@ function initJourneyPanel(){
   function applyApprovedSalesIntent(intent){
     replyEmojiRange=null;closeReplyEmojiMenu();replySession++;replyPreviewRequest++;
     replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=Number(intent.id)||0;
-    replyManualMode=false;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyMatches=[];
+    replyManualMode=false;replyAiDraftActive=false;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyMatches=[];
     replyTaglishDraft=approvedSalesReply(intent.taglish_format);replyEnglishDraft=approvedSalesReply(intent.english_format);
     replyLanguage.value=replyTaglishDraft?'taglish':'english';renderReplyLanguageButton();
     replyEditor.value=replyLanguage.value==='english'?replyEnglishDraft:replyTaglishDraft;
@@ -311,7 +327,7 @@ function initJourneyPanel(){
   }
   function showNoApprovedSalesIntent(){
     replyEmojiRange=null;closeReplyEmojiMenu();replySession++;replyPreviewRequest++;
-    replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyManualMode=false;replySavedSuggestion=null;replyMatches=[];
+    replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyManualMode=false;replyAiDraftActive=false;replySavedSuggestion=null;replyMatches=[];
     replyEditor.value='';replyTaglishDraft='';replyEnglishDraft='';replyMatchLabel.textContent='No exact approved reply found';
     replyStatus.textContent='Write your own reply if needed.';showReplyMode();renderReplyOptions();updateReplyButton();
   }
@@ -341,6 +357,40 @@ function initJourneyPanel(){
       }
     }
   }
+  /*   Parent message is saved first; then Luna and Terra analyze that exact journey and return a draft here */
+  async function loadAiReplyForMessage(message,journeyId,inquiryId,messageId,legacyMaster=null,legacyV2=null){
+    const endpoint=configuredAiEndpoint();
+    if(!endpoint){
+      await loadApprovedReplyForMessage(message,journeyId,inquiryId,legacyMaster,legacyV2);
+      if(Number(demo.journeyId)===journeyId&&conversationInquiryId===inquiryId){
+        replyStatus.textContent='Luna–Terra is not connected yet. Open "Connect Luna–Terra" above and save the exact Xano endpoint. '+replyStatus.textContent;
+      }
+      return;
+    }
+    const request=++replyMatchRequest,session=replySession;
+    replyAiDraftActive=false;replyManualMode=false;replyQuickFormActive=false;replySavedSuggestion=null;replyQuickFormDrafts={taglish:'',english:''};
+    replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyMatches=[];replyEditor.value='';replyTaglishDraft='';replyEnglishDraft='';
+    replyMatchLabel.textContent='Luna–Terra · analyzing the parent message';replyStatus.textContent='Preparing an AI suggested reply…';renderReplyLanguageButton();showReplyMode();renderReplyOptions();updateReplyButton();
+    try{
+      const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:journeyId})});
+      const envelope=await response.json().catch(()=>({})),data=envelope?.api_response||envelope;
+      if(!response.ok||!data||!String(data.suggested_reply||'').trim()){
+        const error=typeof data?.message==='string'?data.message:(typeof data?.error==='string'?data.error:'No suggested reply returned');
+        throw Error('AI request failed (HTTP '+response.status+'): '+error);
+      }
+      if(Number(data.trigger_message_id)!==Number(messageId))throw Error('The AI processed a different message. Review the conversation before trying again.');
+      if(request!==replyMatchRequest||session!==replySession||Number(demo.journeyId)!==journeyId||conversationInquiryId!==inquiryId||!panel.classList.contains('open'))return;
+      replyAiDraftActive=true;replyEditor.value=String(data.suggested_reply).trim();
+      replyMatchLabel.textContent='Luna–Terra · '+(data.status==='already_processed'?'previously generated reply':'AI suggested reply');
+      replyStatus.textContent='Review and edit this suggestion, then copy and record only after sending it through Messenger.';
+      renderReplyLanguageButton();showReplyMode();updateReplyButton();
+    }catch(error){
+      if(request!==replyMatchRequest||session!==replySession||Number(demo.journeyId)!==journeyId||conversationInquiryId!==inquiryId)return;
+      replyAiDraftActive=false;replyMatchLabel.textContent='Luna–Terra · unable to prepare reply';
+      replyStatus.textContent=error.message||'The AI reply could not be generated.';
+      renderReplyLanguageButton();showReplyMode();updateReplyButton();
+    }
+  }
   replyWriteOwn.addEventListener('click',()=>{
     if(replySending)return;
     replyMatchRequest++;
@@ -348,16 +398,16 @@ function initJourneyPanel(){
     ++replyPreviewRequest;
     replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};
     if(!replyManualMode){
-      replySavedSuggestion=(replyQuestionId||replyTemplateId||replyMasterIntentId)?{id:replyQuestionId,templateId:replyTemplateId,masterIntentId:replyMasterIntentId,text:replyEditor.value,label:replyMatchLabel.textContent,language:replyLanguage.value,taglishDraft:replyTaglishDraft,englishDraft:replyEnglishDraft}:null;
-      replyManualMode=true;replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyEditor.value='';replyMatchLabel.textContent='Write a personal reply in your own words';replyStatus.textContent='';
+      replySavedSuggestion=(replyQuestionId||replyTemplateId||replyMasterIntentId||replyAiDraftActive)?{id:replyQuestionId,templateId:replyTemplateId,masterIntentId:replyMasterIntentId,aiDraft:replyAiDraftActive,text:replyEditor.value,label:replyMatchLabel.textContent,language:replyLanguage.value,taglishDraft:replyTaglishDraft,englishDraft:replyEnglishDraft}:null;
+      replyManualMode=true;replyAiDraftActive=false;renderReplyLanguageButton();replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyEditor.value='';replyMatchLabel.textContent='Write a personal reply in your own words';replyStatus.textContent='';
     }else{
       replyManualMode=false;
       if(replySavedSuggestion){
-        replyQuestionId=replySavedSuggestion.id;replyTemplateId=replySavedSuggestion.templateId||0;replyMasterIntentId=replySavedSuggestion.masterIntentId||0;replyTaglishDraft=replySavedSuggestion.taglishDraft||'';replyEnglishDraft=replySavedSuggestion.englishDraft||'';replyEditor.value=replySavedSuggestion.text;replyMatchLabel.textContent=replySavedSuggestion.label;replyLanguage.value=replySavedSuggestion.language;renderReplyLanguageButton();replyStatus.textContent='Review and edit before copying';
+        replyQuestionId=replySavedSuggestion.id;replyTemplateId=replySavedSuggestion.templateId||0;replyMasterIntentId=replySavedSuggestion.masterIntentId||0;replyAiDraftActive=Boolean(replySavedSuggestion.aiDraft);replyTaglishDraft=replySavedSuggestion.taglishDraft||'';replyEnglishDraft=replySavedSuggestion.englishDraft||'';replyEditor.value=replySavedSuggestion.text;replyMatchLabel.textContent=replySavedSuggestion.label;replyLanguage.value=replySavedSuggestion.language;renderReplyLanguageButton();replyStatus.textContent='Review and edit before copying';
       }else{replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyEditor.value='';replyMatchLabel.textContent='';replyStatus.textContent='';}
       replySavedSuggestion=null;
     }
-    showReplyMode();renderReplyOptions();updateReplyButton();replyEditor.focus();
+    renderReplyLanguageButton();showReplyMode();renderReplyOptions();updateReplyButton();replyEditor.focus();
   });
   /*   insert selected emoji at the last caret position inside the editable reply*/
   let replyEmojiRange=null;
@@ -430,7 +480,7 @@ function initJourneyPanel(){
   replyCopyRecord.addEventListener('click',async()=>{
     const message=replyEditor.value.trim(),questionId=replyQuestionId,templateId=replyTemplateId,masterIntentId=replyMasterIntentId,language=replyLanguage.value,journeyId=Number(demo.journeyId)||0,inquiryId=conversationInquiryId;
     const isConfirmation=replyQuickFormActive&&replyMatchLabel.textContent.startsWith('Appointment confirmation');
-    if(replySending||!message||(!replyManualMode&&!questionId&&!templateId&&!masterIntentId)||!journeyId||!inquiryId)return;
+    if(replySending||!message||(!replyManualMode&&!replyAiDraftActive&&!questionId&&!templateId&&!masterIntentId)||!journeyId||!inquiryId)return;
     if(!lockOwned||lockPending||lockJourneyId!==journeyId){replyStatus.textContent='Take Control before recording replies';return;}
     let messageTimestamp=null;
     try{validateTimeEntry('journeyReplyOriginal',replyOriginalDate);messageTimestamp=originalMessageTimestamp(replyOriginalDate,replyOriginalTime);}catch(error){replyStatus.textContent=error.message;return;}
@@ -469,7 +519,7 @@ function initJourneyPanel(){
         }
       }
       if(session===replySession&&journeyId===Number(demo.journeyId)&&inquiryId===conversationInquiryId){
-        replyEditor.value='';resetReplyTimestamp();replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyMatchLabel.textContent=replyManualMode?'Write another message when needed':'Reply recorded · Select another approved reply when needed';replyStatus.textContent=confirmationSaveFailed?'Message recorded, but confirmation status could not be verified. Do NOT record the message again. Use Retry Saving Confirmation in the appointment panel. '+confirmationError:'Copied & recorded. Paste and send it in Facebook Messenger';showReplyMode();renderReplyOptions();updateReplyButton();
+        replyEditor.value='';resetReplyTimestamp();replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyAiDraftActive=false;renderReplyLanguageButton();replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyMatchLabel.textContent=replyManualMode?'Write another message when needed':'Reply recorded · Select another approved reply when needed';replyStatus.textContent=confirmationSaveFailed?'Message recorded, but confirmation status could not be verified. Do NOT record the message again. Use Retry Saving Confirmation in the appointment panel. '+confirmationError:'Copied & recorded. Paste and send it in Facebook Messenger';showReplyMode();renderReplyOptions();updateReplyButton();
         conversationFingerprint='';await loadMessengerConversation(inquiryId,false,result.message.id);
       }
     }catch(error){if(session===replySession)replyStatus.textContent='Copied, but recording was not confirmed. Check Conversation before retrying. '+(error.message||'');}
