@@ -550,10 +550,14 @@ function initJourneyPanel(){
     if(item.notes)notes.push(String(item.notes));
     captureField('notes').value=notes.join('\n');
     captureSource.hidden=true;captureSource.open=false;captureRaw.value='';
-    const preferred=String(item.preferred_time||'').trim().match(/^(1[0-2]|0?[1-9])(?::([0-5]\d))?\s*(am|pm)$/i);
-    if(preferred){const hour=(Number(preferred[1])%12)+(preferred[3].toLowerCase()==='pm'?12:0);captureField('time').value=String(hour).padStart(2,'0')+':'+(preferred[2]||'00');}
+    const submittedTime=String(item.preferred_time||'').trim();
+    const time24=submittedTime.match(/^([01]\d|2[0-3]):([0-5]\d)(?::[0-5]\d)?$/),time12=submittedTime.match(/^(1[0-2]|0?[1-9])(?::([0-5]\d))?\s*(am|pm)$/i);
+    if(time24)captureField('time').value=time24[1]+':'+time24[2];
+    else if(time12){const hour=(Number(time12[1])%12)+(time12[3].toLowerCase()==='pm'?12:0);captureField('time').value=String(hour).padStart(2,'0')+':'+(time12[2]||'00');}
     captureNotice.textContent='Submitted online by the parent. Review and confirm the appointment time before applying; no schedule has been saved.';
-    captureField('parent').focus();
+    const submittedType=String(item.schedule_type||'').toLowerCase();
+    const currentType=document.querySelector('input[name="visitType"]:checked')?.value;
+    applyCapturedSchedule(submittedType==='trial'||submittedType==='visit'?submittedType:currentType==='visit'?'visit':'trial');
   }
   function renderParentSubmission(item){
     const line=document.createElement('div');line.className='journey-message-row incoming journey-submission-row';
@@ -571,7 +575,7 @@ function initJourneyPanel(){
     details.forEach(([label,value])=>{if(value===null||value===undefined||String(value).trim()==='')return;const dt=document.createElement('dt');dt.textContent=label;const dd=document.createElement('dd');dd.textContent=String(value);grid.append(dt,dd);});
     bubble.appendChild(grid);
     if(item.status==='awaiting_schedule'){
-      const action=document.createElement('button');action.type='button';action.className='journey-primary journey-submission-review';action.textContent='Review & Fill Schedule';action.addEventListener('click',()=>showParentSubmissionReview(item));bubble.appendChild(action);
+      const action=document.createElement('button');action.type='button';action.className='journey-primary journey-submission-review';action.textContent='Fill Schedule';action.addEventListener('click',()=>showParentSubmissionReview(item));bubble.appendChild(action);
     }else{const done=document.createElement('p');done.className='journey-submission-handled';done.textContent='Schedule recorded · submission retained for history';bubble.appendChild(done);}
     line.appendChild(bubble);return line;
   }
