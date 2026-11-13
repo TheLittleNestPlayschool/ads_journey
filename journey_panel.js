@@ -92,10 +92,11 @@ function initJourneyPanel(){
   /*   Prominent, sequential franchise handoff; the two old dock buttons remain wired but hidden */
   const franchiseNextAction=document.createElement('div');
   franchiseNextAction.id='journeyFranchiseNextAction';franchiseNextAction.hidden=true;franchiseNextAction.className='journey-franchise-next-action';
-  franchiseNextAction.innerHTML='<span class="journey-franchise-next-kicker">NEXT STEP</span><button id="journeySendToFranchise" type="button">Send to Franchise</button><p id="journeyFranchiseNextInstruction" role="status">Copy the booking details and send them in the franchise chat.</p>';
+  franchiseNextAction.innerHTML='<span class="journey-franchise-next-kicker">NEXT STEP</span><button id="journeySendToFranchise" type="button">Send to Franchise</button><p id="journeyFranchiseNextInstruction" role="status">Copy the booking details and send them in the franchise chat.</p><div id="journeyFranchiseSentDetail" hidden><div class="journey-franchise-sent-row"><strong>✓ Sent to Franchise</strong><button id="journeyFranchiseCopyAgain" type="button">Copy Message</button></div><p id="journeyFranchiseSentInfo" role="status">The franchise notification is recorded. You can copy the message again whenever needed.</p></div>';
   document.querySelector('#handoffCard .scheduled-summary').after(franchiseNextAction);
   const franchiseNextStyles=document.createElement('style');
   franchiseNextStyles.textContent='#journeyFranchiseNextAction{margin:13px 0 15px;padding:13px 15px;border:1px solid #dfc58c;border-radius:11px;background:#fff8e8}#journeyFranchiseNextAction[hidden]{display:none!important}#journeyFranchiseNextAction .journey-franchise-next-kicker{display:block;margin-bottom:8px;font-size:10px;font-weight:800;letter-spacing:.08em;color:#856127}#journeySendToFranchise{display:block;width:100%;min-height:49px;border:1px solid #b98428;border-radius:9px;background:#e7b85f;color:#322612;font-size:14px;font-weight:800;cursor:pointer}#journeySendToFranchise:hover:not(:disabled){background:#dba747}#journeySendToFranchise:disabled{opacity:.55;cursor:not-allowed}#journeyFranchiseNextInstruction{margin:9px 0 0;font-size:11px;line-height:1.55;color:#725c36}#stage2DockCopy,#stage2DockSend{display:none!important}#stage2DockActions{grid-template-columns:repeat(2,minmax(0,1fr))!important}';
+  franchiseNextStyles.textContent+='#journeyFranchiseNextAction.is-sent{border-color:#b6d5c5;background:#edf6ef}#journeyFranchiseNextAction.is-sent .journey-franchise-next-kicker,#journeyFranchiseNextAction.is-sent #journeySendToFranchise,#journeyFranchiseNextAction.is-sent #journeyFranchiseNextInstruction{display:none!important}#journeyFranchiseSentDetail[hidden]{display:none!important}.journey-franchise-sent-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}.journey-franchise-sent-row strong{font-size:14px;color:#285a48}#journeyFranchiseCopyAgain{padding:7px 12px;min-height:32px;border:1px solid #abc7b8;border-radius:8px;background:#fff;color:#35624e;font-size:11px;font-weight:750;cursor:pointer}#journeyFranchiseCopyAgain:hover:not(:disabled){background:#e4f2e9}#journeyFranchiseSentInfo{font-size:12px;line-height:1.5;color:#456a55;margin:8px 0 0}';
   document.head.appendChild(franchiseNextStyles);
   const scheduleUxStyles=document.createElement('style');scheduleUxStyles.textContent='#journeySaveScheduleTop{background:#376c59;color:#fff;border-color:#376c59;padding:11px 18px;white-space:normal;text-align:center;min-height:43px}#journeySaveScheduleTop:hover:not(:disabled){background:#295643}#journeySaveScheduleTop[hidden],#journeyFillSchedule[hidden],#saveScheduleButton[hidden]{display:none!important}.journey-saved-state{margin:12px 0;padding:13px 15px;border:1px solid #b6d5c5;border-radius:11px;background:#edf6ef;color:#285a48}.journey-saved-state strong{font-size:14px}.journey-saved-state p{margin:5px 0 0;font-size:12px;line-height:1.5}.journey-schedule-feedback{margin:10px 0;color:#914a32;font-size:12px;font-weight:650;line-height:1.5}.journey-schedule-feedback[hidden]{display:none!important}';document.head.appendChild(scheduleUxStyles);
   /*   reserved third workspace column for human-reviewed response suggestions*/
@@ -826,8 +827,12 @@ function initJourneyPanel(){
   /*   A copy alone never marks franchise notification as sent */
   function refreshFranchiseNextAction(){
     const box=document.getElementById('journeyFranchiseNextAction'),button=document.getElementById('journeySendToFranchise'),hint=document.getElementById('journeyFranchiseNextInstruction');
-    const active=panel.dataset.stage==='scheduled'&&stage2State&&!stage2State.cancelled&&!stage2State.franchiseSent;
-    box.hidden=!active;if(!active)return;
+    const active=panel.dataset.stage==='scheduled'&&stage2State&&!stage2State.cancelled;
+    box.hidden=!active;if(!active){box.classList.remove('is-sent');return;}
+    const sent=Boolean(stage2State.franchiseSent);
+    box.classList.toggle('is-sent',sent);
+    document.getElementById('journeyFranchiseSentDetail').hidden=!sent;
+    if(sent)return;
     const ready=parentConfirmationState===true,key=String(demo.journeyId)+':'+String(stage2State.scheduledFor),copied=franchiseCopyKey===key;
     button.disabled=!ready;button.textContent=copied?'Confirm Sent to Franchise':'Send to Franchise';
     hint.textContent=!ready?'The parent confirmation must be recorded first.':copied?'Message copied. Paste it into the franchise chat and send it. Then click Confirm Sent to Franchise.':'Copy the booking details to your clipboard, then paste them into the franchise chat.';
@@ -852,6 +857,21 @@ function initJourneyPanel(){
       refreshFranchiseNextAction();
     }catch(error){hint.textContent='Unable to copy the franchise message. Check clipboard permissions and try again.';}
     finally{if(Number(demo.journeyId)===id)button.disabled=parentConfirmationState!==true;}
+  });
+  document.getElementById('journeyFranchiseCopyAgain').addEventListener('click',async()=>{
+    const button=document.getElementById('journeyFranchiseCopyAgain'),info=document.getElementById('journeyFranchiseSentInfo');
+    if(panel.dataset.stage!=='scheduled'||!stage2State?.franchiseSent||stage2State.cancelled)return;
+    const id=Number(demo.journeyId),scheduledAt=Number(stage2State.scheduledFor);
+    button.disabled=true;
+    try{
+      const message=document.getElementById('franchiseMessage').textContent;
+      if(!message.trim())throw Error('No franchise message is available to copy.');
+      await navigator.clipboard.writeText(message);
+      if(Number(demo.journeyId)!==id||Number(stage2State?.scheduledFor)!==scheduledAt)return;
+      button.textContent='Copied ✓';
+      info.textContent='The franchise notification is recorded. The message has been copied again.';
+    }catch(error){info.textContent='Could not copy the message. Check your clipboard permissions.';}
+    finally{button.disabled=false;}
   });
   function setActionDockStage(stage){
     const dockStage=stage==='inquiry-followup'?'inquiry':stage;
