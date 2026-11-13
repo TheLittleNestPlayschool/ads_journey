@@ -43,7 +43,7 @@
 const API='https://x58r-xped-p4y6.n7e.xano.io/api:0Ddhs4dT';
 const token=new URLSearchParams(location.search).get('t')||'';
 const el=id=>document.getElementById(id),form=el('parentForm'),message=el('formMessage'),branch=el('formBranch'),submit=el('submitParentForm');
-let accepted=false,busy=false,requestedDate='',requestedTime=';
+let accepted=false,busy=false,requestedDate='',requestedTime='';
 function notice(text,error=false){message.hidden=false;message.textContent=text;message.classList.toggle('error',error);}
 async function getJSON(response){return response.json().catch(()=>({}));}
 function string(v,max){return String(v||'').trim().slice(0,max);}
