@@ -418,7 +418,7 @@ function logout(){localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(USE
 const journeyStyle=document.createElement('link');journeyStyle.rel='stylesheet';journeyStyle.href='journey_panel.css?v=20261024-record-corrections';document.head.appendChild(journeyStyle);
 const journeyScript=document.createElement('script');journeyScript.src='journey_panel.js?v='+Date.now();journeyScript.onload=()=>{const corrections=document.createElement('script');corrections.src='journey_corrections.js?v=20261024';document.body.appendChild(corrections);};document.body.appendChild(journeyScript);
 const inquiryStyle=document.createElement('link');inquiryStyle.rel='stylesheet';inquiryStyle.href='inquiry_modal.css?v=20261004-0604';document.head.appendChild(inquiryStyle);
-const inquiryScript=document.createElement('script');inquiryScript.src='inquiry_modal.js?v=20261015-sort-selected';document.body.appendChild(inquiryScript);
+const inquiryScript=document.createElement('script');inquiryScript.src='inquiry_modal.js?v=20261113-url-optional';document.body.appendChild(inquiryScript);
 
 
 
