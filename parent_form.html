@@ -27,7 +27,7 @@
 <form class="form" id="parentForm" hidden novalidate>
 <div class="field"><label for="parentName">Parent's full name <span>*</span></label><input id="parentName" name="parent_name" type="text" maxlength="120" autocomplete="name" required placeholder="Your name"></div>
 <div class="field"><label for="childName">Child's name <span>*</span></label><input id="childName" name="child_name" type="text" maxlength="120" required placeholder="Your little one's name"></div>
-<div class="row"><div class="field"><label for="ageYears">Age in years <span>*</span></label><input id="ageYears" name="age_years" type="number" min="0" max="12" step="1" required placeholder="0"></div><div class="field"><label for="ageMonths">Extra months <span>*</span></label><input id="ageMonths" name="age_months" type="number" min="0" max="11" step="1" required placeholder="0"></div></div>
+<div class="row"><div class="field"><label for="ageYears">Age in years <span>*</span></label><input id="ageYears" name="age_years" type="number" min="0" max="12" step="1" required placeholder="0"></div><div class="field"><label for="ageMonths">Extra months</label><input id="ageMonths" name="age_months" type="number" min="0" max="11" step="1" value="0" placeholder="0"></div></div>
 <div class="field"><label for="city">City / Municipality <span>*</span></label><input id="city" name="city" type="text" maxlength="120" required placeholder="e.g. Tanauan City"></div>
 <div class="requested-session" id="requestedSession" hidden><div class="session-heading">Your requested session <span>(not yet confirmed)</span></div><div class="row"><div class="field"><div class="session-label">Date</div><div class="session-value" id="preferredDateText"></div></div><div class="field"><div class="session-label">Time</div><div class="session-value" id="preferredTimeText"></div></div></div><p class="note">Need a different date or time? Send us a message and we will help arrange it.</p></div>
 <div class="field"><label for="address">Street / Barangay / Address</label><input id="address" name="address" type="text" maxlength="240" placeholder="Where you live (optional)"></div>
@@ -74,7 +74,7 @@ message.hidden=true;form.hidden=false;
 form.addEventListener('submit',async e=>{
 e.preventDefault();if(!accepted||busy)return;
 if(!form.reportValidity())return;
-const years=Number(el('ageYears').value),months=Number(el('ageMonths').value);
+const years=Number(el('ageYears').value),months=Number(el('ageMonths').value||0);
 if(!Number.isInteger(years)||years<0||years>12||!Number.isInteger(months)||months<0||months>11){notice('Please check your little one’s age.',true);return;}
 const parent=string(el('parentName').value,120),child=string(el('childName').value,120),city=string(el('city').value,120),phone=string(el('contactNumber').value,30);
 if(!parent||!child||!city){notice('Please complete the required details.',true);return;}
