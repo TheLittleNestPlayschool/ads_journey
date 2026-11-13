@@ -889,3 +889,14 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel .journey-reply-library{flex:1 1 32%;min-height:135px;overflow:hidden}
 .journey-panel .journey-reply-alternatives-window,
 .journey-panel #journeyReplyAlternatives:empty{display:flex;flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;background:#fffefa;border:1px solid #c7d5d1;border-radius:9px}
+
+/*   focused Reply Assistant: keep controls visible and scroll only inside the suggested reply */
+.journey-panel .journey-reply-library{display:none!important;flex:0 0 0!important;min-height:0!important}
+.journey-panel .journey-assistance{overflow:hidden!important;min-height:0}
+.journey-panel .journey-assistance-body{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden!important;gap:10px;padding:12px}
+.journey-panel .journey-assistance-editor-section{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;overflow:hidden;padding-bottom:10px}
+.journey-panel .journey-reply-heading,.journey-panel .journey-reply-match-label,.journey-panel .journey-reply-time-details,.journey-panel .journey-reply-copy-record,.journey-panel .journey-reply-assist-status{flex:0 0 auto}
+.journey-panel #journeyAssistanceReplyText{flex:1 1 0;min-height:100px;max-height:none;height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;resize:none}
+.journey-panel .journey-reply-actions{flex:0 0 auto;min-height:0;padding-bottom:0;border-bottom:0}
+.journey-panel #scheduleActionCard .visit-type-control label:has(input[value="message"]) span{display:block;width:100%;box-sizing:border-box;text-align:center;min-height:38px;padding:10px 14px;background:#e1ece9;border:1px solid #9fb9b0;border-radius:9px;color:#315d50;font-weight:800;cursor:pointer}
+.journey-panel #scheduleActionCard .visit-type-control label:has(input[value="message"]):hover span{background:#d2e4de}
