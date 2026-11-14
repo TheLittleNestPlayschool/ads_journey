@@ -99,7 +99,7 @@ function initJourneyPanel(){
   franchiseNextStyles.textContent='#journeyFranchiseNextAction{margin:13px 0 15px;padding:13px 15px;border:1px solid #dfc58c;border-radius:11px;background:#fff8e8}#journeyFranchiseNextAction[hidden]{display:none!important}#journeyFranchiseNextAction .journey-franchise-next-kicker{display:block;margin-bottom:8px;font-size:10px;font-weight:800;letter-spacing:.08em;color:#856127}#journeySendToFranchise{display:block;width:100%;min-height:49px;border:1px solid #b98428;border-radius:9px;background:#e7b85f;color:#322612;font-size:14px;font-weight:800;cursor:pointer}#journeySendToFranchise:hover:not(:disabled){background:#dba747}#journeySendToFranchise:disabled{opacity:.55;cursor:not-allowed}#journeyFranchiseNextInstruction{margin:9px 0 0;font-size:11px;line-height:1.55;color:#725c36}#stage2DockCopy,#stage2DockSend{display:none!important}#stage2DockActions{grid-template-columns:repeat(2,minmax(0,1fr))!important}';
   franchiseNextStyles.textContent+='#journeyFranchiseNextAction.is-sent{border-color:#b6d5c5;background:#edf6ef}#journeyFranchiseNextAction.is-sent .journey-franchise-next-kicker,#journeyFranchiseNextAction.is-sent #journeySendToFranchise,#journeyFranchiseNextAction.is-sent #journeyFranchiseNextInstruction{display:none!important}#journeyFranchiseSentDetail[hidden]{display:none!important}.journey-franchise-sent-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;justify-content:space-between}.journey-franchise-sent-row strong{font-size:14px;color:#285a48}#journeyFranchiseCopyAgain{padding:7px 12px;min-height:32px;border:1px solid #abc7b8;border-radius:8px;background:#fff;color:#35624e;font-size:11px;font-weight:750;cursor:pointer}#journeyFranchiseCopyAgain:hover:not(:disabled){background:#e4f2e9}#journeyFranchiseSentInfo{font-size:12px;line-height:1.5;color:#456a55;margin:8px 0 0}';
   document.head.appendChild(franchiseNextStyles);
-  const scheduleUxStyles=document.createElement('style');scheduleUxStyles.textContent='#journeySaveScheduleTop{background:#376c59;color:#fff;border-color:#376c59;padding:11px 18px;white-space:normal;text-align:center;min-height:43px}#journeySaveScheduleTop:hover:not(:disabled){background:#295643}#journeySaveScheduleTop[hidden],#journeyFillSchedule[hidden],#saveScheduleButton[hidden]{display:none!important}.journey-saved-state{margin:12px 0;padding:13px 15px;border:1px solid #b6d5c5;border-radius:11px;background:#edf6ef;color:#285a48}.journey-saved-state strong{font-size:14px}.journey-saved-state p{margin:5px 0 0;font-size:12px;line-height:1.5}.journey-schedule-feedback{margin:10px 0;color:#914a32;font-size:12px;font-weight:650;line-height:1.5}.journey-schedule-feedback[hidden]{display:none!important}';scheduleUxStyles.textContent+='#scheduleActionCard .visit-type-control{display:flex!important;gap:0}#scheduleActionCard .visit-type-control label{width:100%;flex:1}#scheduleActionCard .visit-type-control label:not(:has(input[value="message"])){display:none!important}#scheduleActionCard .visit-type-control label[hidden]{display:none!important}#stage1DockActions #saveScheduleButton{display:none!important}';scheduleUxStyles.textContent+='.journey-awaiting-parent-form{padding:15px 16px;border:1px solid #d5e1db;border-radius:11px;background:#f3f7f4;color:#345d4e}.journey-awaiting-parent-form[hidden],#scheduleAppointmentFields[hidden]{display:none!important}.journey-awaiting-parent-form strong{font-size:14px}.journey-awaiting-parent-form p{margin:7px 0 0;font-size:12px;line-height:1.6;color:#587368}';scheduleUxStyles.textContent+='.journey-panel[data-stage="inquiry-followup"] #scheduleActionCard .visit-type-control{display:none!important}';scheduleUxStyles.textContent+='#journeyFillSchedule{display:none!important}';document.head.appendChild(scheduleUxStyles);
+  const scheduleUxStyles=document.createElement('style');scheduleUxStyles.textContent='#journeySaveScheduleTop{background:#376c59;color:#fff;border-color:#376c59;padding:11px 18px;white-space:normal;text-align:center;min-height:43px}#journeySaveScheduleTop:hover:not(:disabled){background:#295643}#journeySaveScheduleTop[hidden],#journeyFillSchedule[hidden],#saveScheduleButton[hidden]{display:none!important}.journey-saved-state{margin:12px 0;padding:13px 15px;border:1px solid #b6d5c5;border-radius:11px;background:#edf6ef;color:#285a48}.journey-saved-state strong{font-size:14px}.journey-saved-state p{margin:5px 0 0;font-size:12px;line-height:1.5}.journey-schedule-feedback{margin:10px 0;color:#914a32;font-size:12px;font-weight:650;line-height:1.5}.journey-schedule-feedback[hidden]{display:none!important}';scheduleUxStyles.textContent+='#scheduleActionCard .visit-type-control{display:flex!important;gap:0}#scheduleActionCard .visit-type-control label{width:100%;flex:1}#scheduleActionCard .visit-type-control label:not(:has(input[value="message"])){display:none!important}#scheduleActionCard .visit-type-control label[hidden]{display:none!important}#stage1DockActions #saveScheduleButton{display:none!important}';scheduleUxStyles.textContent+='.journey-awaiting-parent-form{padding:15px 16px;border:1px solid #d5e1db;border-radius:11px;background:#f3f7f4;color:#345d4e}.journey-awaiting-parent-form[hidden],#scheduleAppointmentFields[hidden]{display:none!important}.journey-awaiting-parent-form strong{font-size:14px}.journey-awaiting-parent-form p{margin:7px 0 0;font-size:12px;line-height:1.6;color:#587368}';scheduleUxStyles.textContent+='.journey-panel[data-stage="inquiry-followup"] #scheduleActionCard .visit-type-control{display:none!important}';scheduleUxStyles.textContent+='#journeyFillSchedule{display:none!important}.journey-panel[data-schedule-ready="true"] #scheduleActionCard .visit-type-control label:has(input[value="trial"]),.journey-panel[data-schedule-ready="true"] #scheduleActionCard .visit-type-control label:has(input[value="visit"]){display:flex!important}.journey-panel[data-stage="inquiry-followup"][data-schedule-ready="true"] #scheduleActionCard .visit-type-control{display:flex!important}';document.head.appendChild(scheduleUxStyles);
   /*   reserved third workspace column for human-reviewed response suggestions*/
   const assistance=document.createElement('aside');
   assistance.className='journey-assistance';
@@ -803,12 +803,14 @@ function initJourneyPanel(){
       if(scheduleVerificationPending){showScheduleFeedback('The last save needs verification. Reopen this journey before attempting another save.');return;}
       if(bookingSessionPending)return;
       bookingSessionPending=true;
-      const journeyId=Number(demo.journeyId),date=document.getElementById('scheduleDate').value,time=getSelectedTime();
-      findCalendarBookingSession(date,time).then(match=>{
+      const journeyId=Number(demo.journeyId),date=document.getElementById('scheduleDate').value,time=getSelectedTime(),kind=document.querySelector('input[name="visitType"]:checked')?.value;
+      selectedCalendarSession=null;
+      (kind==='visit'?Promise.resolve({id:0,name:'Visit — no class session'}):findCalendarBookingSession(date,time)).then(match=>{
         if(Number(demo.journeyId)!==journeyId||!form.isConnected)return;
         selectedCalendarSession=match;showScheduleFeedback('');
-        return showChangeDialog(title,description+' Calendar session: '+match.name+'.').then(approved=>{
+        return showChangeDialog(title,description+(kind==='visit'?' Appointment type: Visit (no class session required).':' Calendar session: '+match.name+'.')).then(approved=>{
           if(!approved||!form.isConnected||Number(demo.journeyId)!==journeyId)return;
+          if(document.querySelector('input[name="visitType"]:checked')?.value!==kind||document.getElementById('scheduleDate').value!==date||getSelectedTime()!==time){selectedCalendarSession=null;showScheduleFeedback('Appointment details changed. Please save again.');return;}
           confirmedEvents.add(form);
           try{form.requestSubmit(submitter&&submitter.isConnected?submitter:undefined);}finally{confirmedEvents.delete(form);}
         });
@@ -1099,6 +1101,7 @@ function initJourneyPanel(){
   function setSchedulePrepared(value){schedulePrepared=Boolean(value);const mode=document.querySelector('input[name="visitType"]:checked')?.value||'trial';syncScheduleAction(mode);}
   function syncScheduleAction(mode){
     const isAppointment=mode==='trial'||mode==='visit',ready=isAppointment&&schedulePrepared;
+    panel.dataset.scheduleReady=ready?'true':'false';
     const top=document.getElementById('journeySaveScheduleTop'),bottom=document.getElementById('saveScheduleButton');
     const appointment=document.getElementById('scheduleAppointmentFields'),waiting=document.getElementById('scheduleAwaitingParentForm');
     appointment.hidden=!ready;
@@ -1228,20 +1231,20 @@ function initJourneyPanel(){
     }
     if(!schedulePrepared){showScheduleFeedback('Complete the parent form and use Fill Schedule before saving.');return;}
     const parent=document.getElementById('scheduleParent').value.trim();
-    const session=selectedCalendarSession?.name||'None';
+    const session=type==='visit'?'Visit — no class session':selectedCalendarSession?.name||'None';
     const date=document.getElementById('scheduleDate').value;
     const time=getSelectedTime();
     const child=document.getElementById('scheduleChild').value.trim();
     const ageYears=document.getElementById('scheduleAgeYears').value;
     const ageMonths=document.getElementById('scheduleAgeMonths').value;
     const notes=document.getElementById('scheduleNotes').value.trim();
-    if(!parent||!Number(selectedCalendarSession?.id)||!date||!time||!child||!demo.journeyId){showScheduleFeedback('Please complete the parent, child, date and time before saving. The calendar session must match.');return;}
+    if(!parent||!date||!time||!child||!demo.journeyId||(type==='trial'&&!Number(selectedCalendarSession?.id))){showScheduleFeedback('Please complete the parent, child, date and time before saving. Free trials must match a calendar session.');return;}
     const typeLabel=type==='trial'?'Free Trial':'Visit';
     const age=formatAge(ageYears,ageMonths);
     const scheduledFor=new Date(`${date}T${time}:00`).getTime();
     saveButton.disabled=true;saveButton.textContent='Saving...';const topSave=document.getElementById('journeySaveScheduleTop');topSave.disabled=true;topSave.textContent='Saving...';showScheduleFeedback('');
     try{
-      const response=await fetch(`${API}/ad_journey_schedule`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${journeyToken}`},body:JSON.stringify({journey_id:demo.journeyId,schedule_type:type,scheduled_for:scheduledFor,session_id:Number(selectedCalendarSession.id),note:notes,parent_name:parent,child_name:child,age_years:ageYears===''?0:Number(ageYears),age_months:ageMonths===''?0:Number(ageMonths),session_name:session})});
+      const response=await fetch(`${API}/ad_journey_schedule`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${journeyToken}`},body:JSON.stringify({journey_id:demo.journeyId,schedule_type:type,scheduled_for:scheduledFor,session_id:type==='visit'?0:Number(selectedCalendarSession.id),note:notes,parent_name:parent,child_name:child,age_years:ageYears===''?0:Number(ageYears),age_months:ageMonths===''?0:Number(ageMonths),session_name:session})});
       const data=await response.json().catch(()=>({}));
       if(!response.ok||data.success===false||data.error||data.code)throw new Error(data.message||data.error||data.detail||'Unable to save schedule.');
       /*   Confirm the stage change and schedule event actually exist before displaying Saved */
@@ -1276,7 +1279,7 @@ function initJourneyPanel(){
       showParentConfirmationGate();
       await recordAppointmentConfirmationAutomatically();
       addTimeline(`${typeLabel} scheduled`,`${formatDate(date)} · ${formatTime(time)} · ${session}`);
-      usageEvent('schedule_saved',{module:'journey_panel',action:'save',target:'journey',journey_id:demo.journeyId,franchise_id:demo.franchiseId||0,schedule_type:type,session_id:Number(sessionSelect.value),scheduled_for:scheduledFor});
+      usageEvent('schedule_saved',{module:'journey_panel',action:'save',target:'journey',journey_id:demo.journeyId,franchise_id:demo.franchiseId||0,schedule_type:type,session_id:type==='visit'?0:Number(selectedCalendarSession?.id)||0,scheduled_for:scheduledFor});
       conversationFingerprint='';if(conversationInquiryId)await loadMessengerConversation(conversationInquiryId,false);
       if(typeof loadBoard==='function')await loadBoard();
     }catch(error){showScheduleFeedback(error.message||'Unable to save schedule.');}
