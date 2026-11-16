@@ -900,3 +900,20 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel .journey-reply-actions{flex:0 0 auto;min-height:0;padding-bottom:0;border-bottom:0}
 .journey-panel #scheduleActionCard .visit-type-control label:has(input[value="message"]) span{display:block;width:100%;box-sizing:border-box;text-align:center;min-height:38px;padding:10px 14px;background:#e1ece9;border:1px solid #9fb9b0;border-radius:9px;color:#315d50;font-weight:800;cursor:pointer}
 .journey-panel #scheduleActionCard .visit-type-control label:has(input[value="message"]):hover span{background:#d2e4de}
+
+/*   Inline Luna–Terra draft in the center Messenger conversation — never a sent message*/
+.journey-panel .journey-message-row.ai-draft-row{justify-content:flex-end}
+.journey-panel .journey-message-row.ai-draft-row .ai-draft-bubble{width:min(91%,540px);max-width:91%;padding:13px 14px;background:#eef6f1!important;border:2px solid #80b59b!important;border-radius:13px 13px 5px 13px;box-shadow:0 4px 14px rgba(30,106,66,.09)}
+.journey-panel .ai-draft-title{display:flex;align-items:center;gap:6px;padding-bottom:8px;margin-bottom:9px;border-bottom:1px solid #bed8c8;font-size:10px;font-weight:850;color:#215d40;letter-spacing:.025em}
+.journey-panel .ai-draft-text{font-size:12px;line-height:1.55;color:#253e35;white-space:pre-wrap;overflow-wrap:anywhere}
+.journey-panel .ai-draft-editor{display:block;width:100%;min-height:105px;padding:10px 11px;border:1px solid #9ec6b0;border-radius:8px;background:#fff;color:#253e35;font-size:12px;line-height:1.5;resize:vertical}
+.journey-panel .ai-draft-editor:focus{outline:2px solid #35a76d;outline-offset:1px}
+.journey-panel .ai-draft-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:7px;margin-top:13px}
+.journey-panel .ai-draft-actions button{min-height:32px;padding:7px 12px;border:1px solid #9ab6a5;border-radius:7px;background:#fff;color:#2c5340;font-size:11px;font-weight:800;cursor:pointer}
+.journey-panel .ai-draft-actions button:hover{background:#e5f1e9}
+.journey-panel .ai-draft-actions button[data-inline-ai-action="post"],.journey-panel .ai-draft-actions button[data-inline-ai-action="confirm"]{background:#15824d;border-color:#0d7240;color:#fff}
+.journey-panel .ai-draft-actions button[data-inline-ai-action="post"]:hover,.journey-panel .ai-draft-actions button[data-inline-ai-action="confirm"]:hover{background:#086b3b}
+.journey-panel .ai-draft-actions button[data-inline-ai-action="delete"]{border-color:#cb9c99;color:#8c3733}
+.journey-panel .ai-draft-actions button:disabled{opacity:.55;cursor:wait}
+.journey-panel .ai-draft-status{font-size:11px;line-height:1.45;color:#466c58;margin-top:9px}
+.journey-panel .ai-draft-status:empty{display:none}
