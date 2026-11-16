@@ -124,7 +124,7 @@ async function initializeJourneySync(){try{currentEventId=await fetchLatestJourn
 async function checkJourneySync(){if(journeySyncChecking||document.hidden)return;journeySyncChecking=true;try{const latestEventId=await fetchLatestJourneyEventId();if(latestEventId===null)return;if(currentEventId===null){currentEventId=latestEventId;return;}if(latestEventId!==currentEventId){await loadBoard();currentEventId=latestEventId;window.dispatchEvent(new CustomEvent('journey-sync-refresh',{detail:{latestEventId}}));}}catch(error){}finally{journeySyncChecking=false;}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkJourneySync();refreshReplyAttention();}});
 /*   Attention is based on unanswered incoming messages, not whether AI has finished.*/
-function stageAttentionCount(stage){return [...replyAttentionByJourney.values()].filter(item=>normalizeStage(item.current_stage)===stage).length;}
+function stageAttentionCount(stage){return [...replyAttentionByJourney.values()].filter(item=>normalizeStage(item.current_stage)===stage||(stage==='inquiry-followup'&&String(item.current_stage)==='inquiry_follow_up_pending')).length;}
 function renderStageReplyAttention(){
   document.querySelectorAll('.journey-column').forEach(column=>{
     const stage=column.dataset.stage,header=column.querySelector('header');if(!header)return;
@@ -145,7 +145,7 @@ function renderCardReplyAttention(){
   });
 }
 async function openReplyAttentionStage(stage){
-  const pending=[...replyAttentionByJourney.values()].filter(item=>normalizeStage(item.current_stage)===stage).sort((a,b)=>(Number(a.last_parent_at)||0)-(Number(b.last_parent_at)||0));
+  const pending=[...replyAttentionByJourney.values()].filter(item=>normalizeStage(item.current_stage)===stage||(stage==='inquiry-followup'&&String(item.current_stage)==='inquiry_follow_up_pending')).sort((a,b)=>(Number(a.last_parent_at)||0)-(Number(b.last_parent_at)||0));
   if(!pending.length)return;
   const first=pending[0];window.dispatchEvent(new CustomEvent('open-attention-journey',{detail:{journeyId:first.ad_journey_id,franchiseId:first.franchise_id}}));
 }
@@ -167,6 +167,7 @@ async function refreshReplyAttention(){
   finally{replyAttentionBusy=false;}
 }
 setInterval(refreshReplyAttention,5000);
+window.addEventListener('ads-reply-attention-refresh-request',()=>{void refreshReplyAttention();});
 /*   lightweight lock polling updates badges without rebuilding journey cards*/
 let lockStatusLoading=false;
 async function refreshJourneyLocks(){
@@ -463,7 +464,7 @@ function titleCase(value){return String(value||'').replace(/_/g,' ').replace(/\b
 function escapeHtml(value){return String(value??'').replace(/[&<>'"]/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));}
 logoutButton.addEventListener('click',logout);
 function logout(){localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(USER_KEY);window.location.replace('index.html');}
-const journeyStyle=document.createElement('link');journeyStyle.rel='stylesheet';journeyStyle.href='journey_panel.css?v=20261024-record-corrections';document.head.appendChild(journeyStyle);
+const journeyStyle=document.createElement('link');journeyStyle.rel='stylesheet';journeyStyle.href='journey_panel.css?v=20261116-inline-ai-replies';document.head.appendChild(journeyStyle);
 const journeyScript=document.createElement('script');journeyScript.src='journey_panel.js?v='+Date.now();journeyScript.onload=()=>{const corrections=document.createElement('script');corrections.src='journey_corrections.js?v=20261024';document.body.appendChild(corrections);};document.body.appendChild(journeyScript);
 const inquiryStyle=document.createElement('link');inquiryStyle.rel='stylesheet';inquiryStyle.href='inquiry_modal.css?v=20261004-0604';document.head.appendChild(inquiryStyle);
 const inquiryScript=document.createElement('script');inquiryScript.src='inquiry_modal.js?v=20261113-url-optional';document.body.appendChild(inquiryScript);
