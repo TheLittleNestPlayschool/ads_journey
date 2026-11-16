@@ -3,6 +3,8 @@ function initJourneyPanel(){
   /*   Approved-answer lookup; update this URL if ai_intellegence uses a separate Xano API group base*/
   const AI_MATCH_ENDPOINT='https://x58r-xped-p4y6.n7e.xano.io/api:kyTUvcmr/ai_match_parent_expression';
   const AI_PROCESS_ENDPOINT='https://x58r-xped-p4y6.n7e.xano.io/api:KLjFk2LI/ai_process_message';
+  const AI_REPLY_DISCARD_ENDPOINT='https://x58r-xped-p4y6.n7e.xano.io/api:KLjFk2LI/ai_reply_discard';
+  const AI_REPLY_ATTENTION_ENDPOINT=API+'/ai_reply_attention';
   const demo={facebookName:'',location:'',franchiseId:null,journeyId:null,stage:'Inquiry',status:'New',next:'Continue conversation'};
   let stage2State=null;let parentConfirmationState=null;let schedulePrepared=false,scheduleVerificationPending=false,scheduleFormReceived=false;let autoConfirmationBusy='',franchiseCopyKey='';
   let openJourneyCardKey='',journeySyncRefreshBusy=false,journeySyncRefreshQueued=false;
@@ -170,6 +172,8 @@ function initJourneyPanel(){
   let conversationFingerprint='';
   let conversationLoading=false;
   let conversationFocusMessageId=0;
+  let inlineAiDraft={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};
+  const inlineAiHiddenTurns=new Set();
   const CONVERSATION_REFRESH_MS=5000;
   const conversationList=document.createElement('div');
   conversationList.className='journey-conversation-list';
@@ -539,6 +543,7 @@ function initJourneyPanel(){
   function stopConversationRefresh(){
     if(conversationTimer!==null){clearInterval(conversationTimer);conversationTimer=null;}
     conversationInquiryId=0;conversationFingerprint='';conversationFocusMessageId=0;conversationRequest++;
+    inlineAiDraft={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};inlineAiHiddenTurns.clear();
   }
   function startConversationRefresh(inquiryId){
     stopConversationRefresh();conversationInquiryId=inquiryId;
@@ -601,6 +606,78 @@ function initJourneyPanel(){
     match.classList.add('journey-message-just-saved');
     conversationFocusMessageId=0;
   }
+  /*   Pending Luna–Terra replies are drafts, never Messenger messages until admin confirms sending.*/
+  function currentInlineAttention(){return window.adsReplyAttentionByJourney?.get(Number(demo.journeyId))||null;}
+  function currentAiSuggestion(attention){
+    if(!attention||Number(attention.unanswered_count)<1||attention.ai_discarded)return false;
+    const turnId=Number(attention.ai_turn_id)||0;
+    return turnId>0&&Number(attention.ai_trigger_message_id)===Number(attention.last_parent_message_id)&&String(attention.ai_processing_status)==='completed'&&Boolean(String(attention.suggested_reply||'').trim())&&!inlineAiHiddenTurns.has(turnId);
+  }
+  function inlineAiRow(attention,waiting=false){
+    const row=document.createElement('div');row.className='journey-message-row outgoing ai-draft-row';row.dataset.aiTurnId=String(attention.ai_turn_id||0);
+    const bubble=document.createElement('div');bubble.className='journey-message-bubble ai-draft-bubble';
+    const title=document.createElement('div');title.className='ai-draft-title';title.textContent=waiting?(attention.ai_discarded?'AI suggestion deleted · Parent still needs a reply':'Luna–Terra · Preparing updated suggestion…'):'✦ Luna–Terra Suggested Reply · NOT SENT';bubble.appendChild(title);
+    if(!waiting){
+      const id=Number(attention.ai_turn_id)||0;
+      if(inlineAiDraft.turnId!==id)inlineAiDraft={turnId:id,text:String(attention.suggested_reply||'').trim(),editing:false,posting:false,busy:false,notice:''};
+      if(inlineAiDraft.editing){const editor=document.createElement('textarea');editor.className='ai-draft-editor';editor.value=inlineAiDraft.text;editor.maxLength=5000;editor.setAttribute('aria-label','Edit pending AI reply');editor.addEventListener('input',()=>{if(inlineAiDraft.turnId===id)inlineAiDraft.text=editor.value;});bubble.appendChild(editor);}
+      else{const text=document.createElement('div');text.className='journey-message-text ai-draft-text';text.textContent=inlineAiDraft.text;bubble.appendChild(text);}
+      const actions=document.createElement('div');actions.className='ai-draft-actions';
+      const buttons=inlineAiDraft.posting?[['confirm','Confirm Sent'],['cancel','Cancel']]:[['edit',inlineAiDraft.editing?'Done Editing':'Edit'],['delete','Delete'],['post','Post']];
+      buttons.forEach(([action,label])=>{const button=document.createElement('button');button.type='button';button.dataset.inlineAiAction=action;button.textContent=label;button.disabled=inlineAiDraft.busy;actions.appendChild(button);});
+      bubble.appendChild(actions);
+    }
+    const status=document.createElement('div');status.className='ai-draft-status';status.setAttribute('role','status');status.textContent=waiting?'':inlineAiDraft.notice;bubble.appendChild(status);row.appendChild(bubble);return row;
+  }
+  function refreshInlineAiRow(){const old=conversationList.querySelector('.ai-draft-row');const attention=currentInlineAttention();if(!old||!attention)return;const waiting=!currentAiSuggestion(attention);old.replaceWith(inlineAiRow(attention,waiting));}
+  function inlineAiNotice(message){inlineAiDraft.notice=String(message||'');const status=conversationList.querySelector('.ai-draft-row .ai-draft-status');if(status)status.textContent=inlineAiDraft.notice;}
+  async function verifyInlineAiCurrent(id,lastParentMessageId){
+    const response=await fetch(AI_REPLY_ATTENTION_ENDPOINT,{headers:{Authorization:'Bearer '+journeyToken},cache:'no-store'});
+    if(!response.ok)throw Error('Could not verify latest parent messages. Nothing was recorded.');
+    const data=await response.json(),items=Array.isArray(data.replies)?data.replies:[];
+    const found=items.find(item=>Number(item.ad_journey_id)===Number(demo.journeyId));
+    if(!found||Number(found.ai_turn_id)!==id||Number(found.last_parent_message_id)!==lastParentMessageId||!currentAiSuggestion(found))throw Error('The parent conversation has changed. Review the updated suggestion.');
+  }
+  conversationList.addEventListener('click',async event=>{
+    const button=event.target.closest('button[data-inline-ai-action]');if(!button)return;
+    const action=button.dataset.inlineAiAction,attention=currentInlineAttention(),turnId=Number(attention?.ai_turn_id)||0;
+    if(!turnId||!currentAiSuggestion(attention)||inlineAiDraft.turnId!==turnId)return;
+    if(!lockOwned||lockPending||lockJourneyId!==Number(demo.journeyId)){inlineAiNotice('Take Control before changing or posting this reply.');return;}
+    if(inlineAiDraft.busy)return;
+    if(action==='edit'){inlineAiDraft.editing=!inlineAiDraft.editing;inlineAiDraft.notice='';refreshInlineAiRow();return;}
+    if(action==='cancel'){inlineAiDraft.posting=false;inlineAiDraft.notice='';refreshInlineAiRow();return;}
+    if(action==='post'){
+      if(!inlineAiDraft.text.trim()){inlineAiNotice('Write a reply before posting.');return;}
+      try{if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(inlineAiDraft.text.trim());else throw Error('Clipboard unavailable. Use Edit to select and copy the message.');inlineAiDraft.posting=true;inlineAiDraft.editing=false;inlineAiDraft.notice='Copied. Paste and send through Messenger, then click Confirm Sent.';refreshInlineAiRow();}
+      catch(error){inlineAiNotice(error.message||'Unable to copy the reply.');}
+      return;
+    }
+    if(action==='delete'){
+      if(!window.confirm('Delete this AI suggestion? The parent will remain marked as needing a reply.'))return;
+      inlineAiDraft.busy=true;refreshInlineAiRow();
+      try{
+        const response=await fetch(AI_REPLY_DISCARD_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:Number(demo.journeyId),ai_turn_id:turnId})});
+        const data=await response.json().catch(()=>({}));
+        if(!response.ok||data.success!==true)throw Error(data.message||data.error||'Could not discard the AI suggestion.');
+        inlineAiHiddenTurns.add(turnId);inlineAiDraft={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};conversationFingerprint='';window.dispatchEvent(new Event('ads-reply-attention-refresh-request'));void loadMessengerConversation(conversationInquiryId,false);
+      }catch(error){inlineAiDraft.busy=false;inlineAiNotice(error.message||'Could not delete the suggestion.');refreshInlineAiRow();}
+      return;
+    }
+    if(action==='confirm'){
+      inlineAiDraft.busy=true;refreshInlineAiRow();
+      const journeyId=Number(demo.journeyId),inquiryId=Number(conversationInquiryId),message=inlineAiDraft.text.trim(),lastParentId=Number(attention.last_parent_message_id);
+      try{
+        await verifyInlineAiCurrent(turnId,lastParentId);
+        const response=await fetch(API+'/ad_reply_record_sent',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:journeyId,ad_inquiry_id:inquiryId,response_text:message,question_id:0,language:replyLanguage.value,reply_source:'admin_composed'})});
+        const data=await response.json().catch(()=>({}));
+        if(!response.ok||!data.message?.id)throw Error(typeof data.message==='string'?data.message:(data.error||'Could not record the sent reply.'));
+        inlineAiHiddenTurns.add(turnId);inlineAiDraft={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};conversationFingerprint='';
+        if(replyAiDraftActive&&!replyManualMode){replyEditor.value='';replyAiDraftActive=false;replyMatchLabel.textContent='Reply sent and recorded';replyStatus.textContent='';updateReplyButton();}
+        window.dispatchEvent(new Event('ads-reply-attention-refresh-request'));void loadMessengerConversation(inquiryId,false,data.message.id);
+      }catch(error){inlineAiDraft.busy=false;inlineAiNotice('Not recorded: '+(error.message||'Unable to confirm sending.'));refreshInlineAiRow();}
+    }
+  });
+  window.addEventListener('ads-reply-attention-changed',()=>{if(panel.classList.contains('open')&&conversationInquiryId&&!conversationLoading)void loadMessengerConversation(conversationInquiryId,false);});
   async function loadMessengerConversation(inquiryId,initial=false,focusMessageId=0){
     if(focusMessageId)conversationFocusMessageId=Number(focusMessageId)||0;
     if(conversationLoading)return;
@@ -623,11 +700,14 @@ function initJourneyPanel(){
         const received=forms.some(item=>item.status==='awaiting_schedule'&&(!item.ad_journey_id||Number(item.ad_journey_id)===Number(demo.journeyId)));
         if(scheduleFormReceived!==received){scheduleFormReceived=received;syncScheduleAction(document.querySelector('input[name="visitType"]:checked')?.value||'trial');}
       }
+      const attention=currentInlineAttention(),hasUnanswered=attention&&Number(attention.unanswered_count)>0;
+      const aiKind=hasUnanswered?(currentAiSuggestion(attention)?'ai':'ai-waiting'):null;
       const timeline=[
         ...messages.map(item=>({kind:'message',item,timestamp:Number(item.message_timestamp||item.created_at)||0})),
-        ...forms.map(item=>({kind:'form',item,timestamp:Number(item.submitted_at||item.created_at)||0}))
+        ...forms.map(item=>({kind:'form',item,timestamp:Number(item.submitted_at||item.created_at)||0})),
+        ...(aiKind?[{kind:aiKind,item:attention,timestamp:Math.max(Number(attention.last_parent_at)||0,...messages.map(m=>Number(m.message_timestamp||m.created_at)||0))+1}]:[])
       ].sort((a,b)=>a.timestamp-b.timestamp);
-      const fingerprint=JSON.stringify(timeline.map(({kind,item,timestamp})=>kind==='form'?[kind,item.id,item.status,timestamp]:[kind,item.id,item.message_id,item.message_text,item.direction,timestamp]));
+      const fingerprint=JSON.stringify(timeline.map(({kind,item,timestamp})=>kind==='form'?[kind,item.id,item.status,timestamp]:kind==='ai'||kind==='ai-waiting'?[kind,item.ai_turn_id,item.last_parent_message_id,item.ai_trigger_message_id,item.suggested_reply,item.ai_discarded,timestamp]:[kind,item.id,item.message_id,item.message_text,item.direction,timestamp]));
       if(fingerprint===conversationFingerprint){showNewlySavedConversationMessage();return;}
       conversationFingerprint=fingerprint;
       if(!timeline.length){conversationNotice('No conversation messages or parent forms recorded yet.');return;}
@@ -637,6 +717,7 @@ function initJourneyPanel(){
       const signedInName=String(signedInAdmin.name||signedInAdmin.full_name||signedInAdmin.email||'Admin').trim();
       timeline.forEach(({kind,item})=>{
         if(kind==='form'){fragment.appendChild(renderParentSubmission(item));return;}
+        if(kind==='ai'||kind==='ai-waiting'){fragment.appendChild(inlineAiRow(item,kind==='ai-waiting'));return;}
         const outgoing=item.direction==='outbound'||item.direction==='outgoing';
         const line=document.createElement('div');line.className='journey-message-row '+(outgoing?'outgoing':'incoming');line.dataset.conversationMessageId=String(item.id);line.dataset.recordCorrectable=String(!String(item.message_id||'').trim());
         const bubble=document.createElement('div');bubble.className='journey-message-bubble';
