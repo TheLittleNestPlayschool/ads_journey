@@ -12,6 +12,8 @@ const AWAITING_OUTCOME_ENDPOINT='/ad_journey_awaiting_outcome';
 const TOKEN_KEY='ads_journey_token';
 const USER_KEY='ads_journey_user';
 const FILTER_KEY='ads_journey_franchise_filter';
+/*   Network-wide parent reply attention, independent of franchise selection*/
+const REPLY_ATTENTION_ENDPOINT='/ai_reply_attention';
 const token=localStorage.getItem(TOKEN_KEY);
 if(!token)window.location.replace('index.html');
 const userName=document.getElementById('userName');
@@ -34,6 +36,8 @@ let boardJourneys=[];
 let enrollmentSummary=null;
 let enrollmentSummaryRequest=0;
 let franchiseJourneyStats=new Map();
+let replyAttentionByJourney=new Map(),replyAttentionBusy=false,replyAttentionSignature='',replyAttentionFailureLogged=false;
+window.adsReplyAttentionByJourney=replyAttentionByJourney;
 let currentEventId=null;
 let journeySyncTimer=null;
 let journeySyncChecking=false;
@@ -42,7 +46,7 @@ window.addEventListener('inquiry-created',event=>{const data=event.detail||{};co
 window.addEventListener('open-attention-journey',event=>openAttentionJourney(event.detail||{}));
 async function start(){await validateLogin();await loadFranchises();setupDashboardModals();setupJourneySearch();}
 async function validateLogin(){try{const response=await fetch(`${API_BASE_URL}${ME_ENDPOINT}`,{headers:{Authorization:`Bearer ${token}`}});if(!response.ok)throw new Error('AUTH_FAILED');const data=await response.json();const user=data.ad_user||data.user||data;localStorage.setItem(USER_KEY,JSON.stringify(user));userName.textContent=user.name||user.email||'Admin';}catch(error){logout();}}
-async function loadFranchises(){try{const response=await fetch(`${API_BASE_URL}${FRANCHISE_ENDPOINT}`,{headers:{Authorization:`Bearer ${token}`}});if(response.status===401){logout();return}if(!response.ok)throw new Error('Unable to load franchises.');const data=await response.json();franchises=Array.isArray(data)?data:(data.items||data.records||data.franchise||data.franchises||[]);restoreSelection();renderFranchiseList();updateFilterLabel();syncUsageFranchiseSelection('initial_load');await loadBoard();await initializeJourneySync();}catch(error){franchiseCheckboxList.innerHTML='<p class="filter-error">Unable to load franchise locations.</p>';}}
+async function loadFranchises(){try{const response=await fetch(`${API_BASE_URL}${FRANCHISE_ENDPOINT}`,{headers:{Authorization:`Bearer ${token}`}});if(response.status===401){logout();return}if(!response.ok)throw new Error('Unable to load franchises.');const data=await response.json();franchises=Array.isArray(data)?data:(data.items||data.records||data.franchise||data.franchises||[]);restoreSelection();renderFranchiseList();updateFilterLabel();syncUsageFranchiseSelection('initial_load');await loadBoard();await initializeJourneySync();void refreshReplyAttention();}catch(error){franchiseCheckboxList.innerHTML='<p class="filter-error">Unable to load franchise locations.</p>';}}
 const stageQuickHelp={
   en:{
     inquiry:{title:'Stage 1 — Inquiry',intro:'A new parent inquiry has arrived. Decide what actually happens next.',items:['Free Trial — parent agrees to a free trial.','Visit — parent agrees to visit the playschool.','Continue Conversation — the chat is still active and no next step is agreed yet.','Enroll — the parent enrolls without needing a visit or trial.','No Longer Interested — the parent clearly decides not to continue.']},
@@ -118,7 +122,51 @@ async function advanceDueScheduledJourneys(journeys){const candidates=journeys.f
 async function fetchLatestJourneyEventId(){const response=await fetch(`${API_BASE_URL}${LATEST_EVENT_ENDPOINT}`,{cache:'no-store',headers:{Authorization:`Bearer ${token}`}});if(response.status===401){logout();return null}if(!response.ok)throw new Error('SYNC_LOAD_FAILED');const data=await response.json().catch(()=>0);if(typeof data==='number'||typeof data==='string')return Number(data)||0;const nestedId=data?.ad_journey_event?.items?.[0]?.id;return Number(data.latest_event_id??data.id??data.ad_journey_event_id??nestedId)||0;}
 async function initializeJourneySync(){try{currentEventId=await fetchLatestJourneyEventId();}catch(error){currentEventId=null;}if(journeySyncTimer)clearInterval(journeySyncTimer);journeySyncTimer=setInterval(checkJourneySync,5000);}
 async function checkJourneySync(){if(journeySyncChecking||document.hidden)return;journeySyncChecking=true;try{const latestEventId=await fetchLatestJourneyEventId();if(latestEventId===null)return;if(currentEventId===null){currentEventId=latestEventId;return;}if(latestEventId!==currentEventId){await loadBoard();currentEventId=latestEventId;window.dispatchEvent(new CustomEvent('journey-sync-refresh',{detail:{latestEventId}}));}}catch(error){}finally{journeySyncChecking=false;}}
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkJourneySync();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkJourneySync();refreshReplyAttention();}});
+/*   Attention is based on unanswered incoming messages, not whether AI has finished.*/
+function stageAttentionCount(stage){return [...replyAttentionByJourney.values()].filter(item=>normalizeStage(item.current_stage)===stage).length;}
+function renderStageReplyAttention(){
+  document.querySelectorAll('.journey-column').forEach(column=>{
+    const stage=column.dataset.stage,header=column.querySelector('header');if(!header)return;
+    const count=stageAttentionCount(stage);let button=header.querySelector('.stage-reply-attention');
+    if(!button){button=document.createElement('button');button.type='button';button.className='stage-reply-attention';button.addEventListener('click',event=>{event.stopPropagation();openReplyAttentionStage(stage);});header.appendChild(button);}
+    header.classList.toggle('has-parent-replies',count>0);button.hidden=!count;button.textContent=count+' NEED '+(count===1?'REPLY':'REPLIES');
+    button.title=count+' unanswered parent '+(count===1?'conversation':'conversations')+' across all franchises — open oldest';
+  });
+}
+function renderCardReplyAttention(){
+  document.querySelectorAll('.journey-card[data-journey-id]').forEach(card=>{
+    const attention=replyAttentionByJourney.get(Number(card.dataset.journeyId)),count=Number(attention?.unanswered_count)||0;
+    card.classList.toggle('parent-reply-needed',Boolean(attention));
+    let badge=card.querySelector('.parent-reply-banner');
+    if(!attention){badge?.remove();return;}
+    if(!badge){badge=document.createElement('div');badge.className='parent-reply-banner';card.prepend(badge);}
+    badge.textContent='● PARENT REPLY NEEDED'+(count>1?' · '+count+' MESSAGES':'');
+  });
+}
+async function openReplyAttentionStage(stage){
+  const pending=[...replyAttentionByJourney.values()].filter(item=>normalizeStage(item.current_stage)===stage).sort((a,b)=>(Number(a.last_parent_at)||0)-(Number(b.last_parent_at)||0));
+  if(!pending.length)return;
+  const first=pending[0];window.dispatchEvent(new CustomEvent('open-attention-journey',{detail:{journeyId:first.ad_journey_id,franchiseId:first.franchise_id}}));
+}
+async function refreshReplyAttention(){
+  if(replyAttentionBusy||document.hidden)return;replyAttentionBusy=true;
+  try{
+    const response=await fetch(API_BASE_URL+REPLY_ATTENTION_ENDPOINT,{headers:{Authorization:'Bearer '+token},cache:'no-store'});
+    if(response.status===401){logout();return;}
+    if(!response.ok)throw Error('Reply attention HTTP '+response.status);
+    const data=await response.json();if(!Array.isArray(data.replies))throw Error('Reply attention API response missing replies array');
+    const updated=new Map();
+    data.replies.forEach(item=>{const id=Number(item.ad_journey_id)||0;if(id&&Number(item.franchise_id)>0)updated.set(id,item);});
+    const nextSignature=JSON.stringify([...updated.entries()]);
+    replyAttentionByJourney=updated;window.adsReplyAttentionByJourney=updated;
+    renderStageReplyAttention();renderCardReplyAttention();
+    if(nextSignature!==replyAttentionSignature){replyAttentionSignature=nextSignature;window.dispatchEvent(new CustomEvent('ads-reply-attention-changed',{detail:{journeyIds:[...updated.keys()]}}));}
+    replyAttentionFailureLogged=false;
+  }catch(error){if(!replyAttentionFailureLogged){console.warn('Parent reply attention unavailable:',error);replyAttentionFailureLogged=true;}}
+  finally{replyAttentionBusy=false;}
+}
+setInterval(refreshReplyAttention,5000);
 /*   lightweight lock polling updates badges without rebuilding journey cards*/
 let lockStatusLoading=false;
 async function refreshJourneyLocks(){
@@ -257,7 +305,7 @@ function journeyLockLabel(journey){
   return 'In use · '+display;
 }
 function isStage4Due(journey,now=Date.now()){if(normalizeStage(journey.current_stage)!=='followup')return false;const status=String(journey.current_status||'').toLowerCase(),type=String(journey.next_action_type||'none').toLowerCase(),dueAt=Number(journey.next_action_at)||0;return status!=='enrolled'&&!(status==='parent_deciding'&&type==='none')&&dueAt>0&&dueAt<=now;}
-function buildJourneyCard(journey){const inquiry=journey._ad_inquiry||{};const location=journeyLocation(journey);const stage=normalizeStage(journey.current_stage);const status=String(journey.current_status||'active');const enrolled=status.toLowerCase()==='enrolled';const nextAt=Number(journey.next_action_at)||0;const stage4Waiting=stage==='followup'&&status.toLowerCase()==='parent_deciding'&&String(journey.next_action_type||'none').toLowerCase()==='none';const urgent=stage==='followup'?isStage4Due(journey):stage!=='scheduled'&&!enrolled&&nextAt>0&&nextAt<=Date.now();const updated=lastUpdateTimestamp(journey);const originalAt=Number(inquiry.first_message_at)||Number(inquiry.created_at)||0;const article=document.createElement('article');article.className=`journey-card work-row${urgent?' urgent':''}${enrolled?' enrolled':''}`;article.dataset.franchise=location;article.dataset.status=status;article.dataset.journeyId=String(journey.id);article.dataset.inquiryId=String(journey.ad_inquiry_id||'');article.dataset.franchiseId=String(journey.franchise_id||'');const badgeClass=stage4Waiting?'waiting-blue':urgent?'overdue':badgeClassFor(status);const badgeText=stage4Waiting?'Waiting':urgent?'Due now':badgeTextFor(status);const datesHtml=`<div class="card-dates"><div><span>Original inquiry</span><time>${escapeHtml(formatCardTimestamp(originalAt))}</time></div><div><span>Last updated</span><time>${escapeHtml(formatCardTimestamp(updated))}</time></div></div>`;const lockText=journeyLockLabel(journey);const lockHtml=lockText?`<div class="journey-card-lock" aria-label="${escapeHtml(lockText)}">🔒 ${escapeHtml(lockText)}</div>`:'';if(stage==='enrollment'){article.innerHTML=`<div class="enrollment-card-name"><strong>${escapeHtml(inquiry.facebook_name||`Journey #${journey.id}`)}</strong><span aria-label="Enrolled">✓</span></div><div class="enrollment-card-meta"><span>${escapeHtml(location)}</span><time>${escapeHtml(formatCardTimestamp(journey.enrolled_at||0))}</time></div>`;}else if(stage==='inquiry'){article.innerHTML=`<div class="card-top"><strong>${escapeHtml(inquiry.facebook_name||`Journey #${journey.id}`)}</strong></div><p>${escapeHtml(cardDescription(journey,location))}</p>${datesHtml}`;}else{article.innerHTML=`<div class="card-top"><strong>${escapeHtml(inquiry.facebook_name||`Journey #${journey.id}`)}</strong><span class="priority ${badgeClass}">${escapeHtml(badgeText)}</span></div><p>${escapeHtml(cardDescription(journey,location))}</p>${stage==='inquiry-followup'?'':`<div class="card-next"><span>${escapeHtml(nextActionText(journey))}</span>${nextTimeText(journey)?`<time>${escapeHtml(nextTimeText(journey))}</time>`:''}</div>`}${datesHtml}`;}if(lockHtml)article.insertAdjacentHTML('beforeend',lockHtml);return article;}
+function buildJourneyCard(journey){const inquiry=journey._ad_inquiry||{};const location=journeyLocation(journey);const stage=normalizeStage(journey.current_stage);const status=String(journey.current_status||'active');const enrolled=status.toLowerCase()==='enrolled';const nextAt=Number(journey.next_action_at)||0;const stage4Waiting=stage==='followup'&&status.toLowerCase()==='parent_deciding'&&String(journey.next_action_type||'none').toLowerCase()==='none';const urgent=stage==='followup'?isStage4Due(journey):stage!=='scheduled'&&!enrolled&&nextAt>0&&nextAt<=Date.now();const updated=lastUpdateTimestamp(journey);const originalAt=Number(inquiry.first_message_at)||Number(inquiry.created_at)||0;const article=document.createElement('article');article.className=`journey-card work-row${urgent?' urgent':''}${enrolled?' enrolled':''}`;article.dataset.franchise=location;article.dataset.status=status;article.dataset.journeyId=String(journey.id);article.dataset.inquiryId=String(journey.ad_inquiry_id||'');article.dataset.franchiseId=String(journey.franchise_id||'');const badgeClass=stage4Waiting?'waiting-blue':urgent?'overdue':badgeClassFor(status);const badgeText=stage4Waiting?'Waiting':urgent?'Due now':badgeTextFor(status);const datesHtml=`<div class="card-dates"><div><span>Original inquiry</span><time>${escapeHtml(formatCardTimestamp(originalAt))}</time></div><div><span>Last updated</span><time>${escapeHtml(formatCardTimestamp(updated))}</time></div></div>`;const lockText=journeyLockLabel(journey);const lockHtml=lockText?`<div class="journey-card-lock" aria-label="${escapeHtml(lockText)}">🔒 ${escapeHtml(lockText)}</div>`:'';if(stage==='enrollment'){article.innerHTML=`<div class="enrollment-card-name"><strong>${escapeHtml(inquiry.facebook_name||`Journey #${journey.id}`)}</strong><span aria-label="Enrolled">✓</span></div><div class="enrollment-card-meta"><span>${escapeHtml(location)}</span><time>${escapeHtml(formatCardTimestamp(journey.enrolled_at||0))}</time></div>`;}else if(stage==='inquiry'){article.innerHTML=`<div class="card-top"><strong>${escapeHtml(inquiry.facebook_name||`Journey #${journey.id}`)}</strong></div><p>${escapeHtml(cardDescription(journey,location))}</p>${datesHtml}`;}else{article.innerHTML=`<div class="card-top"><strong>${escapeHtml(inquiry.facebook_name||`Journey #${journey.id}`)}</strong><span class="priority ${badgeClass}">${escapeHtml(badgeText)}</span></div><p>${escapeHtml(cardDescription(journey,location))}</p>${stage==='inquiry-followup'?'':`<div class="card-next"><span>${escapeHtml(nextActionText(journey))}</span>${nextTimeText(journey)?`<time>${escapeHtml(nextTimeText(journey))}</time>`:''}</div>`}${datesHtml}`;}if(lockHtml)article.insertAdjacentHTML('beforeend',lockHtml);const attention=replyAttentionByJourney.get(Number(journey.id));if(attention){article.classList.add('parent-reply-needed');const count=Number(attention.unanswered_count)||0;article.insertAdjacentHTML('afterbegin','<div class="parent-reply-banner">● PARENT REPLY NEEDED'+(count>1?' · '+count+' MESSAGES':'')+'</div>');}return article;}
 function normalizeStage(stage){const value=String(stage||'inquiry').toLowerCase();if(value==='inquiry_follow_up')return'inquiry-followup';if(value==='awaiting_outcome')return'awaiting-outcome';if(value==='follow_up')return'followup';return value;}
 function journeyLocation(journey){const franchise=journey._franchise||{};return franchise.location||franchise.name||franchise.branch_name||franchiseName(franchises.find(item=>Number(item.id)===Number(journey.franchise_id))||{id:journey.franchise_id});}
 function cardDescription(journey,location){const waiting=normalizeStage(journey.current_stage)==='followup'&&String(journey.current_status||'').toLowerCase()==='parent_deciding'&&String(journey.next_action_type||'none').toLowerCase()==='none';return`${location} · ${waiting?'Waiting':friendlyStatus(journey.current_status)}`;}
