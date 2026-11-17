@@ -144,7 +144,7 @@ await releaseLock();
 modal.style.display='flex';modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();
 if(typeof openDashboardModal==='function')openDashboardModal('reengagementModal');else{modal.hidden=false;document.getElementById('dashboardModalBackdrop').hidden=false;}
 await showRecord(record);
-if(options.fromAttention){const action=detail.querySelector('[data-re-reactivate]');if(action)action.textContent='Reactivate to Schedule';const note=detail.querySelector('#reSendStatus');if(note)note.textContent='A parent form is waiting. Reactivate to Stage 1A to schedule the visit or free trial. The attention alert clears only after Save Schedule.';}
+if(options.fromAttention){const note=detail.querySelector('#reSendStatus');if(note)note.textContent='A parent is waiting for a reply. Review the Luna–Terra suggestion in Conversation; you can reply without reactivating the journey.';}
 return true;
 };
 body.addEventListener('click',event=>{const btn=event.target.closest('[data-re-id]');if(!btn)return;const record=records.find(r=>String(r.id)===btn.dataset.reId);if(!record)return;showRecord(record);});
@@ -219,7 +219,8 @@ bubble.appendChild(actions);
 if(aiState.notice){const notice=document.createElement('div');notice.className='re-ai-notice';notice.textContent=aiState.notice;bubble.appendChild(notice);}
 aiConversation.appendChild(bubble);
 }
-updateOpenStage1BAi=showAiDraft;
+let observedParentMessageId=Number(currentAiAttention()?.last_parent_message_id)||0;
+updateOpenStage1BAi=()=>{const nextId=Number(currentAiAttention()?.last_parent_message_id)||0;if(nextId&&nextId!==observedParentMessageId){observedParentMessageId=nextId;void loadConversation();}else showAiDraft();};
 aiConversation.addEventListener('input',event=>{if(event.target.matches('.re-ai-editor'))aiState.text=event.target.value;});
 aiConversation.addEventListener('click',async event=>{
 const control=event.target.closest('button[data-re-ai-action]');if(!control)return;
