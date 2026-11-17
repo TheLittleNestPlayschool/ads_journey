@@ -239,7 +239,7 @@ function initJourneyPanel(){
       if(conversationInquiryId===inquiryId&&Number(demo.journeyId)===journeyId){
         manualText.value='';resetManualTimestamp();manualStatus.textContent='Parent message recorded';
         if(!replyManualMode||!replyEditor.value.trim())void loadAiReplyForMessage(message,journeyId,inquiryId,result.message.id,result.response_matches,result.response_matches_v2);
-        conversationFingerprint='';await loadMessengerConversation(inquiryId,false,result.message.id);
+        conversationFingerprint='';window.dispatchEvent(new Event('ads-reply-attention-refresh-request'));await loadMessengerConversation(inquiryId,false,result.message.id);
       }
     }catch(error){manualStatus.textContent=error.message||'Unable to save the parent message';}
     finally{manualSaving=false;manualSave.disabled=false;manualSave.textContent='Save Parent Message';}
@@ -526,7 +526,7 @@ function initJourneyPanel(){
       }
       if(session===replySession&&journeyId===Number(demo.journeyId)&&inquiryId===conversationInquiryId){
         replyEditor.value='';resetReplyTimestamp();replyQuestionId=0;replyTemplateId=0;replyMasterIntentId=0;replyAiDraftActive=false;renderReplyLanguageButton();replyQuickFormActive=false;replyQuickFormDrafts={taglish:'',english:''};replySavedSuggestion=null;replyMatchLabel.textContent=replyManualMode?'Write another message when needed':'Reply recorded · Select another approved reply when needed';replyStatus.textContent=confirmationSaveFailed?'Message recorded, but confirmation status could not be verified. Do NOT record the message again. Use Retry Saving Confirmation in the appointment panel. '+confirmationError:'Copied & recorded. Paste and send it in Facebook Messenger';showReplyMode();renderReplyOptions();updateReplyButton();
-        conversationFingerprint='';await loadMessengerConversation(inquiryId,false,result.message.id);
+        conversationFingerprint='';window.dispatchEvent(new Event('ads-reply-attention-refresh-request'));await loadMessengerConversation(inquiryId,false,result.message.id);
       }
     }catch(error){if(session===replySession)replyStatus.textContent='Copied, but recording was not confirmed. Check Conversation before retrying. '+(error.message||'');}
     finally{if(session===replySession){replySending=false;replyCopyRecord.textContent='Copy & Record Sent';updateReplyButton();}}
