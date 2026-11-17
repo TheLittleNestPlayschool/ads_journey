@@ -10,6 +10,16 @@ visibilityObserver.observe(modal,{attributes:true,attributeFilter:['hidden']});
 const body=document.getElementById('reengagementRecords'),daily=document.getElementById('reDaily'),queue=document.getElementById('reengagementQueueView'),detail=document.getElementById('reengagementDetailView');
 let records=[],lockMap=new Map(),request=0,lockId=0,lockOwned=false,lockTimer=null,lockSeq=0;
 const justSent=new Set();
+/*   Stage 1B reply alerts are separate from the Stage 1A board column. */
+const stage1BReplies=()=>[...(window.adsReplyAttentionByJourney?.values()||[])].filter(item=>String(item.current_stage)==='inquiry_follow_up_pending'&&Number(item.unanswered_count)>0);
+const hasParentReply=r=>Number(window.adsReplyAttentionByJourney?.get(Number(r.id))?.unanswered_count)>0;
+function renderStage1BReplyAlert(){
+let indicator=button.querySelector('.re-ai-attention-badge');
+if(!indicator){indicator=document.createElement('span');indicator.className='re-ai-attention-badge';indicator.style.cssText='display:inline-block;padding:3px 8px;margin-left:6px;background:#07ab50;color:#fff;border-radius:12px;font-size:10px;font-weight:800';button.appendChild(indicator);}
+const count=stage1BReplies().length;indicator.hidden=!count;indicator.textContent=count+' NEED REPLY';indicator.title='Open the oldest Stage 1B parent awaiting a reply';
+}
+window.addEventListener('ads-reply-attention-changed',()=>{renderStage1BReplyAlert();if(!modal.hidden&&queue&&!queue.hidden)renderList();});
+renderStage1BReplyAlert();
 const sendConfirm=document.createElement('div');sendConfirm.className='journey-change-overlay';sendConfirm.hidden=true;
 sendConfirm.innerHTML='<div class="journey-change-dialog" role="dialog" aria-modal="true" aria-labelledby="reFollowupConfirmTitle" aria-describedby="reFollowupConfirmDescription"><span class="journey-change-kicker">THE LITTLE NEST · ADS JOURNEY</span><h3 id="reFollowupConfirmTitle">Confirm Follow-up Sent</h3><p id="reFollowupConfirmDescription"></p><div class="journey-change-buttons"><button type="button" class="journey-change-cancel">Cancel</button><button type="button" class="journey-change-confirm">Confirm Sent</button></div></div>';
 document.body.appendChild(sendConfirm);
@@ -107,7 +117,7 @@ renderList();
 function renderList(){
 const priority={due:0,scheduled:1,awaiting:2};
 const locationOf=r=>{const f=typeof franchises!=='undefined'?franchises.find(f=>Number(f.id)===Number(r.franchise_id)):null;return String(f?(f.location||f.name||f.branch_name):'Franchise #'+r.franchise_id).trim();};
-const rows=records.filter(r=>classify(r)!=='awaiting'&&!justSent.has(Number(r.id))).sort((a,b)=>locationOf(a).localeCompare(locationOf(b),undefined,{sensitivity:'base',numeric:true})||priority[classify(a)]-priority[classify(b)]||(Number(a.next_action_at)||0)-(Number(b.next_action_at)||0));
+const rows=records.filter(r=>(classify(r)!=='awaiting'&&!justSent.has(Number(r.id)))||hasParentReply(r)).sort((a,b)=>locationOf(a).localeCompare(locationOf(b),undefined,{sensitivity:'base',numeric:true})||priority[classify(a)]-priority[classify(b)]||(Number(a.next_action_at)||0)-(Number(b.next_action_at)||0));
 const total=document.getElementById('reQueueTotal');if(total)total.textContent=rows.length+' '+(rows.length===1?'record':'records');
 if(!rows.length){body.innerHTML='<div class="reengagement-empty">No follow-ups requiring action. Sent follow-ups remain tracked while awaiting a parent reply.</div>';return;}
 let lastLocation='';
@@ -117,12 +127,12 @@ const location=locationOf(r);
 const divider=location.toLocaleLowerCase()===lastLocation.toLocaleLowerCase()?'':'<div class="location-divider">'+e(location)+'</div>';
 lastLocation=location;
 const lockedLabel=lockLabel(r);
-const status=classify(r),label=status==='due'?'Due now':status==='scheduled'?'Scheduled':'Awaiting Reply';
-const nextLabel=status==='awaiting'?'Reply deadline':'Follow Up With Parent';
+const status=classify(r),needsReply=hasParentReply(r),label=needsReply?'Parent Reply Needed':status==='due'?'Due now':status==='scheduled'?'Scheduled':'Awaiting Reply';
+const nextLabel=needsReply?'Reply to Parent':status==='awaiting'?'Reply deadline':'Follow Up With Parent';
 return divider+'<div class="reengagement-item journey-card reengagement-card '+(status==='due'?'urgent':'')+'" data-re-id="'+e(r.id)+'" role="button" tabindex="0"><div class="card-top"><strong>'+e(recordName(r)||'Journey #'+r.id)+'</strong>'+(lockedLabel?'<span class="re-card-lock">🔒 '+e(lockedLabel)+'</span>':'')+'<span class="priority '+(status==='due'?'overdue':status==='scheduled'?'upcoming':'waiting-parent')+'">'+label+'</span></div><p>'+e(location)+' · Re-engagement</p><div class="card-next"><span>'+nextLabel+'</span><time>'+e(date(r.next_action_at))+'</time></div></div>';
 }).join('');hydrateQueueNames();
 }
-button.addEventListener('click',async()=>{await releaseLock();showQueueNotice('');modal.style.display='flex';modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();if(typeof openDashboardModal==='function')openDashboardModal('reengagementModal');else{modal.hidden=false;document.getElementById('dashboardModalBackdrop').hidden=false;}await refresh();});
+button.addEventListener('click',async event=>{if(event.target.closest('.re-ai-attention-badge')){const first=stage1BReplies().sort((a,b)=>Number(a.last_parent_at)-Number(b.last_parent_at))[0];if(first)window.dispatchEvent(new CustomEvent('open-attention-journey',{detail:{journeyId:first.ad_journey_id,franchiseId:first.franchise_id}}));return;}await releaseLock();showQueueNotice('');modal.style.display='flex';modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();if(typeof openDashboardModal==='function')openDashboardModal('reengagementModal');else{modal.hidden=false;document.getElementById('dashboardModalBackdrop').hidden=false;}await refresh();});
 /*   Allow global Journey Search to open an active Stage 1B record directly*/
 window.openStage1BJourney=async (journeyId,options={})=>{
 const id=Number(journeyId)||0;if(!id)return false;
