@@ -124,7 +124,8 @@ async function initializeJourneySync(){try{currentEventId=await fetchLatestJourn
 async function checkJourneySync(){if(journeySyncChecking||document.hidden)return;journeySyncChecking=true;try{const latestEventId=await fetchLatestJourneyEventId();if(latestEventId===null)return;if(currentEventId===null){currentEventId=latestEventId;return;}if(latestEventId!==currentEventId){await loadBoard();currentEventId=latestEventId;window.dispatchEvent(new CustomEvent('journey-sync-refresh',{detail:{latestEventId}}));}}catch(error){}finally{journeySyncChecking=false;}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkJourneySync();refreshReplyAttention();}});
 /*   Attention is based on unanswered incoming messages, not whether AI has finished.*/
-function stageAttentionCount(stage){return [...replyAttentionByJourney.values()].filter(item=>normalizeStage(item.current_stage)===stage||(stage==='inquiry-followup'&&String(item.current_stage)==='inquiry_follow_up_pending')).length;}
+function resolvedAttentionStage(item){const journey=boardJourneys.find(row=>Number(row.id)===Number(item.ad_journey_id));return normalizeStage(journey?.current_stage||item.current_stage);}
+function stageAttentionCount(stage){return [...replyAttentionByJourney.values()].filter(item=>resolvedAttentionStage(item)===stage).length;}
 function renderStageReplyAttention(){
   document.querySelectorAll('.journey-column').forEach(column=>{
     const stage=column.dataset.stage,header=column.querySelector('header');if(!header)return;
@@ -145,7 +146,7 @@ function renderCardReplyAttention(){
   });
 }
 async function openReplyAttentionStage(stage){
-  const pending=[...replyAttentionByJourney.values()].filter(item=>normalizeStage(item.current_stage)===stage||(stage==='inquiry-followup'&&String(item.current_stage)==='inquiry_follow_up_pending')).sort((a,b)=>(Number(a.last_parent_at)||0)-(Number(b.last_parent_at)||0));
+  const pending=[...replyAttentionByJourney.values()].filter(item=>resolvedAttentionStage(item)===stage).sort((a,b)=>(Number(a.last_parent_at)||0)-(Number(b.last_parent_at)||0));
   if(!pending.length)return;
   const first=pending[0];window.dispatchEvent(new CustomEvent('open-attention-journey',{detail:{journeyId:first.ad_journey_id,franchiseId:first.franchise_id}}));
 }
@@ -277,6 +278,7 @@ function renderBoard(journeys){
     if(stage==='followup'){const badge=column.querySelector('.stage4-due-badge'),number=column.querySelector('.stage4-due-number');if(number)number.textContent=String(dueCount);if(badge){badge.title=`${dueCount} due now`;badge.setAttribute('aria-label',`${dueCount} due now`);}if(count){count.title=`${remainingCount} not due`;count.setAttribute('aria-label',`${remainingCount} not due`);}}
   });
   updateSummaryCounts();
+  renderStageReplyAttention();renderCardReplyAttention();window.dispatchEvent(new Event('ads-reply-attention-routing-refresh'));
 }
 function compareStageJourneys(stage,a,b){
   const inquiryA=a._ad_inquiry||{},inquiryB=b._ad_inquiry||{};
