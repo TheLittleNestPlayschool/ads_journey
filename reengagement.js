@@ -176,6 +176,7 @@ let updateOpenStage1BAi=null;
 window.addEventListener('ads-reply-attention-changed',()=>{if(!modal.hidden&&!detail.hidden)updateOpenStage1BAi?.();});
 const reAiStyle=document.createElement('style');
 reAiStyle.textContent='.re-ai-draft{max-width:92%;margin:12px 10px 16px auto;padding:14px 15px;background:#ecf5ef;border:2px solid #82b59c;border-radius:13px;color:#254d3d;box-sizing:border-box;font-size:12px;line-height:1.6}.re-ai-draft strong{display:block;font-size:11px;padding-bottom:8px;margin-bottom:9px;border-bottom:1px solid #c7dcd0}.re-ai-draft p{margin:0 0 9px;white-space:pre-wrap}.re-ai-draft textarea{box-sizing:border-box;width:100%;min-height:110px;padding:9px;border:1px solid #91b6a1;border-radius:7px;font:inherit;resize:vertical}.re-ai-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:9px}.re-ai-actions button{background:#fff;border:1px solid #a7c8b5;border-radius:7px;padding:7px 12px;font-weight:700;color:#275443;cursor:pointer}.re-ai-actions button[data-re-ai-action=post],.re-ai-actions button[data-re-ai-action=confirm]{background:#168354;border-color:#168354;color:white}.re-ai-actions button[data-re-ai-action=delete]{border-color:#d9a1a1;color:#a34545}.re-ai-actions button:disabled{opacity:.5;cursor:default}.re-ai-notice{font-size:11px;color:#476757;margin-top:6px}';
+reAiStyle.textContent+='.re-ai-draft .re-ai-bird{width:82px;height:89px;margin:0 auto 6px}.re-ai-draft .re-ai-bird .journey-ai-bird{width:76px;height:76px}.re-ai-draft .re-ai-bird .journey-ai-bird-shadow{left:20px;bottom:4px;width:42px;height:8px}';
 document.head.appendChild(reAiStyle);
 async function showRecord(record){
 await releaseLock();
@@ -207,6 +208,7 @@ const item=currentAiAttention();if(!item||Number(item.unanswered_count)<1)return
 const active=aiIsCurrent(item),turnId=Number(item.ai_turn_id)||0;
 if(active&&aiState.turnId!==turnId)aiState={turnId,text:String(item.suggested_reply).trim(),editing:false,posting:false,busy:false,notice:''};
 const bubble=document.createElement('div');bubble.className='re-ai-draft';
+if(!active&&!item.ai_discarded&&['pending','processing'].includes(String(item.ai_processing_status||'pending'))){const bird=document.querySelector('.journey-ai-busy-overlay .journey-ai-bird-stage')?.cloneNode(true);if(bird){bird.classList.add('re-ai-bird');bubble.appendChild(bird);}}
 const title=document.createElement('strong');title.textContent=active?'✦ Luna–Terra Suggested Reply · NOT SENT':item.ai_discarded?'AI suggestion deleted · Parent still needs a reply':'Luna–Terra · Preparing updated suggestion…';bubble.appendChild(title);
 if(active){
 if(aiState.editing){const edit=document.createElement('textarea');edit.className='re-ai-editor';edit.value=aiState.text;bubble.appendChild(edit);}
