@@ -5,6 +5,8 @@ function initJourneyPanel(){
   const AI_PROCESS_ENDPOINT='https://x58r-xped-p4y6.n7e.xano.io/api:KLjFk2LI/ai_process_message';
   const AI_REPLY_DISCARD_ENDPOINT='https://x58r-xped-p4y6.n7e.xano.io/api:KLjFk2LI/ai_reply_discard';
   const AI_REPLY_ATTENTION_ENDPOINT=API+'/ai_reply_attention';
+  /*   Luna–Terra activity bird appears in every active sales stage, never Enrollment (Stage 5).*/
+  const aiBirdStages=new Set(['inquiry','inquiry-followup','scheduled','awaiting-outcome','followup']);
   const demo={facebookName:'',location:'',franchiseId:null,journeyId:null,stage:'Inquiry',status:'New',next:'Continue conversation'};
   let stage2State=null;let parentConfirmationState=null;let schedulePrepared=false,scheduleVerificationPending=false,scheduleFormReceived=false;let autoConfirmationBusy='',franchiseCopyKey='';
   let openJourneyCardKey='',journeySyncRefreshBusy=false,journeySyncRefreshQueued=false;
@@ -135,7 +137,7 @@ function initJourneyPanel(){
   aiBusyOverlay.innerHTML='<div class="journey-ai-busy-card"><span class="journey-ai-bird-stage" aria-hidden="true"><span class="journey-ai-bird-shadow"></span><svg class="journey-ai-bird" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg"><path d="M47 97V108M73 97V108" stroke="#d89435" stroke-width="4" stroke-linecap="round"/><path d="M38 110H55M65 110H82" stroke="#dc9839" stroke-width="4" stroke-linecap="round"/><path d="M59 27C47 24 43 17 47 9C57 9 63 17 62 27Z" fill="#a2c93f"/><path d="M61 27C60 17 66 7 76 8C79 17 69 25 61 27Z" fill="#45b975"/><ellipse cx="60" cy="64" rx="35" ry="40" fill="#83d1c7"/><ellipse cx="28" cy="68" rx="14" ry="19" fill="#28acd1"/><ellipse cx="92" cy="68" rx="14" ry="19" fill="#28acd1"/><path d="M21 64Q28 71 35 63M21 74Q28 81 35 73M85 63Q92 71 99 64M85 73Q92 81 99 74" fill="none" stroke="#65cce2" stroke-width="2.7" stroke-linecap="round"/><ellipse cx="60" cy="80" rx="23" ry="22" fill="#fff5df"/><circle cx="45" cy="45" r="5.5" fill="#284e45"/><circle cx="75" cy="45" r="5.5" fill="#284e45"/><circle cx="46.8" cy="43" r="1.7" fill="#fff"/><circle cx="76.8" cy="43" r="1.7" fill="#fff"/><circle cx="37" cy="55" r="6.5" fill="#f9aaa0"/><circle cx="83" cy="55" r="6.5" fill="#f9aaa0"/><path d="M50 56Q60 49 70 56L60 67Z" fill="#ffc449"/><path d="M54 58Q60 56 66 58L60 63Z" fill="#eb7d46"/><path d="M45 84Q60 60 75 84" fill="none" stroke="#f39b8f" stroke-width="4.4" stroke-linecap="round"/><path d="M49 84Q60 68 71 84" fill="none" stroke="#efc35a" stroke-width="4.4" stroke-linecap="round"/><path d="M53 84Q60 76 67 84" fill="none" stroke="#45b6d2" stroke-width="4.4" stroke-linecap="round"/><path d="M60 94C53 89 54 85 58 85C59 85 60 86 60 87C62 84 67 85 67 89C67 91 63 94 60 96Z" fill="#f18d84"/></svg></span><strong class="journey-ai-busy-heading">I\'m flying as fast as I can!</strong></div>';
   assistance.appendChild(aiBusyOverlay);
   const aiBusyHeading=aiBusyOverlay.querySelector('.journey-ai-busy-heading');
-  function setAiBusy(value){if(value){let adminName='Admin';try{const signedInAdmin=JSON.parse(localStorage.getItem('ads_journey_user')||'{}')||{};const name=String(signedInAdmin.first_name||signedInAdmin.name||signedInAdmin.full_name||'').trim();if(name)adminName=name.split(/\s+/)[0];}catch(_){}aiBusyHeading.textContent=adminName+", I'm flying as fast as I can!";}aiBusyOverlay.hidden=!value;assistance.setAttribute('aria-busy',String(Boolean(value)));}
+  function setAiBusy(value){if(value){let adminName='Admin';try{const signedInAdmin=JSON.parse(localStorage.getItem('ads_journey_user')||'{}')||{};const name=String(signedInAdmin.first_name||signedInAdmin.name||signedInAdmin.full_name||'').trim();if(name)adminName=name.split(/\s+/)[0];}catch(_){}aiBusyHeading.textContent=adminName+", I'm flying as fast as I can!";}const visible=Boolean(value)&&aiBirdStages.has(panel.dataset.stage);aiBusyOverlay.hidden=!visible;assistance.setAttribute('aria-busy',String(visible));}
   /*   Display the running conversation cost from the existing journey detail response*/
   function renderConversationAiCost(journey){
     const cost=Number(journey?.ai_total_cost_php),turns=Number(journey?.ai_turn_count);
@@ -614,8 +616,6 @@ function initJourneyPanel(){
     const turnId=Number(attention.ai_turn_id)||0;
     return turnId>0&&Number(attention.ai_trigger_message_id)===Number(attention.last_parent_message_id)&&String(attention.ai_processing_status)==='completed'&&Boolean(String(attention.suggested_reply||'').trim())&&!inlineAiHiddenTurns.has(turnId);
   }
-  /*   Luna–Terra activity bird appears in every active sales stage, never Enrollment (Stage 5).*/
-  const aiBirdStages=new Set(['inquiry','inquiry-followup','scheduled','awaiting-outcome','followup']);
   function inlineAiRow(attention,waiting=false){
     const row=document.createElement('div');row.className='journey-message-row outgoing ai-draft-row';row.dataset.aiTurnId=String(attention.ai_turn_id||0);
     const bubble=document.createElement('div');bubble.className='journey-message-bubble ai-draft-bubble';
