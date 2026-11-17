@@ -614,10 +614,12 @@ function initJourneyPanel(){
     const turnId=Number(attention.ai_turn_id)||0;
     return turnId>0&&Number(attention.ai_trigger_message_id)===Number(attention.last_parent_message_id)&&String(attention.ai_processing_status)==='completed'&&Boolean(String(attention.suggested_reply||'').trim())&&!inlineAiHiddenTurns.has(turnId);
   }
+  /*   Luna–Terra activity bird appears in every active sales stage, never Enrollment (Stage 5).*/
+  const aiBirdStages=new Set(['inquiry','inquiry-followup','scheduled','awaiting-outcome','followup']);
   function inlineAiRow(attention,waiting=false){
     const row=document.createElement('div');row.className='journey-message-row outgoing ai-draft-row';row.dataset.aiTurnId=String(attention.ai_turn_id||0);
     const bubble=document.createElement('div');bubble.className='journey-message-bubble ai-draft-bubble';
-    if(waiting&&!attention.ai_discarded&&['pending','processing'].includes(String(attention.ai_processing_status||'pending'))){const bird=aiBusyOverlay.querySelector('.journey-ai-bird-stage')?.cloneNode(true);if(bird){bird.classList.add('ai-draft-bird');bubble.appendChild(bird);}}
+    if(waiting&&aiBirdStages.has(panel.dataset.stage)&&!attention.ai_discarded&&['pending','processing'].includes(String(attention.ai_processing_status||'pending'))){const bird=aiBusyOverlay.querySelector('.journey-ai-bird-stage')?.cloneNode(true);if(bird){bird.classList.add('ai-draft-bird');bubble.appendChild(bird);}}
     const title=document.createElement('div');title.className='ai-draft-title';title.textContent=waiting?(attention.ai_discarded?'AI suggestion deleted · Parent still needs a reply':'Luna–Terra · Preparing updated suggestion…'):'✦ Luna–Terra Suggested Reply · NOT SENT';bubble.appendChild(title);
     if(!waiting){
       const id=Number(attention.ai_turn_id)||0;
