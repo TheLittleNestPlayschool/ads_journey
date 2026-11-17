@@ -11,7 +11,7 @@ const body=document.getElementById('reengagementRecords'),daily=document.getElem
 let records=[],lockMap=new Map(),request=0,lockId=0,lockOwned=false,lockTimer=null,lockSeq=0;
 const justSent=new Set();
 /*   Stage 1B reply alerts are separate from the Stage 1A board column. */
-const stage1BReplies=()=>[...(window.adsReplyAttentionByJourney?.values()||[])].filter(item=>String(item.current_stage)==='inquiry_follow_up_pending'&&Number(item.unanswered_count)>0);
+const stage1BReplies=()=>[...(window.adsReplyAttentionByJourney?.values()||[])].filter(item=>{const live=typeof boardJourneys!=='undefined'?boardJourneys.find(row=>Number(row.id)===Number(item.ad_journey_id)):null;return String(live?.current_stage||item.current_stage)==='inquiry_follow_up_pending'&&Number(item.unanswered_count)>0;});
 const hasParentReply=r=>Number(window.adsReplyAttentionByJourney?.get(Number(r.id))?.unanswered_count)>0;
 function renderStage1BReplyAlert(){
 let indicator=button.querySelector('.re-ai-attention-badge');
@@ -19,6 +19,7 @@ if(!indicator){indicator=document.createElement('span');indicator.className='re-
 const count=stage1BReplies().length;indicator.hidden=!count;indicator.textContent=count+' NEED REPLY';indicator.title='Open the oldest Stage 1B parent awaiting a reply';
 }
 window.addEventListener('ads-reply-attention-changed',()=>{renderStage1BReplyAlert();if(!modal.hidden&&queue&&!queue.hidden)renderList();});
+window.addEventListener('ads-reply-attention-routing-refresh',renderStage1BReplyAlert);
 renderStage1BReplyAlert();
 const sendConfirm=document.createElement('div');sendConfirm.className='journey-change-overlay';sendConfirm.hidden=true;
 sendConfirm.innerHTML='<div class="journey-change-dialog" role="dialog" aria-modal="true" aria-labelledby="reFollowupConfirmTitle" aria-describedby="reFollowupConfirmDescription"><span class="journey-change-kicker">THE LITTLE NEST · ADS JOURNEY</span><h3 id="reFollowupConfirmTitle">Confirm Follow-up Sent</h3><p id="reFollowupConfirmDescription"></p><div class="journey-change-buttons"><button type="button" class="journey-change-cancel">Cancel</button><button type="button" class="journey-change-confirm">Confirm Sent</button></div></div>';
