@@ -125,6 +125,7 @@ function initJourneyPanel(){
   /*   Large, unmistakable activity indicator while Luna–Terra prepares the reply */
   const aiBusyStyles=document.createElement('style');
   aiBusyStyles.textContent=`.journey-panel .journey-assistance{position:relative}.journey-ai-busy-overlay{position:absolute;inset:0;z-index:12;display:grid;place-items:center;padding:20px;background:rgba(250,249,245,.85);backdrop-filter:blur(3px);border-radius:12px}.journey-ai-busy-overlay[hidden]{display:none!important}.journey-ai-busy-card{width:100%;max-width:265px;display:flex;flex-direction:column;align-items:center;gap:15px;padding:28px 15px;background:rgba(255,255,255,.94);border:1px solid #cddcd3;box-shadow:0 14px 40px rgba(40,70,58,.14);border-radius:18px;text-align:center}.journey-ai-bird-stage{position:relative;width:120px;height:124px;display:grid;place-items:center}.journey-ai-bird{display:block;width:110px;height:110px;transform-origin:50% 85%;animation:journey-ai-bird-bounce 1.2s ease-in-out infinite;filter:drop-shadow(0 3px 2px rgba(40,90,70,.12))}.journey-ai-bird-shadow{position:absolute;left:30px;bottom:4px;width:60px;height:10px;background:rgba(55,95,75,.14);border-radius:50%;filter:blur(3px);animation:journey-ai-bird-shadow 1.2s ease-in-out infinite}.journey-ai-busy-heading{font-size:15px;line-height:1.4;font-weight:800;color:#315d50}.journey-ai-busy-detail{font-size:11px;line-height:1.5;color:#687d73}@keyframes journey-ai-bird-bounce{0%,100%{transform:translateY(4px) scaleY(.98)}50%{transform:translateY(-16px) scaleY(1.01)}}@keyframes journey-ai-bird-shadow{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(.7);opacity:.45}}@media(prefers-reduced-motion:reduce){.journey-ai-bird,.journey-ai-bird-shadow{animation:none}}`;
+  aiBusyStyles.textContent+='.journey-panel .ai-draft-bird{width:82px;height:89px;margin:0 auto 6px}.journey-panel .ai-draft-bird .journey-ai-bird{width:76px;height:76px}.journey-panel .ai-draft-bird .journey-ai-bird-shadow{left:20px;bottom:4px;width:42px;height:8px}';
   document.head.appendChild(aiBusyStyles);
   const aiBusyOverlay=document.createElement('div');
   aiBusyOverlay.className='journey-ai-busy-overlay';
@@ -616,6 +617,7 @@ function initJourneyPanel(){
   function inlineAiRow(attention,waiting=false){
     const row=document.createElement('div');row.className='journey-message-row outgoing ai-draft-row';row.dataset.aiTurnId=String(attention.ai_turn_id||0);
     const bubble=document.createElement('div');bubble.className='journey-message-bubble ai-draft-bubble';
+    if(waiting&&!attention.ai_discarded&&['pending','processing'].includes(String(attention.ai_processing_status||'pending'))){const bird=aiBusyOverlay.querySelector('.journey-ai-bird-stage')?.cloneNode(true);if(bird){bird.classList.add('ai-draft-bird');bubble.appendChild(bird);}}
     const title=document.createElement('div');title.className='ai-draft-title';title.textContent=waiting?(attention.ai_discarded?'AI suggestion deleted · Parent still needs a reply':'Luna–Terra · Preparing updated suggestion…'):'✦ Luna–Terra Suggested Reply · NOT SENT';bubble.appendChild(title);
     if(!waiting){
       const id=Number(attention.ai_turn_id)||0;
