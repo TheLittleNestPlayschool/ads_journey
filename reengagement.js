@@ -160,6 +160,12 @@ if(dock){dock.disabled=true;dock.hidden=true;}
 }
 return events.length>oldEventCount;
 }
+/*   Shared reply attention stays visible while Stage 1B manages follow-ups. */
+let updateOpenStage1BAi=null;
+window.addEventListener('ads-reply-attention-changed',()=>{if(!modal.hidden&&!detail.hidden)updateOpenStage1BAi?.();});
+const reAiStyle=document.createElement('style');
+reAiStyle.textContent='.re-ai-draft{max-width:92%;margin:12px 10px 16px auto;padding:14px 15px;background:#ecf5ef;border:2px solid #82b59c;border-radius:13px;color:#254d3d;box-sizing:border-box;font-size:12px;line-height:1.6}.re-ai-draft strong{display:block;font-size:11px;padding-bottom:8px;margin-bottom:9px;border-bottom:1px solid #c7dcd0}.re-ai-draft p{margin:0 0 9px;white-space:pre-wrap}.re-ai-draft textarea{box-sizing:border-box;width:100%;min-height:110px;padding:9px;border:1px solid #91b6a1;border-radius:7px;font:inherit;resize:vertical}.re-ai-actions{display:flex;justify-content:flex-end;gap:7px;margin-top:9px}.re-ai-actions button{background:#fff;border:1px solid #a7c8b5;border-radius:7px;padding:7px 12px;font-weight:700;color:#275443;cursor:pointer}.re-ai-actions button[data-re-ai-action=post],.re-ai-actions button[data-re-ai-action=confirm]{background:#168354;border-color:#168354;color:white}.re-ai-actions button[data-re-ai-action=delete]{border-color:#d9a1a1;color:#a34545}.re-ai-actions button:disabled{opacity:.5;cursor:default}.re-ai-notice{font-size:11px;color:#476757;margin-top:6px}';
+document.head.appendChild(reAiStyle);
 async function showRecord(record){
 await releaseLock();
 const id=Number(record.id),token=localStorage.getItem('ads_journey_token'),auth={Authorization:'Bearer '+token};
@@ -174,10 +180,70 @@ const name=inquiry.facebook_name||inquiry.parent_name||'Journey #'+id,location=t
 const branch=location.location||location.name||location.branch_name||'Franchise #'+record.franchise_id;
 const events=Array.isArray(data.ad_journey_events)?data.ad_journey_events:[];
 const history=historyMarkup(events);
-detail.innerHTML='<div class="re-journey-header"><div><small>PARENT JOURNEY</small><h2>'+e(name)+'</h2><p>'+e(branch)+' · Facebook: '+e(name)+'</p></div><div class="re-header-controls"><span id="reLockStatus" class="re-header-lock" role="status">Checking control…</span><button class="secondary-button" type="button" data-re-back>← Back</button></div></div><div class="re-journey-content"><section class="re-journey-actions"><div class="re-status-strip"><span><small>JOURNEY STAGE</small>Re-engagement</span><span><small>CURRENT STATUS</small>'+e(classify(record)==='due'?'Follow-up Due':classify(record)==='awaiting'?'Awaiting Parent Reply':'Scheduled')+'</span><span><small>NEXT STEP</small>'+e(classify(record)==='awaiting'?'Wait for Parent':'Message Parent')+'</span></div><div class="re-action-card"><small>NEXT STEP</small><h3>Follow-up with Parent</h3><p>'+e(classify(record)==='scheduled'?'Follow-up scheduled for '+date(record.next_action_at):classify(record)==='awaiting'?'Follow-up already sent. Waiting for a reply.':'Follow-up due '+date(record.next_action_at))+'</p><label class="re-followup-label" for="reFollowupNote">MESSAGE SENT / FOLLOW-UP NOTES</label><textarea id="reFollowupNote" class="re-followup-note" placeholder="Enter the follow-up message sent to the parent…" required></textarea><p id="reSendStatus" class="re-send-status" role="status"></p></div><form id="reEnrollForm" class="re-stage1b-enroll-form" hidden><label for="reEnrollNote">ENROLLMENT NOTE</label><textarea id="reEnrollNote" rows="2" placeholder="Optional enrollment details"></textarea><div class="re-stage1b-enroll-actions"><button type="button" data-re-enroll-cancel>Back</button><button type="submit">Confirm Enrolled</button></div><p id="reEnrollStatus" role="status"></p></form><div class="re-action-dock"><button type="button" data-re-reactivate disabled>Reactivate</button><button type="button" data-re-send-shortcut>Sent To Parent</button><button type="button" data-re-enroll disabled>Enroll</button></div></section><section class="re-journey-middle"><div class="re-view-tabs"><button class="selected" type="button" data-re-view="conversation">Conversation</button><button type="button" data-re-view="history">History</button></div><div class="re-view-body" id="reConversation"><div class="reengagement-empty">Loading conversation…</div></div><div class="re-view-body" id="reHistory" hidden>'+ (history||'<div class="reengagement-empty">No journey history.</div>')+'</div><form id="reSendForm" class="re-send-form"><label for="reMessageText">REPLY TO PARENT</label><textarea id="reMessageText" placeholder="Write your reply…" required></textarea><button type="submit">Send Message to Parent</button></form></section><aside class="re-journey-assistance"><div class="re-assist-head"><small>THE LITTLE NEST</small><h3>Reply Assistance</h3><p>Prepared responses · Admin reviewed</p></div><div class="re-assist-body"><h4>Suggested reply</h4><div class="re-assist-placeholder">Suggested wording will appear here once the response library is connected.<p>Nothing is sent automatically. The admin always reviews and sends.</p></div><h4>Conversation context</h4><p>Known parent details and relevant questions will appear here after conversation analysis is connected.</p><h4>School information</h4><p>Verified branch details and response guidance will be shown here when applicable.</p></div></aside></div>';
+detail.innerHTML='<div class="re-journey-header"><div><small>PARENT JOURNEY</small><h2>'+e(name)+'</h2><p>'+e(branch)+' · Facebook: '+e(name)+'</p></div><div class="re-header-controls"><span id="reLockStatus" class="re-header-lock" role="status">Checking control…</span><button class="secondary-button" type="button" data-re-back>← Back</button></div></div><div class="re-journey-content"><section class="re-journey-actions"><div class="re-status-strip"><span><small>JOURNEY STAGE</small>Re-engagement</span><span><small>CURRENT STATUS</small>'+e(classify(record)==='due'?'Follow-up Due':classify(record)==='awaiting'?'Awaiting Parent Reply':'Scheduled')+'</span><span><small>NEXT STEP</small>'+e(classify(record)==='awaiting'?'Wait for Parent':'Message Parent')+'</span></div><div class="re-action-card"><small>NEXT STEP</small><h3>Follow-up with Parent</h3><p>'+e(classify(record)==='scheduled'?'Follow-up scheduled for '+date(record.next_action_at):classify(record)==='awaiting'?'Follow-up already sent. Waiting for a reply.':'Follow-up due '+date(record.next_action_at))+'</p><label class="re-followup-label" for="reFollowupNote">MESSAGE SENT / FOLLOW-UP NOTES</label><textarea id="reFollowupNote" class="re-followup-note" placeholder="Enter the follow-up message sent to the parent…" required></textarea><p id="reSendStatus" class="re-send-status" role="status"></p></div><form id="reEnrollForm" class="re-stage1b-enroll-form" hidden><label for="reEnrollNote">ENROLLMENT NOTE</label><textarea id="reEnrollNote" rows="2" placeholder="Optional enrollment details"></textarea><div class="re-stage1b-enroll-actions"><button type="button" data-re-enroll-cancel>Back</button><button type="submit">Confirm Enrolled</button></div><p id="reEnrollStatus" role="status"></p></form><div class="re-action-dock"><button type="button" data-re-reactivate disabled>Reactivate</button><button type="button" data-re-send-shortcut>Sent To Parent</button><button type="button" data-re-enroll disabled>Enroll</button></div></section><section class="re-journey-middle"><div class="re-view-tabs"><button class="selected" type="button" data-re-view="conversation">Conversation</button><button type="button" data-re-view="history">History</button></div><div class="re-view-body" id="reConversation"><div class="reengagement-empty">Loading conversation…</div></div><div class="re-view-body" id="reHistory" hidden>'+ (history||'<div class="reengagement-empty">No journey history.</div>')+'</div><form id="reSendForm" class="re-send-form"><label for="reMessageText">REPLY TO PARENT</label><textarea id="reMessageText" placeholder="Write your reply…" required></textarea><button type="submit">Send Message to Parent</button></form></section><aside class="re-journey-assistance"><div class="re-assist-head"><small>THE LITTLE NEST</small><h3>Reply Assistance</h3><p>Prepared responses · Admin reviewed</p></div><div class="re-assist-body"><h4>Suggested reply</h4><div class="re-assist-placeholder">Luna–Terra suggestions appear in the Conversation panel as unsent drafts.<p>An admin reviews and sends every reply.</p></div><h4>Conversation context</h4><p>Known parent details and relevant questions will appear here after conversation analysis is connected.</p><h4>School information</h4><p>Verified branch details and response guidance will be shown here when applicable.</p></div></aside></div>';
 const back=detail.querySelector('[data-re-back]'),send=detail.querySelector('#reSendForm');
 if(classify(record)==='awaiting')detail.querySelector('[data-re-send-shortcut]').hidden=true;
 detail.dataset.journeyId=String(id);
+const aiConversation=detail.querySelector('#reConversation');
+let aiState={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};
+const hiddenAiTurns=new Set();
+const currentAiAttention=()=>window.adsReplyAttentionByJourney?.get(id)||null;
+function aiIsCurrent(item){return item&&Number(item.unanswered_count)>0&&!item.ai_discarded&&Number(item.ai_turn_id)>0&&Number(item.ai_trigger_message_id)===Number(item.last_parent_message_id)&&item.ai_processing_status==='completed'&&String(item.suggested_reply||'').trim()&&!hiddenAiTurns.has(Number(item.ai_turn_id));}
+function showAiDraft(){
+if(!aiConversation.isConnected||Number(detail.dataset.journeyId)!==id)return;
+aiConversation.querySelector('.re-ai-draft')?.remove();
+const item=currentAiAttention();if(!item||Number(item.unanswered_count)<1)return;
+const active=aiIsCurrent(item),turnId=Number(item.ai_turn_id)||0;
+if(active&&aiState.turnId!==turnId)aiState={turnId,text:String(item.suggested_reply).trim(),editing:false,posting:false,busy:false,notice:''};
+const bubble=document.createElement('div');bubble.className='re-ai-draft';
+const title=document.createElement('strong');title.textContent=active?'✦ Luna–Terra Suggested Reply · NOT SENT':item.ai_discarded?'AI suggestion deleted · Parent still needs a reply':'Luna–Terra · Preparing updated suggestion…';bubble.appendChild(title);
+if(active){
+if(aiState.editing){const edit=document.createElement('textarea');edit.className='re-ai-editor';edit.value=aiState.text;bubble.appendChild(edit);}
+else{const text=document.createElement('p');text.textContent=aiState.text;bubble.appendChild(text);}
+const actions=document.createElement('div');actions.className='re-ai-actions';
+const labels=aiState.posting?[['confirm','Confirm Sent'],['cancel','Cancel']]:[['edit',aiState.editing?'Done Editing':'Edit'],['delete','Delete'],['post','Post']];
+labels.forEach(([key,label])=>{const control=document.createElement('button');control.type='button';control.dataset.reAiAction=key;control.textContent=label;control.disabled=aiState.busy||!lockOwned||lockId!==id;actions.appendChild(control);});
+bubble.appendChild(actions);
+}
+if(aiState.notice){const notice=document.createElement('div');notice.className='re-ai-notice';notice.textContent=aiState.notice;bubble.appendChild(notice);}
+aiConversation.appendChild(bubble);
+}
+updateOpenStage1BAi=showAiDraft;
+aiConversation.addEventListener('input',event=>{if(event.target.matches('.re-ai-editor'))aiState.text=event.target.value;});
+aiConversation.addEventListener('click',async event=>{
+const control=event.target.closest('button[data-re-ai-action]');if(!control)return;
+const action=control.dataset.reAiAction,item=currentAiAttention(),turnId=Number(item?.ai_turn_id)||0;
+if(!aiIsCurrent(item)||aiState.turnId!==turnId||aiState.busy)return;
+if(!lockOwned||lockId!==id){aiState.notice='Take Control before changing this suggestion.';showAiDraft();return;}
+if(action==='edit'){aiState.editing=!aiState.editing;aiState.notice='';showAiDraft();return;}
+if(action==='cancel'){aiState.posting=false;aiState.notice='';showAiDraft();return;}
+if(action==='post'){
+if(!aiState.text.trim()){aiState.notice='Write a reply before posting.';showAiDraft();return;}
+try{if(!navigator.clipboard?.writeText)throw Error('Clipboard unavailable.');await navigator.clipboard.writeText(aiState.text.trim());aiState.posting=true;aiState.editing=false;aiState.notice='Copied. Send through Messenger, then click Confirm Sent.';}
+catch(error){aiState.notice=error.message||'Unable to copy.';}
+showAiDraft();return;
+}
+if(action==='delete'&&!window.confirm('Delete this AI suggestion? The parent will still need a reply.'))return;
+aiState.busy=true;showAiDraft();
+try{
+if(action==='delete'){
+const res=await fetch('https://x58r-xped-p4y6.n7e.xano.io/api:KLjFk2LI/ai_reply_discard',{method:'POST',headers:{...auth,'Content-Type':'application/json'},body:JSON.stringify({ad_journey_id:id,ai_turn_id:turnId})});
+const data=await res.json().catch(()=>({}));
+if(!res.ok||data.ai_discarded!==true)throw Error(data.message||data.error||'Could not delete suggestion.');
+hiddenAiTurns.add(turnId);aiState={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};window.dispatchEvent(new Event('ads-reply-attention-refresh-request'));showAiDraft();return;
+}
+if(action==='confirm'){
+const verification=await fetch(API+'/ai_reply_attention',{cache:'no-store',headers:auth});
+if(!verification.ok)throw Error('Could not verify the latest parent message.');
+const list=await verification.json(),latest=(Array.isArray(list.replies)?list.replies:[]).find(x=>Number(x.ad_journey_id)===id);
+if(!aiIsCurrent(latest)||Number(latest.ai_turn_id)!==turnId||Number(latest.last_parent_message_id)!==Number(item.last_parent_message_id))throw Error('The parent conversation changed. Review the updated suggestion.');
+const response=await fetch(API+'/ad_reply_record_sent',{method:'POST',headers:{...auth,'Content-Type':'application/json'},body:JSON.stringify({ad_journey_id:id,ad_inquiry_id:Number(journey.ad_inquiry_id||record.ad_inquiry_id),response_text:aiState.text.trim(),question_id:0,language:'english',reply_source:'admin_composed'})});
+const data=await response.json().catch(()=>({}));
+if(!response.ok||!data.message?.id)throw Error(typeof data.message==='string'?data.message:(data.error||'Unable to record confirmed reply.'));
+hiddenAiTurns.add(turnId);aiState={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};window.dispatchEvent(new Event('ads-reply-attention-refresh-request'));await loadConversation();return;
+}
+}catch(error){aiState.busy=false;aiState.notice=String(error.message||'Unable to complete action');showAiDraft();}
+});
 await takeLock(id);
 detail.querySelector('[data-re-enroll]').addEventListener('click',()=>{if(!lockOwned||lockId!==id)return;const form=detail.querySelector('#reEnrollForm');form.hidden=false;detail.querySelector('#reEnrollStatus').textContent='';form.querySelector('textarea')?.focus();});
 detail.querySelector('[data-re-enroll-cancel]').addEventListener('click',()=>{const form=detail.querySelector('#reEnrollForm');form.hidden=true;form.reset();detail.querySelector('#reEnrollStatus').textContent='';});
@@ -247,7 +313,7 @@ const target=detail.querySelector('#reConversation'),inquiryId=Number(journey.ad
 if(!inquiryId){target.innerHTML='<div class="reengagement-empty">No inquiry linked.</div>';return;}
 try{const res=await fetch(API+'/ad_messenger_conversation?ad_inquiry_id='+inquiryId,{headers:auth});if(!res.ok)throw Error('Conversation unavailable');
 const json=await res.json(),raw=Array.isArray(json.messages)?json.messages:(json.messages?.items||json.messages?.records||[]);
-target.innerHTML=raw.length?raw.slice().sort((a,b)=>Number(a.message_timestamp||a.created_at)-Number(b.message_timestamp||b.created_at)).map(m=>'<div class="re-message '+(m.direction==='outbound'||m.direction==='outgoing'?'outgoing':'incoming')+'"><div>'+e(m.message_text||'')+'<small>'+e(date(m.message_timestamp||m.created_at))+'</small></div></div>').join(''):'<div class="reengagement-empty">No Messenger messages recorded for this inquiry yet.</div>';target.scrollTop=target.scrollHeight;
+target.innerHTML=raw.length?raw.slice().sort((a,b)=>Number(a.message_timestamp||a.created_at)-Number(b.message_timestamp||b.created_at)).map(m=>'<div class="re-message '+(m.direction==='outbound'||m.direction==='outgoing'?'outgoing':'incoming')+'"><div>'+e(m.message_text||'')+'<small>'+e(date(m.message_timestamp||m.created_at))+'</small></div></div>').join(''):'<div class="reengagement-empty">No Messenger messages recorded for this inquiry yet.</div>';showAiDraft();target.scrollTop=target.scrollHeight;
 }catch(error){target.innerHTML='<div class="reengagement-empty">'+e(error.message)+'</div>';}
 }
 await loadConversation();
