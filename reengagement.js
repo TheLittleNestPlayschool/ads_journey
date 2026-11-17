@@ -15,7 +15,7 @@ const stage1BReplies=()=>[...(window.adsReplyAttentionByJourney?.values()||[])].
 const hasParentReply=r=>Number(window.adsReplyAttentionByJourney?.get(Number(r.id))?.unanswered_count)>0;
 function renderStage1BReplyAlert(){
 let indicator=button.querySelector('.re-ai-attention-badge');
-if(!indicator){indicator=document.createElement('span');indicator.className='re-ai-attention-badge';indicator.style.cssText='display:inline-block;padding:3px 8px;margin-left:6px;background:#07ab50;color:#fff;border-radius:12px;font-size:10px;font-weight:800';button.appendChild(indicator);}
+if(!indicator){indicator=document.createElement('span');indicator.className='re-ai-attention-badge';indicator.style.cssText='padding:3px 8px;margin-left:6px;background:#07ab50;color:#fff;border-radius:12px;font-size:10px;font-weight:800';button.appendChild(indicator);}
 const count=stage1BReplies().length;indicator.hidden=!count;indicator.textContent=count+' NEED REPLY';indicator.title='Open the oldest Stage 1B parent awaiting a reply';
 }
 window.addEventListener('ads-reply-attention-changed',()=>{renderStage1BReplyAlert();if(!modal.hidden&&queue&&!queue.hidden)renderList();});
