@@ -658,7 +658,7 @@ function initJourneyPanel(){
       try{
         const response=await fetch(AI_REPLY_DISCARD_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:Number(demo.journeyId),ai_turn_id:turnId})});
         const data=await response.json().catch(()=>({}));
-        if(!response.ok||data.success!==true)throw Error(data.message||data.error||'Could not discard the AI suggestion.');
+        if(!response.ok||data.ai_discarded!==true)throw Error(data.message||data.error||'Could not discard the AI suggestion.');
         inlineAiHiddenTurns.add(turnId);inlineAiDraft={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};conversationFingerprint='';window.dispatchEvent(new Event('ads-reply-attention-refresh-request'));void loadMessengerConversation(conversationInquiryId,false);
       }catch(error){inlineAiDraft.busy=false;inlineAiNotice(error.message||'Could not delete the suggestion.');refreshInlineAiRow();}
       return;
