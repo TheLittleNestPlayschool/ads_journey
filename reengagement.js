@@ -240,7 +240,7 @@ if(active){
 if(aiState.editing){const edit=document.createElement('textarea');edit.className='re-ai-editor';edit.value=aiState.text;bubble.appendChild(edit);}
 else{const text=document.createElement('p');text.textContent=aiState.text;bubble.appendChild(text);}
 const actions=document.createElement('div');actions.className='re-ai-actions';
-const labels=aiState.posting?[['confirm','Confirm Sent'],['cancel','Cancel']]:[['edit',aiState.editing?'Done Editing':'Edit'],['delete','Delete'],['post','Post']];
+const labels=[['edit',aiState.editing?'Done Editing':'Edit'],['delete','Delete'],['copy','Copy'],['post','Post']];
 labels.forEach(([key,label])=>{const control=document.createElement('button');control.type='button';control.dataset.reAiAction=key;control.textContent=label;control.disabled=aiState.busy||!lockOwned||lockId!==id;actions.appendChild(control);});
 bubble.appendChild(actions);
 }
@@ -256,13 +256,6 @@ const action=control.dataset.reAiAction,item=currentAiAttention(),turnId=Number(
 if(!aiIsCurrent(item)||aiState.turnId!==turnId||aiState.busy)return;
 if(!lockOwned||lockId!==id){aiState.notice='Take Control before changing this suggestion.';showAiDraft();return;}
 if(action==='edit'){aiState.editing=!aiState.editing;aiState.notice='';showAiDraft();return;}
-if(action==='cancel'){aiState.posting=false;aiState.notice='';showAiDraft();return;}
-if(action==='post'){
-if(!aiState.text.trim()){aiState.notice='Write a reply before posting.';showAiDraft();return;}
-try{if(!navigator.clipboard?.writeText)throw Error('Clipboard unavailable.');await navigator.clipboard.writeText(aiState.text.trim());aiState.posting=true;aiState.editing=false;aiState.notice='Copied. Send through Messenger, then click Confirm Sent.';}
-catch(error){aiState.notice=error.message||'Unable to copy.';}
-showAiDraft();return;
-}
 if(action==='delete'&&!window.confirm('Delete this AI suggestion? The parent will still need a reply.'))return;
 aiState.busy=true;showAiDraft();
 try{
@@ -272,17 +265,26 @@ const data=await res.json().catch(()=>({}));
 if(!res.ok||data.ai_discarded!==true)throw Error(data.message||data.error||'Could not delete suggestion.');
 hiddenAiTurns.add(turnId);aiState={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};window.dispatchEvent(new Event('ads-reply-attention-refresh-request'));showAiDraft();return;
 }
-if(action==='confirm'){
+if(action==='copy'||action==='post'){
+const message=aiState.text.trim();if(!message)throw Error('Write a reply before sending.');
+if(action==='post'&&!window.confirm('Send this reply directly to the parent on Facebook Messenger now?')){aiState.busy=false;showAiDraft();return;}
+if(action==='copy'){
+try{if(!navigator.clipboard?.writeText)throw Error('Clipboard unavailable.');await navigator.clipboard.writeText(message);}
+catch(error){aiState.busy=false;aiState.notice='Clipboard unavailable. Nothing was recorded.';showAiDraft();return;}
+}
 const verification=await fetch(API+'/ai_reply_attention',{cache:'no-store',headers:auth});
 if(!verification.ok)throw Error('Could not verify the latest parent message.');
 const list=await verification.json(),latest=(Array.isArray(list.replies)?list.replies:[]).find(x=>Number(x.ad_journey_id)===id);
 if(!aiIsCurrent(latest)||Number(latest.ai_turn_id)!==turnId||Number(latest.last_parent_message_id)!==Number(item.last_parent_message_id))throw Error('The parent conversation changed. Review the updated suggestion.');
-const response=await fetch(API+'/ad_reply_record_sent',{method:'POST',headers:{...auth,'Content-Type':'application/json'},body:JSON.stringify({ad_journey_id:id,ad_inquiry_id:Number(journey.ad_inquiry_id||record.ad_inquiry_id),response_text:aiState.text.trim(),question_id:0,language:'english',reply_source:'admin_composed'})});
-const data=await response.json().catch(()=>({}));
-if(!response.ok||!data.message?.id)throw Error(typeof data.message==='string'?data.message:(data.error||'Unable to record confirmed reply.'));
-hiddenAiTurns.add(turnId);aiState={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};window.dispatchEvent(new Event('ads-reply-attention-refresh-request'));await loadConversation();return;
+const endpoint=action==='copy'?'ad_reply_record_sent':'ad_messenger_send';
+const payload=action==='copy'?{ad_journey_id:id,ad_inquiry_id:Number(journey.ad_inquiry_id||record.ad_inquiry_id),response_text:message,question_id:0,language:'english',reply_source:'admin_composed'}:{journey_id:id,message_text:message};
+const response=await fetch(API+'/'+endpoint,{method:'POST',headers:{...auth,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+const data=await response.json().catch(()=>({})),saved=action==='copy'?data.message:data.outgoing_message;
+if(!response.ok||data.success===false||!saved?.id||(action==='post'&&!String(saved.message_id||'').trim()))throw Error(typeof data.message==='string'?data.message:(data.error?.message||data.error||'Outgoing message was not confirmed.'));
+hiddenAiTurns.add(turnId);aiState={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};
+window.dispatchEvent(new Event('ads-reply-attention-refresh-request'));await loadConversation();await refresh();if(typeof loadBoard==='function')loadBoard();return;
 }
-}catch(error){aiState.busy=false;aiState.notice=String(error.message||'Unable to complete action');showAiDraft();}
+}catch(error){aiState.busy=false;aiState.notice=action==='post'?'Send not confirmed. Check Messenger before retrying. '+String(error.message||''):action==='copy'?'Message may be copied but not recorded: '+String(error.message||''):String(error.message||'Unable to complete action');showAiDraft();}
 });
 await takeLock(id);
 detail.querySelector('[data-re-enroll]').addEventListener('click',()=>{if(!lockOwned||lockId!==id)return;const form=detail.querySelector('#reEnrollForm');form.hidden=false;detail.querySelector('#reEnrollStatus').textContent='';form.querySelector('textarea')?.focus();});
