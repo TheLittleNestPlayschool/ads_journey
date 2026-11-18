@@ -643,7 +643,7 @@ function initJourneyPanel(){
       if(inlineAiDraft.editing){const editor=document.createElement('textarea');editor.className='ai-draft-editor';editor.value=inlineAiDraft.text;editor.maxLength=5000;editor.setAttribute('aria-label','Edit pending AI reply');editor.addEventListener('input',()=>{if(inlineAiDraft.turnId===id)inlineAiDraft.text=editor.value;});bubble.appendChild(editor);}
       else{const text=document.createElement('div');text.className='journey-message-text ai-draft-text';text.textContent=inlineAiDraft.text;bubble.appendChild(text);}
       const actions=document.createElement('div');actions.className='ai-draft-actions';
-      const buttons=inlineAiDraft.posting?[['confirm','Confirm Sent'],['cancel','Cancel']]:[['edit',inlineAiDraft.editing?'Done Editing':'Edit'],['delete','Delete'],['post','Post']];
+      const buttons=[['edit',inlineAiDraft.editing?'Done Editing':'Edit'],['delete','Delete'],['copy','Copy'],['post','Post']];
       buttons.forEach(([action,label])=>{const button=document.createElement('button');button.type='button';button.dataset.inlineAiAction=action;button.textContent=label;button.disabled=inlineAiDraft.busy;actions.appendChild(button);});
       bubble.appendChild(actions);
     }
@@ -665,13 +665,6 @@ function initJourneyPanel(){
     if(!lockOwned||lockPending||lockJourneyId!==Number(demo.journeyId)){inlineAiNotice('Take Control before changing or posting this reply.');return;}
     if(inlineAiDraft.busy)return;
     if(action==='edit'){inlineAiDraft.editing=!inlineAiDraft.editing;inlineAiDraft.notice='';refreshInlineAiRow();return;}
-    if(action==='cancel'){inlineAiDraft.posting=false;inlineAiDraft.notice='';refreshInlineAiRow();return;}
-    if(action==='post'){
-      if(!inlineAiDraft.text.trim()){inlineAiNotice('Write a reply before posting.');return;}
-      try{if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(inlineAiDraft.text.trim());else throw Error('Clipboard unavailable. Use Edit to select and copy the message.');inlineAiDraft.posting=true;inlineAiDraft.editing=false;inlineAiDraft.notice='Copied. Paste and send through Messenger, then click Confirm Sent.';refreshInlineAiRow();}
-      catch(error){inlineAiNotice(error.message||'Unable to copy the reply.');}
-      return;
-    }
     if(action==='delete'){
       if(!window.confirm('Delete this AI suggestion? The parent will remain marked as needing a reply.'))return;
       inlineAiDraft.busy=true;refreshInlineAiRow();
@@ -683,18 +676,37 @@ function initJourneyPanel(){
       }catch(error){inlineAiDraft.busy=false;inlineAiNotice(error.message||'Could not delete the suggestion.');refreshInlineAiRow();}
       return;
     }
-    if(action==='confirm'){
-      inlineAiDraft.busy=true;refreshInlineAiRow();
+    if(action==='copy'||action==='post'){
       const journeyId=Number(demo.journeyId),inquiryId=Number(conversationInquiryId),message=inlineAiDraft.text.trim(),lastParentId=Number(attention.last_parent_message_id);
+      if(!message){inlineAiNotice('Write a reply before sending.');return;}
+      if(action==='post'&&!window.confirm('Send this reply directly to the parent on Facebook Messenger now?'))return;
+      /*   Copy stays the production workflow: copy immediately, then record through Xano. */
+      if(action==='copy'){
+        try{if(!navigator.clipboard?.writeText)throw Error('Clipboard unavailable.');await navigator.clipboard.writeText(message);}
+        catch(error){inlineAiNotice('Could not copy. Allow clipboard access and try again.');return;}
+      }
+      inlineAiDraft.busy=true;inlineAiDraft.editing=false;inlineAiDraft.notice=action==='copy'?'Copied. Recording the reply…':'Sending directly to Messenger…';refreshInlineAiRow();
       try{
         await verifyInlineAiCurrent(turnId,lastParentId);
-        const response=await fetch(API+'/ad_reply_record_sent',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:journeyId,ad_inquiry_id:inquiryId,response_text:message,question_id:0,language:replyLanguage.value,reply_source:'admin_composed'})});
+        const endpoint=action==='copy'?'ad_reply_record_sent':'ad_messenger_send';
+        const payload=action==='copy'?{ad_journey_id:journeyId,ad_inquiry_id:inquiryId,response_text:message,question_id:0,language:replyLanguage.value,reply_source:'admin_composed'}:{journey_id:journeyId,message_text:message};
+        const response=await fetch(API+'/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify(payload)});
         const data=await response.json().catch(()=>({}));
-        if(!response.ok||!data.message?.id)throw Error(typeof data.message==='string'?data.message:(data.error||'Could not record the sent reply.'));
+        const saved=action==='copy'?data.message:data.outgoing_message;
+        if(!response.ok||data.success===false||!saved?.id||(action==='post'&&!String(saved.message_id||'').trim())){
+          const explanation=typeof data.message==='string'?data.message:(typeof data.error==='string'?data.error:(data.error?.message||data.code||'No confirmed outgoing message returned'));
+          throw Error(action==='post'?'Meta send not confirmed: '+explanation:'Copy recorded failed: '+explanation);
+        }
         inlineAiHiddenTurns.add(turnId);inlineAiDraft={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};conversationFingerprint='';
         if(replyAiDraftActive&&!replyManualMode){replyEditor.value='';replyAiDraftActive=false;replyMatchLabel.textContent='Reply sent and recorded';replyStatus.textContent='';updateReplyButton();}
-        window.dispatchEvent(new Event('ads-reply-attention-refresh-request'));void loadMessengerConversation(inquiryId,false,data.message.id);
-      }catch(error){inlineAiDraft.busy=false;inlineAiNotice('Not recorded: '+(error.message||'Unable to confirm sending.'));refreshInlineAiRow();}
+        window.dispatchEvent(new Event('ads-reply-attention-refresh-request'));
+        void loadMessengerConversation(inquiryId,false,saved.id);
+      }catch(error){
+        inlineAiDraft.busy=false;
+        inlineAiNotice(action==='copy'?'Message copied, but Xano did not confirm recording: '+(error.message||'Please check the conversation before copying again.'):'Send not confirmed. Check Messenger before retrying. '+(error.message||''));
+        refreshInlineAiRow();
+      }
+      return;
     }
   });
   window.addEventListener('ads-reply-attention-changed',()=>{if(panel.classList.contains('open')&&conversationInquiryId&&!conversationLoading)void loadMessengerConversation(conversationInquiryId,false);});
