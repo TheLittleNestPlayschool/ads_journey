@@ -7,7 +7,7 @@
   const header=document.createElement('div');header.className='journey-original-inquiry-correction';header.hidden=true;
   header.innerHTML='<span id="journeyOriginalInquiryValue"></span><button type="button" id="journeyEditOriginalInquiry" title="Correct the original inquiry time">Edit</button>';
   /*   Keep inquiry-time correction accessible in History, away from the compact parent header. */
-  document.querySelector('#journeyPanel .journey-timeline-section').appendChild(header);
+  document.getElementById('journeyTimeline').insertAdjacentElement('beforebegin',header);
   const originalLabel=header.querySelector('#journeyOriginalInquiryValue');
   const overlay=document.createElement('div');overlay.className='journey-change-overlay journey-record-correction-overlay';overlay.hidden=true;
   overlay.innerHTML=[
