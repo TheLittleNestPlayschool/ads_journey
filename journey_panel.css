@@ -934,10 +934,11 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel .journey-parent-form-bar>span{font-size:10px;font-weight:800;color:#365e50;margin-right:auto}
 .journey-panel .journey-parent-form-bar select{min-width:90px;padding:6px;border:1px solid #b9ccbf;border-radius:7px;background:#fff;color:#274536;font:inherit;font-size:11px}
 .journey-panel .journey-parent-form-bar #journeyReplyOnlineForm{width:auto;min-height:29px;padding:6px 9px;border:1px solid #86b39a;border-radius:7px;background:#e3f2e9;color:#255840;font-size:10px;font-weight:800;white-space:nowrap}
-.journey-panel .journey-conversation-reply-drawer{flex:0 0 auto;min-height:0;max-height:245px;overflow-y:auto;border-top:1px solid #d5dbd6;background:#f9f7f2}
+.journey-panel .journey-conversation-reply-drawer,.journey-panel .journey-conversation-incoming-drawer{flex:0 0 auto;min-height:0;max-height:245px;overflow-y:auto;border-top:1px solid #d5dbd6;background:#f9f7f2}
 .journey-panel .journey-conversation-reply-drawer[hidden]{display:none!important}
-.journey-panel .journey-conversation-reply-drawer>summary{padding:10px 14px;cursor:pointer;font-size:11px;font-weight:800;color:#35604e;list-style-position:inside}
-.journey-panel .journey-conversation-reply-drawer[open]>summary{border-bottom:1px solid #e1e4de}
+.journey-panel .journey-conversation-reply-drawer>summary,.journey-panel .journey-conversation-incoming-drawer>summary{padding:10px 14px;cursor:pointer;font-size:11px;font-weight:800;color:#35604e;list-style-position:inside}
+.journey-panel .journey-conversation-reply-drawer[open]>summary,.journey-panel .journey-conversation-incoming-drawer[open]>summary{border-bottom:1px solid #e1e4de}
+.journey-panel .journey-conversation-incoming-drawer .journey-manual-message-form{border-top:0}
 .journey-panel .journey-conversation-reply-drawer .journey-assistance-editor-section{display:flex;flex-direction:column;min-height:0;overflow:visible;padding:11px 13px 13px;background:transparent;border:0;flex:none}
 .journey-panel .journey-conversation-reply-drawer #journeyReplyWriteOwn{display:none!important}
 .journey-panel .journey-conversation-reply-drawer #journeyAssistanceReplyText{display:block!important;flex:none!important;box-sizing:border-box;height:75px!important;min-height:75px!important;max-height:100px!important;resize:vertical!important;overflow-y:auto!important}
