@@ -921,19 +921,14 @@ body:has(#journeyPanel.open){overflow:hidden}
 /*   One conversation workspace: left journey/actions, wide center conversation. */
 @media(min-width:901px){
 .journey-panel{grid-template-columns:minmax(320px,.96fr) minmax(450px,1.46fr)!important}
-.journey-panel .journey-panel-scroll.journey-panel-main{grid-column:1;grid-row:2;grid-template-rows:48px 43px minmax(0,1fr)!important;gap:10px!important}
-.journey-panel .journey-panel-scroll.journey-panel-main .journey-action-card:not([hidden]){grid-row:3!important}
+.journey-panel .journey-panel-scroll.journey-panel-main{grid-column:1;grid-row:2;grid-template-rows:48px minmax(0,1fr)!important;gap:10px!important}
+.journey-panel .journey-panel-scroll.journey-panel-main .journey-action-card:not([hidden]){grid-row:2!important}
 .journey-panel[data-stage="enrollment"] .journey-panel-scroll.journey-panel-main{grid-template-rows:48px minmax(0,1fr)!important}
 .journey-panel[data-stage="enrollment"] .journey-panel-scroll.journey-panel-main .journey-action-card:not([hidden]){grid-row:2!important}
 .journey-panel .journey-history-scroll{grid-column:2;grid-row:2/4;padding:12px 12px 12px 3px}
 .journey-panel .journey-assistance{display:none!important}
 }
 .journey-panel .journey-assistance{display:none!important}
-.journey-panel .journey-parent-form-bar{grid-row:2;display:flex;align-items:center;gap:9px;padding:6px 9px;background:#f9f7f2;border:1px solid #d5ddd8;border-radius:9px;min-height:0;box-sizing:border-box}
-.journey-panel .journey-parent-form-bar[hidden]{display:none!important}
-.journey-panel .journey-parent-form-bar>span{font-size:10px;font-weight:800;color:#365e50;margin-right:auto}
-.journey-panel .journey-parent-form-bar select{min-width:90px;padding:6px;border:1px solid #b9ccbf;border-radius:7px;background:#fff;color:#274536;font:inherit;font-size:11px}
-.journey-panel .journey-parent-form-bar #journeyReplyOnlineForm{width:auto;min-height:29px;padding:6px 9px;border:1px solid #86b39a;border-radius:7px;background:#e3f2e9;color:#255840;font-size:10px;font-weight:800;white-space:nowrap}
 .journey-panel .journey-conversation-reply-drawer,.journey-panel .journey-conversation-incoming-drawer{flex:0 0 auto;min-height:0;max-height:245px;overflow-y:auto;border-top:1px solid #d5dbd6;background:#f9f7f2}
 .journey-panel .journey-conversation-reply-drawer[hidden]{display:none!important}
 .journey-panel .journey-conversation-reply-drawer>summary,.journey-panel .journey-conversation-incoming-drawer>summary{padding:10px 14px;cursor:pointer;font-size:11px;font-weight:800;color:#35604e;list-style-position:inside}
@@ -947,4 +942,3 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel .journey-conversation-reply-drawer .journey-reply-copy-record{min-height:33px!important;padding:7px 10px!important;margin-top:7px!important}
 
 /*   Branch-controlled visit or free-trial form type, read-only for admins */
-.journey-panel .journey-parent-form-bar #journeyParentFormTypeLabel{min-width:77px;text-align:center;padding:6px 9px;border:1px solid #bfd0c5;border-radius:7px;background:#edf5ef;color:#315846;font-size:11px;font-weight:800}
