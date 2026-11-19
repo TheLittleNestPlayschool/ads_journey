@@ -192,7 +192,9 @@ function initJourneyPanel(){
   manualForm.id='journeyManualMessageForm';
   manualForm.className='journey-manual-message-form';
   manualForm.innerHTML='<label for="journeyManualMessageText">Parent message from Messenger</label><textarea id="journeyManualMessageText" rows="2" maxlength="3000" placeholder="Paste the parent’s message here…" aria-label="Paste incoming parent message" required></textarea><div class="journey-time-override-row" role="group" aria-label="Parent message original time"><span class="journey-time-override-label" title="Leave blank to use current time">Use Other Date and Time</span><input id="journeyManualOriginalDate" type="date" aria-label="Parent message date"><span class="journey-time-entry"><input id="journeyManualOriginalHour" type="text" inputmode="numeric" maxlength="2" placeholder="Hr" aria-label="Hour 1 to 12"><span class="journey-time-colon">:</span><input id="journeyManualOriginalMinute" type="text" inputmode="numeric" maxlength="2" placeholder="Min" aria-label="Minute 0 to 59"><button id="journeyManualOriginalPeriod" type="button" class="journey-time-period" aria-label="Toggle AM PM" aria-pressed="false">AM</button><input id="journeyManualOriginalTime" type="hidden"></span><button id="journeyManualTimeClear" type="button" class="journey-time-clear" title="Clear date/time to use now" aria-label="Clear parent message date and time">×</button></div><div class="journey-manual-message-footer"><span id="journeyManualMessageStatus" role="status"></span><button id="journeyManualMessageSave" class="journey-primary" type="submit">Save Parent Message</button></div>';
-  conversationView.appendChild(manualForm);
+  const manualDrawer=document.createElement('details');manualDrawer.id='journeyIncomingComposer';manualDrawer.className='journey-conversation-incoming-drawer';
+  manualDrawer.innerHTML='<summary>Parent message from Messenger</summary>';
+  manualDrawer.appendChild(manualForm);conversationView.appendChild(manualDrawer);
   /*   Keep the existing manual reply controls, but move them into the Conversation column. */
   const replyDrawer=document.createElement('details');replyDrawer.id='journeyOutgoingComposer';replyDrawer.className='journey-conversation-reply-drawer';
   replyDrawer.innerHTML='<summary>Write a reply to parent</summary>';
@@ -245,7 +247,7 @@ function initJourneyPanel(){
   }
   function resetManualTimestamp(){manualOriginalDate.value='';clearManualTimeEntry();}
   document.getElementById('journeyManualTimeClear').addEventListener('click',resetManualTimestamp);
-  function resetManualComposer(){manualText.value='';manualStatus.textContent='';manualSaving=false;manualSave.disabled=false;manualSave.textContent='Save Parent Message';resetManualTimestamp();}
+  function resetManualComposer(){manualDrawer.open=false;manualText.value='';manualStatus.textContent='';manualSaving=false;manualSave.disabled=false;manualSave.textContent='Save Parent Message';resetManualTimestamp();}
   manualForm.addEventListener('submit',async event=>{
     event.preventDefault();
     const message=manualText.value.trim(),inquiryId=conversationInquiryId,journeyId=Number(demo.journeyId)||0;
@@ -259,7 +261,7 @@ function initJourneyPanel(){
       const result=await response.json().catch(()=>({}));
       if(!response.ok||!result.message?.id)throw new Error(result.message?.message||result.error||'Unable to save the parent message');
       if(conversationInquiryId===inquiryId&&Number(demo.journeyId)===journeyId){
-        manualText.value='';resetManualTimestamp();manualStatus.textContent='Parent message recorded';
+        manualText.value='';resetManualTimestamp();manualStatus.textContent='Parent message recorded';manualDrawer.open=false;
         /*   Xano handles Luna–Terra asynchronously; no duplicate browser-side AI request. */
         conversationFingerprint='';window.dispatchEvent(new Event('ads-reply-attention-refresh-request'));await loadMessengerConversation(inquiryId,false,result.message.id);
       }
@@ -1249,7 +1251,7 @@ function initJourneyPanel(){
     if(!lockOwned||lockPending||lockJourneyId!==Number(demo.journeyId)){
       showScheduleFeedback('This journey is view only while another admin has control.');trial.checked=true;setScheduleMode('trial');return;
     }
-    if(stage==='inquiry-followup'){setJourneyRightView('conversation');manualText.focus();trial.checked=true;setScheduleMode('trial');return;}
+    if(stage==='inquiry-followup'){setJourneyRightView('conversation');manualDrawer.open=true;manualText.focus();trial.checked=true;setScheduleMode('trial');return;}
     document.getElementById('scheduleForm').requestSubmit();
   });
   /*   A board refresh must not reopen a journey that has not changed */
