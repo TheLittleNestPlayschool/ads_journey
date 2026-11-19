@@ -736,7 +736,12 @@ function initJourneyPanel(){
         const received=forms.some(item=>item.status==='awaiting_schedule'&&(!item.ad_journey_id||Number(item.ad_journey_id)===Number(demo.journeyId)));
         if(scheduleFormReceived!==received){scheduleFormReceived=received;syncScheduleAction(document.querySelector('input[name="visitType"]:checked')?.value||'trial');}
       }
-      const attention=currentInlineAttention(),sentKey=Number(attention?.ai_turn_id)+':'+Number(attention?.last_parent_message_id),hasUnanswered=attention&&Number(attention.unanswered_count)>0&&!inlineAiSentKeys.has(sentKey);
+      /*   A sent reply newer than the last parent message closes that pending reply, even if attention polling is stale.*/
+       const attention=currentInlineAttention(),sentKey=Number(attention?.ai_turn_id)+':'+Number(attention?.last_parent_message_id);
+       const latestOutgoingAt=messages.filter(item=>item.direction==='outbound'||item.direction==='outgoing').reduce((max,item)=>Math.max(max,Number(item.message_timestamp||item.created_at)||0),0);
+       const lastParentAt=Number(attention?.last_parent_at)||0;
+       const alreadyReplied=lastParentAt>0&&latestOutgoingAt>=lastParentAt;
+       const hasUnanswered=attention&&Number(attention.unanswered_count)>0&&!inlineAiSentKeys.has(sentKey)&&!alreadyReplied;
       const aiKind=hasUnanswered?(currentAiSuggestion(attention)?'ai':'ai-waiting'):null;
       const timeline=[
         ...messages.map(item=>({kind:'message',item,timestamp:Number(item.message_timestamp||item.created_at)||0})),
