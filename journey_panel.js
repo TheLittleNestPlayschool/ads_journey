@@ -754,8 +754,16 @@ function initJourneyPanel(){
       if(!timeline.length){conversationNotice('No conversation messages or parent forms recorded yet.');return;}
       const nearBottom=conversationList.scrollHeight-conversationList.scrollTop-conversationList.clientHeight<70,previousScroll=conversationList.scrollTop;
       const fragment=document.createDocumentFragment();
-      let signedInAdmin={};try{signedInAdmin=JSON.parse(localStorage.getItem('ads_journey_user')||'{}')||{};}catch(_){}
-      const signedInName=String(signedInAdmin.name||signedInAdmin.full_name||signedInAdmin.email||'Admin').trim();
+      /*   Sender attribution must come from the saved message, never the admin viewing it. */
+      const outgoingSenderName=item=>{
+        const adminId=Number(item.ad_user_id)||0;
+        const admin=item._ad_user||{};
+        const storedName=String(admin.name||admin.full_name||item.ad_user_name||'').trim();
+        if(adminId)return storedName||'Admin #'+adminId;
+        if(storedName)return storedName;
+        if(item.actor_type==='system'||item.sender_type==='system'||item.message_origin==='meta'||item.source==='meta'||item.raw_payload?.entry?.[0]?.messaging?.[0]?.message?.is_echo===true)return 'System';
+        return 'Sender not recorded';
+      };
       timeline.forEach(({kind,item})=>{
         if(kind==='form'){fragment.appendChild(renderParentSubmission(item));return;}
         if(kind==='ai'||kind==='ai-waiting'){fragment.appendChild(inlineAiRow(item,kind==='ai-waiting'));return;}
@@ -766,7 +774,7 @@ function initJourneyPanel(){
         const meta=document.createElement('div');meta.className='journey-message-meta';
         const occurredAt=Number(item.message_timestamp)||Number(item.created_at)||0,recordedAt=Number(item.created_at)||0;
         const originalTime=conversationDate(occurredAt),recordedTime=conversationDate(recordedAt);
-        const outgoingName=String(item._ad_user?.name||item._ad_user?.full_name||item.ad_user_name||signedInName).trim();
+        const outgoingName=outgoingSenderName(item);
         meta.textContent=(outgoing?outgoingName:'Parent')+(originalTime?' · Sent '+originalTime:'');
         /*   Show the audit entry time separately when an older Messenger message was added later */
         if(originalTime&&recordedTime&&Math.abs(recordedAt-occurredAt)>120000){
