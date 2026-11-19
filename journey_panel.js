@@ -568,8 +568,7 @@ function initJourneyPanel(){
     else if(time12){const hour=(Number(time12[1])%12)+(time12[3].toLowerCase()==='pm'?12:0);captureField('time').value=String(hour).padStart(2,'0')+':'+(time12[2]||'00');}
     captureNotice.textContent='Submitted online by the parent. Review and confirm the appointment time before applying; no schedule has been saved.';
     const submittedType=String(item.schedule_type||'').toLowerCase();
-    const currentType=document.querySelector('input[name="visitType"]:checked')?.value;
-    applyCapturedSchedule(submittedType==='trial'||submittedType==='visit'?submittedType:currentType==='visit'?'visit':'trial');
+    if(submittedType==='trial'||submittedType==='visit')captureNotice.textContent+=' Requested appointment: '+(submittedType==='trial'?'Free Trial':'Visit')+'.';
   }
   function renderParentSubmission(item){
     const line=document.createElement('div');line.className='journey-message-row incoming journey-submission-row';
@@ -1029,7 +1028,7 @@ function initJourneyPanel(){
     '<label>Visit / trial date<input id="journeyCaptureDate" type="date"></label>',
     '<label>Visit / trial time<input id="journeyCaptureTime" type="time" step="300"></label>',
     '<label class="journey-capture-wide">Additional notes<textarea id="journeyCaptureNotes" rows="2" placeholder="Optional"></textarea></label>',
-    '</div><p class="journey-capture-footnote">Missing details remain unfilled. Check the appointment date and time before saving.</p>',
+    '</div>',
     '<div class="journey-capture-actions"><button type="button" id="journeyCaptureCancel" class="journey-capture-cancel">Cancel</button><button type="button" id="journeyCaptureApplyVisit" class="journey-capture-apply">Fill Visit</button><button type="button" id="journeyCaptureApplyTrial" class="journey-capture-apply">Fill Free Trial</button></div>',
     '</section>'
   ].join('');
@@ -1150,7 +1149,9 @@ function initJourneyPanel(){
     if(captureOverlay.hidden||Number(demo.journeyId)!==captureJourneyId)return;
     if(!lockOwned||lockPending||lockJourneyId!==captureJourneyId){captureNotice.textContent='You need control of this journey before applying details';return;}
     const values=Object.fromEntries(Object.keys(captureFields).map(k=>[k,captureField(k).value.trim()]));
-    if(!Object.values(values).some(Boolean)){captureNotice.textContent='Add or extract at least one detail first';return;}
+    if(!values.parent||!values.child||!values.date||!values.time){captureNotice.textContent='Parent, child, appointment date and time are required before scheduling.';return;}
+    const proposed=new Date(values.date+'T'+values.time+':00');
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(values.date)||!/^([01]\d|2[0-3]):[0-5]\d$/.test(values.time)||!Number.isFinite(proposed.getTime())){captureNotice.textContent='Enter a valid appointment date and time.';return;}
     if(values.ageYears!==''&&(!/^\d+$/.test(values.ageYears)||Number(values.ageYears)>12)){captureNotice.textContent='Check the age in years';return;}
     if(values.ageMonths!==''&&(!/^\d+$/.test(values.ageMonths)||Number(values.ageMonths)>11)){captureNotice.textContent='Check the age in months';return;}
     if(values.time&&Number(values.time.slice(3))%5!==0){captureNotice.textContent='Choose a time in 5-minute intervals';return;}
@@ -1166,9 +1167,11 @@ function initJourneyPanel(){
     document.getElementById('scheduleNotes').value=mergeCapturedNotes(document.getElementById('scheduleNotes').value,note);
     const chosen=document.querySelector('input[name="visitType"][value="'+kind+'"]');chosen.checked=true;chosen.dispatchEvent(new Event('change',{bubbles:true}));
     setSchedulePrepared(true);
+    if(document.getElementById('scheduleDate').value!==values.date||getSelectedTime()!==values.time){captureNotice.textContent='The appointment date or time could not be transferred. Recheck the selected values.';return;}
     closeCaptureReview();
     document.getElementById('scheduleForm').scrollIntoView({block:'nearest',behavior:'smooth'});
-    document.getElementById('scheduleParent').focus({preventScroll:true});
+    /*   Use the existing schedule confirmation and API, not a separate saving path. */
+    document.getElementById('scheduleForm').requestSubmit(document.getElementById('journeySaveScheduleTop'));
   }
   captureButton.addEventListener('click',()=>openCaptureReview(''));
   captureButton.title='Enter parent details manually while reading the conversation';
