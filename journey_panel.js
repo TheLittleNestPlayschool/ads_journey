@@ -795,7 +795,7 @@ function initJourneyPanel(){
         ...(aiKind?[{kind:aiKind,item:attention,timestamp:Math.max(Number(attention.last_parent_at)||0,...messages.map(m=>Number(m.message_timestamp||m.created_at)||0))+1}]:[]),
         ...(activeAppointmentDraft()?[{kind:'appointment-draft',item:appointmentDraft,timestamp:Math.max(Number(stage2State?.scheduleRecordedAt)||0,...messages.map(m=>Number(m.message_timestamp||m.created_at)||0),...forms.map(f=>Number(f.submitted_at||f.created_at)||0))+2}]:[])
       ].sort((a,b)=>a.timestamp-b.timestamp);
-      const fingerprint=JSON.stringify(timeline.map(({kind,item,timestamp})=>kind==='form'?[kind,item.id,item.status,timestamp]:kind==='ai'||kind==='ai-waiting'?[kind,item.ai_turn_id,item.last_parent_message_id,item.ai_trigger_message_id,item.suggested_reply,item.ai_discarded,timestamp]:kind==='appointment-draft'?[kind,item.journeyId,item.scheduledAt,item.text,item.editing,timestamp]:[kind,item.id,item.message_id,item.message_text,item.direction,timestamp]));
+      const fingerprint=JSON.stringify(timeline.map(({kind,item,timestamp})=>kind==='form'?[kind,item.id,item.status,timestamp]:kind==='ai'||kind==='ai-waiting'?[kind,item.ai_turn_id,item.last_parent_message_id,item.ai_trigger_message_id,item.suggested_reply,item.ai_discarded,timestamp]:kind==='appointment-draft'?[kind,item.journeyId,item.scheduledAt,timestamp]:[kind,item.id,item.message_id,item.message_text,item.direction,timestamp]));
       if(fingerprint===conversationFingerprint){showNewlySavedConversationMessage();return;}
       conversationFingerprint=fingerprint;
       if(!timeline.length){conversationNotice('No conversation messages or parent forms recorded yet.');return;}
