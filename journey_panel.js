@@ -54,18 +54,19 @@ function initJourneyPanel(){
   changeDialog.innerHTML='<div class="journey-change-dialog" role="dialog" aria-modal="true" aria-labelledby="journeyChangeTitle" aria-describedby="journeyChangeDescription"><span class="journey-change-kicker">THE LITTLE NEST · ADS JOURNEY</span><h3 id="journeyChangeTitle"></h3><p id="journeyChangeDescription"></p><div class="journey-change-buttons"><button type="button" class="journey-change-cancel">Cancel</button><button type="button" class="journey-change-confirm">Confirm</button></div></div>';
   document.body.appendChild(changeDialog);
   let dialogResolver=null;
-  const showChangeDialog=(title,description,success=false)=>new Promise(resolve=>{
+  const showChangeDialog=(title,description,success=false,confirmText='Confirm')=>new Promise(resolve=>{
     if(dialogResolver){resolve(false);return;}
     dialogResolver=resolve;
     changeDialog.querySelector('#journeyChangeTitle').textContent=title;
     changeDialog.querySelector('#journeyChangeDescription').textContent=description;
     changeDialog.querySelector('.journey-change-cancel').hidden=success;
     const confirmButton=changeDialog.querySelector('.journey-change-confirm');
-    confirmButton.textContent=success?'Close':'Confirm';
+    confirmButton.textContent=success?'Close':confirmText;
     changeDialog.classList.toggle('journey-change-success',success);
     changeDialog.hidden=false;confirmButton.focus();
   });
   window.journeyShowChangeSuccess=(title)=>showChangeDialog(title,'The change has been recorded successfully.',true);
+  window.adsJourneyConfirmReplyPost=()=>showChangeDialog('Send to Messenger','Send this reply directly to the parent on Facebook Messenger?',false,'Send Message');
   function finishChangeDialog(value){if(!dialogResolver)return;const done=dialogResolver;dialogResolver=null;changeDialog.hidden=true;done(value);}
   changeDialog.querySelector('.journey-change-cancel').addEventListener('click',()=>finishChangeDialog(false));
   changeDialog.querySelector('.journey-change-confirm').addEventListener('click',()=>finishChangeDialog(true));
@@ -179,6 +180,9 @@ function initJourneyPanel(){
   let conversationFocusMessageId=0;
   let inlineAiDraft={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};
   const inlineAiHiddenTurns=new Set();
+  /*   Keep successfully sent turns out of the pending AI row while dashboard attention synchronizes.*/
+  const inlineAiSentKeys=new Set();
+  let conversationReloadQueued=false;
   const CONVERSATION_REFRESH_MS=5000;
   const conversationList=document.createElement('div');
   conversationList.className='journey-conversation-list';
@@ -562,7 +566,7 @@ function initJourneyPanel(){
   function stopConversationRefresh(){
     if(conversationTimer!==null){clearInterval(conversationTimer);conversationTimer=null;}
     conversationInquiryId=0;conversationFingerprint='';conversationFocusMessageId=0;conversationRequest++;
-    inlineAiDraft={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};inlineAiHiddenTurns.clear();
+    inlineAiDraft={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};inlineAiHiddenTurns.clear();inlineAiSentKeys.clear();conversationReloadQueued=false;
   }
   function startConversationRefresh(inquiryId){
     stopConversationRefresh();conversationInquiryId=inquiryId;
@@ -679,7 +683,7 @@ function initJourneyPanel(){
     if(action==='copy'||action==='post'){
       const journeyId=Number(demo.journeyId),inquiryId=Number(conversationInquiryId),message=inlineAiDraft.text.trim(),lastParentId=Number(attention.last_parent_message_id);
       if(!message){inlineAiNotice('Write a reply before sending.');return;}
-      if(action==='post'&&!window.confirm('Send this reply directly to the parent on Facebook Messenger now?'))return;
+      if(action==='post'&&!await window.adsJourneyConfirmReplyPost())return;
       /*   Copy stays the production workflow: copy immediately, then record through Xano. */
       if(action==='copy'){
         try{if(!navigator.clipboard?.writeText)throw Error('Clipboard unavailable.');await navigator.clipboard.writeText(message);}
@@ -697,7 +701,7 @@ function initJourneyPanel(){
           const explanation=typeof data.message==='string'?data.message:(typeof data.error==='string'?data.error:(data.error?.message||data.code||'No confirmed outgoing message returned'));
           throw Error(action==='post'?'Meta send not confirmed: '+explanation:'Copy recorded failed: '+explanation);
         }
-        inlineAiHiddenTurns.add(turnId);inlineAiDraft={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};conversationFingerprint='';
+        inlineAiHiddenTurns.add(turnId);inlineAiSentKeys.add(turnId+':'+lastParentId);inlineAiDraft={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};conversationFingerprint='';
         if(replyAiDraftActive&&!replyManualMode){replyEditor.value='';replyAiDraftActive=false;replyMatchLabel.textContent='Reply sent and recorded';replyStatus.textContent='';updateReplyButton();}
         window.dispatchEvent(new Event('ads-reply-attention-refresh-request'));
         void loadMessengerConversation(inquiryId,false,saved.id);
@@ -709,7 +713,7 @@ function initJourneyPanel(){
       return;
     }
   });
-  window.addEventListener('ads-reply-attention-changed',()=>{if(panel.classList.contains('open')&&conversationInquiryId&&!conversationLoading)void loadMessengerConversation(conversationInquiryId,false);});
+  window.addEventListener('ads-reply-attention-changed',()=>{if(!panel.classList.contains('open')||!conversationInquiryId)return;if(conversationLoading){conversationReloadQueued=true;return;}void loadMessengerConversation(conversationInquiryId,false);});
   async function loadMessengerConversation(inquiryId,initial=false,focusMessageId=0){
     if(focusMessageId)conversationFocusMessageId=Number(focusMessageId)||0;
     if(conversationLoading)return;
@@ -732,7 +736,7 @@ function initJourneyPanel(){
         const received=forms.some(item=>item.status==='awaiting_schedule'&&(!item.ad_journey_id||Number(item.ad_journey_id)===Number(demo.journeyId)));
         if(scheduleFormReceived!==received){scheduleFormReceived=received;syncScheduleAction(document.querySelector('input[name="visitType"]:checked')?.value||'trial');}
       }
-      const attention=currentInlineAttention(),hasUnanswered=attention&&Number(attention.unanswered_count)>0;
+      const attention=currentInlineAttention(),sentKey=Number(attention?.ai_turn_id)+':'+Number(attention?.last_parent_message_id),hasUnanswered=attention&&Number(attention.unanswered_count)>0&&!inlineAiSentKeys.has(sentKey);
       const aiKind=hasUnanswered?(currentAiSuggestion(attention)?'ai':'ai-waiting'):null;
       const timeline=[
         ...messages.map(item=>({kind:'message',item,timestamp:Number(item.message_timestamp||item.created_at)||0})),
@@ -769,7 +773,7 @@ function initJourneyPanel(){
       conversationList.scrollTop=initial||nearBottom?conversationList.scrollHeight:previousScroll;
       showNewlySavedConversationMessage();
     }catch(error){if(request===conversationRequest&&initial)conversationNotice('Unable to load Messenger conversation. Please reopen this inquiry.');}
-    finally{conversationLoading=false;}
+    finally{conversationLoading=false;if(conversationReloadQueued&&panel.classList.contains('open')&&conversationInquiryId){conversationReloadQueued=false;void loadMessengerConversation(conversationInquiryId,false);}}
   }
   window.addEventListener('journey-conversation-corrected',()=>{conversationFingerprint='';if(conversationInquiryId)loadMessengerConversation(conversationInquiryId,false);});
   const panel=document.getElementById('journeyPanel'),backdrop=document.getElementById('journeyBackdrop');
