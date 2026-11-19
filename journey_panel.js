@@ -1092,7 +1092,7 @@ function initJourneyPanel(){
   captureOverlay.innerHTML=[
     '<section class="journey-capture-dialog" role="dialog" aria-modal="false" aria-labelledby="journeyCaptureTitle">',
     '<div class="journey-capture-head"><div><small>PARENT INFORMATION</small><h3 id="journeyCaptureTitle">Review Schedule Details</h3></div><button id="journeyCaptureClose" class="journey-capture-close" type="button" aria-label="Close review">×</button></div>',
-    '<p class="journey-capture-intro">Check and correct the details before filling the form. Nothing is saved yet.</p>',
+    '<p class="journey-capture-intro">Review the details, then choose Fill Free Trial or Fill Visit. You will confirm before the appointment is saved.</p>',
     '<details id="journeyCaptureSource" hidden><summary>Source message — view or edit</summary><textarea id="journeyCaptureRaw" rows="4" placeholder="Paste the completed parent form or message here"></textarea><button type="button" id="journeyCaptureExtract" class="journey-capture-extract">Extract details again</button></details>',
     '<div id="journeyCaptureNotice" class="journey-capture-notice" role="status"></div>',
     '<div class="journey-capture-fields">',
