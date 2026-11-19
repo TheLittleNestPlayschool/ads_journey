@@ -921,14 +921,9 @@ body:has(#journeyPanel.open){overflow:hidden}
 /*   One conversation workspace: left journey/actions, wide center conversation. */
 @media(min-width:901px){
 .journey-panel{grid-template-columns:minmax(320px,.96fr) minmax(450px,1.46fr)!important}
-.journey-panel .journey-panel-scroll.journey-panel-main{grid-column:1;grid-row:2;grid-template-rows:58px minmax(0,1fr)!important;gap:10px!important}
-/*   Give long stage/status descriptions room to wrap instead of squeezing into one line. */
-.journey-panel .journey-state-grid{grid-template-columns:minmax(0,1.12fr) minmax(0,1.1fr) minmax(0,1.12fr);height:58px;min-height:58px;gap:7px}
-.journey-panel .journey-state-grid .journey-state{height:58px;min-width:0;padding:7px 9px}
-.journey-panel .journey-state-grid .journey-state span{display:block;font-size:8px;line-height:1.1;margin-bottom:4px}
-.journey-panel .journey-state-grid .journey-state strong{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;white-space:normal;overflow:hidden;text-overflow:clip;overflow-wrap:anywhere;font-size:10px;line-height:1.2}
+.journey-panel .journey-panel-scroll.journey-panel-main{grid-column:1;grid-row:2;grid-template-rows:48px minmax(0,1fr)!important;gap:10px!important}
 .journey-panel .journey-panel-scroll.journey-panel-main .journey-action-card:not([hidden]){grid-row:2!important}
-.journey-panel[data-stage="enrollment"] .journey-panel-scroll.journey-panel-main{grid-template-rows:58px minmax(0,1fr)!important}
+.journey-panel[data-stage="enrollment"] .journey-panel-scroll.journey-panel-main{grid-template-rows:48px minmax(0,1fr)!important}
 .journey-panel[data-stage="enrollment"] .journey-panel-scroll.journey-panel-main .journey-action-card:not([hidden]){grid-row:2!important}
 .journey-panel .journey-history-scroll{grid-column:2;grid-row:2/4;padding:12px 12px 12px 3px}
 .journey-panel .journey-assistance{display:none!important}
@@ -947,3 +942,9 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel .journey-conversation-reply-drawer .journey-reply-copy-record{min-height:33px!important;padding:7px 10px!important;margin-top:7px!important}
 
 /*   Branch-controlled visit or free-trial form type, read-only for admins */
+/*   Compact parent identity: parent and branch together, child and Facebook ID below. */
+.journey-panel .journey-parent-identity{display:flex;flex-direction:column;justify-content:center;gap:2px;flex:1 1 auto;min-width:0}
+.journey-panel .journey-parent-identity-first{display:flex;align-items:baseline;gap:9px;min-width:0;white-space:nowrap}
+.journey-panel .journey-parent-identity-first h2{flex:0 1 auto;min-width:0;max-width:65%;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.journey-panel .journey-parent-identity-first #journeyLocation{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+.journey-panel .journey-parent-identity>p{margin:0;color:#586b70;font-size:9px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
