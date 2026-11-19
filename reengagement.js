@@ -29,7 +29,17 @@ function finishSendConfirmation(approved){if(!sendConfirmResolver)return;const r
 function confirmFollowupSent(parentName){
 if(sendConfirmResolver)return Promise.resolve(false);
 sendConfirmReturnFocus=document.activeElement;
+sendConfirm.querySelector('#reFollowupConfirmTitle').textContent='Confirm Follow-up Sent';sendConfirm.querySelector('.journey-change-confirm').textContent='Confirm Sent';
 sendConfirm.querySelector('#reFollowupConfirmDescription').textContent='Confirm that the follow-up message was actually sent to '+parentName+'? This will remove the parent from the action queue while the system waits for a reply.';
+sendConfirm.hidden=false;sendConfirm.querySelector('.journey-change-confirm').focus();
+return new Promise(resolve=>{sendConfirmResolver=resolve;});
+}
+function confirmAiPost(){
+if(sendConfirmResolver)return Promise.resolve(false);
+sendConfirmReturnFocus=document.activeElement;
+sendConfirm.querySelector('#reFollowupConfirmTitle').textContent='Send to Messenger';
+sendConfirm.querySelector('#reFollowupConfirmDescription').textContent='Send this reply directly to the parent on Facebook Messenger?';
+sendConfirm.querySelector('.journey-change-confirm').textContent='Send Message';
 sendConfirm.hidden=false;sendConfirm.querySelector('.journey-change-confirm').focus();
 return new Promise(resolve=>{sendConfirmResolver=resolve;});
 }
@@ -225,12 +235,13 @@ detail.dataset.journeyId=String(id);
 const aiConversation=detail.querySelector('#reConversation');
 let aiState={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};
 const hiddenAiTurns=new Set();
+const sentAiKeys=new Set();
 const currentAiAttention=()=>window.adsReplyAttentionByJourney?.get(id)||null;
 function aiIsCurrent(item){return item&&Number(item.unanswered_count)>0&&!item.ai_discarded&&Number(item.ai_turn_id)>0&&Number(item.ai_trigger_message_id)===Number(item.last_parent_message_id)&&item.ai_processing_status==='completed'&&String(item.suggested_reply||'').trim()&&!hiddenAiTurns.has(Number(item.ai_turn_id));}
 function showAiDraft(){
 if(!aiConversation.isConnected||Number(detail.dataset.journeyId)!==id)return;
 aiConversation.querySelector('.re-ai-draft')?.remove();
-const item=currentAiAttention();if(!item||Number(item.unanswered_count)<1)return;
+const item=currentAiAttention();if(!item||Number(item.unanswered_count)<1||sentAiKeys.has(Number(item.ai_turn_id)+':'+Number(item.last_parent_message_id)))return;
 const active=aiIsCurrent(item),turnId=Number(item.ai_turn_id)||0;
 if(active&&aiState.turnId!==turnId)aiState={turnId,text:String(item.suggested_reply).trim(),editing:false,posting:false,busy:false,notice:''};
 const bubble=document.createElement('div');bubble.className='re-ai-draft';
@@ -267,7 +278,7 @@ hiddenAiTurns.add(turnId);aiState={turnId:0,text:'',editing:false,posting:false,
 }
 if(action==='copy'||action==='post'){
 const message=aiState.text.trim();if(!message)throw Error('Write a reply before sending.');
-if(action==='post'&&!window.confirm('Send this reply directly to the parent on Facebook Messenger now?')){aiState.busy=false;showAiDraft();return;}
+if(action==='post'&&!await confirmAiPost()){aiState.busy=false;showAiDraft();return;}
 if(action==='copy'){
 try{if(!navigator.clipboard?.writeText)throw Error('Clipboard unavailable.');await navigator.clipboard.writeText(message);}
 catch(error){aiState.busy=false;aiState.notice='Clipboard unavailable. Nothing was recorded.';showAiDraft();return;}
@@ -281,7 +292,7 @@ const payload=action==='copy'?{ad_journey_id:id,ad_inquiry_id:Number(journey.ad_
 const response=await fetch(API+'/'+endpoint,{method:'POST',headers:{...auth,'Content-Type':'application/json'},body:JSON.stringify(payload)});
 const data=await response.json().catch(()=>({})),saved=action==='copy'?data.message:data.outgoing_message;
 if(!response.ok||data.success===false||!saved?.id||(action==='post'&&!String(saved.message_id||'').trim()))throw Error(typeof data.message==='string'?data.message:(data.error?.message||data.error||'Outgoing message was not confirmed.'));
-hiddenAiTurns.add(turnId);aiState={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};
+hiddenAiTurns.add(turnId);sentAiKeys.add(turnId+':'+Number(item.last_parent_message_id));aiState={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};
 window.dispatchEvent(new Event('ads-reply-attention-refresh-request'));await loadConversation();await refresh();if(typeof loadBoard==='function')loadBoard();return;
 }
 }catch(error){aiState.busy=false;aiState.notice=action==='post'?'Send not confirmed. Check Messenger before retrying. '+String(error.message||''):action==='copy'?'Message may be copied but not recorded: '+String(error.message||''):String(error.message||'Unable to complete action');showAiDraft();}
