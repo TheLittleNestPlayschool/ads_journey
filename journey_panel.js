@@ -652,8 +652,8 @@ function initJourneyPanel(){
     }
     const status=document.createElement('div');status.className='ai-draft-status';status.setAttribute('role','status');status.textContent=waiting?'':inlineAiDraft.notice;bubble.appendChild(status);row.appendChild(bubble);return row;
   }
-  function refreshInlineAiRow(){const old=conversationList.querySelector('.ai-draft-row');const attention=currentInlineAttention();if(!old||!attention)return;const waiting=!currentAiSuggestion(attention);old.replaceWith(inlineAiRow(attention,waiting));}
-  function inlineAiNotice(message){inlineAiDraft.notice=String(message||'');const status=conversationList.querySelector('.ai-draft-row .ai-draft-status');if(status)status.textContent=inlineAiDraft.notice;}
+  function refreshInlineAiRow(){const old=conversationList.querySelector('.ai-draft-row:not(.appointment-draft-row)');const attention=currentInlineAttention();if(!old||!attention)return;const waiting=!currentAiSuggestion(attention);old.replaceWith(inlineAiRow(attention,waiting));}
+  function inlineAiNotice(message){inlineAiDraft.notice=String(message||'');const status=conversationList.querySelector('.ai-draft-row:not(.appointment-draft-row) .ai-draft-status');if(status)status.textContent=inlineAiDraft.notice;}
   async function verifyInlineAiCurrent(id,lastParentMessageId){
     const response=await fetch(AI_REPLY_ATTENTION_ENDPOINT,{headers:{Authorization:'Bearer '+journeyToken},cache:'no-store'});
     if(!response.ok)throw Error('Could not verify latest parent messages. Nothing was recorded.');
@@ -710,6 +710,53 @@ function initJourneyPanel(){
         refreshInlineAiRow();
       }
       return;
+    }
+  });
+  /*   Confirmation actions share the live message endpoints; never auto-send or auto-record. */
+  conversationList.addEventListener('click',async event=>{
+    const button=event.target.closest('button[data-appointment-action]');if(!button)return;
+    const action=button.dataset.appointmentAction,draft=activeAppointmentDraft();
+    if(!draft||draft.busy)return;
+    const journeyId=Number(demo.journeyId),inquiryId=Number(conversationInquiryId),scheduledAt=Number(stage2State?.scheduledFor);
+    if(!lockOwned||lockPending||lockJourneyId!==journeyId){appointmentDraftNotice('Take Control before sending this confirmation.');return;}
+    if(action==='edit'){draft.editing=!draft.editing;draft.notice='';refreshAppointmentDraftRow();return;}
+    if(action==='delete'){
+      if(!window.confirm('Remove this unsent appointment confirmation draft? No message will be sent.'))return;
+      draft.deleted=true;conversationFingerprint='';void loadMessengerConversation(inquiryId,false);return;
+    }
+    if(action!=='copy'&&action!=='post')return;
+    const message=draft.text.trim();
+    if(!message){appointmentDraftNotice('Write a confirmation before sending.');return;}
+    if(action==='post'&&!await window.adsJourneyConfirmReplyPost())return;
+    if(action==='copy'){
+      try{if(!navigator.clipboard?.writeText)throw Error('Clipboard unavailable.');await navigator.clipboard.writeText(message);}
+      catch(_){appointmentDraftNotice('Could not copy. Allow clipboard access and try again.');return;}
+    }
+    draft.busy=true;draft.editing=false;draft.notice=action==='copy'?'Copied. Recording the confirmation…':'Sending confirmation through Messenger…';refreshAppointmentDraftRow();
+    try{
+      if(Number(demo.journeyId)!==journeyId||Number(stage2State?.scheduledFor)!==scheduledAt)throw Error('Appointment changed. Reopen the journey.');
+      const endpoint=action==='copy'?'ad_reply_record_sent':'ad_messenger_send';
+      const payload=action==='copy'?{ad_journey_id:journeyId,ad_inquiry_id:inquiryId,response_text:message,question_id:0,language:'taglish',reply_source:'parent_appointment_confirmation'}:{journey_id:journeyId,message_text:message};
+      const response=await fetch(API+'/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify(payload)});
+      const data=await response.json().catch(()=>({}));
+      const saved=action==='copy'?data.message:data.outgoing_message;
+      if(!response.ok||data.success===false||!saved?.id||(action==='post'&&!String(saved.message_id||'').trim()))throw Error(typeof data.message==='string'?data.message:(data.error?.message||data.error||data.code||'No confirmed outgoing message returned'));
+      draft.delivered=true;draft.busy=false;
+      rememberConfirmationRef(journeyId,scheduledAt,saved.id);
+      let confirmed=false;
+      try{await saveConfirmationReference(journeyId,scheduledAt,saved.id);confirmed=true;}
+      catch(error){confirmed=await readConfirmationStatus(journeyId,scheduledAt).catch(()=>false);if(!confirmed)console.warn('Confirmation recorded, but its schedule status needs verification:',error);}
+      if(Number(demo.journeyId)!==journeyId||Number(stage2State?.scheduledFor)!==scheduledAt)return;
+      parentConfirmationState=confirmed?true:null;
+      if(confirmed){clearConfirmationRef(journeyId);window.dispatchEvent(new Event('parent-confirmation-recorded'));}
+      else document.getElementById('scheduleSavedHelp').textContent='Confirmation was recorded, but its status needs verification. Use Retry Saving Confirmation Status; do not send again.';
+      showParentConfirmationGate();
+      conversationFingerprint='';window.dispatchEvent(new Event('ads-reply-attention-refresh-request'));
+      await loadMessengerConversation(inquiryId,false,saved.id);
+    }catch(error){
+      draft.busy=false;
+      appointmentDraftNotice(action==='copy'?'Message copied, but recording was not confirmed. Check Conversation before retrying. '+(error.message||''):'Send not confirmed. Check Messenger before trying again. '+(error.message||''));
+      refreshAppointmentDraftRow();
     }
   });
   window.addEventListener('ads-reply-attention-changed',()=>{if(!panel.classList.contains('open')||!conversationInquiryId)return;if(conversationLoading){conversationReloadQueued=true;return;}void loadMessengerConversation(conversationInquiryId,false);});
@@ -1410,7 +1457,7 @@ function initJourneyPanel(){
       document.getElementById('handoffCard').hidden=false;
       document.getElementById('stage2UpdateBlock').hidden=false;
       showParentConfirmationGate();
-      await recordAppointmentConfirmationAutomatically();
+      await loadParentConfirmation(scheduledFor);
       addTimeline(`${typeLabel} scheduled`,`${formatDate(date)} · ${formatTime(time)} · ${session}`);
       usageEvent('schedule_saved',{module:'journey_panel',action:'save',target:'journey',journey_id:demo.journeyId,franchise_id:demo.franchiseId||0,schedule_type:type,session_id:0,scheduled_for:scheduledFor});
       conversationFingerprint='';if(conversationInquiryId)await loadMessengerConversation(conversationInquiryId,false);
@@ -1514,45 +1561,7 @@ function initJourneyPanel(){
   }
   async function loadFollowUpDetail(){const data=await loadStage2Detail(false);if(!stage2State||!data)return;const journey=data.journey||{};const status=journey.current_status||'';const cancelled=status==='cancelled';const noShow=status==='no_show';document.getElementById('handoffCard').hidden=false;document.getElementById('journeyStage').textContent='Parent Follow-up';document.getElementById('journeyStatus').textContent=cancelled?'Appointment Cancelled':noShow?'No Show':status==='follow_up_due'?'Follow-up Due':friendlyStatus(status||'follow_up_due');document.getElementById('journeyNextAction').textContent=status==='parent_deciding'&&journey.next_action_type==='none'?'Waiting for Parent Decision':journey.next_action_type==='follow_up_parent'?'Follow Up With Parent':friendlyNext(journey.next_action_type,'followup');document.getElementById('handoffKicker').textContent=cancelled?'Cancelled Appointment':noShow?'No Show':'Parent Follow-up';document.getElementById('handoffTitle').textContent=cancelled?'Appointment Cancelled':noShow?'Parent Did Not Attend':'Follow Up With Parent';document.getElementById('scheduledWhen').textContent=status==='parent_deciding'&&journey.next_action_type==='none'?'Waiting for Parent Decision':Number(journey.next_action_at)?`Follow-up scheduled · ${formatDateTime(journey.next_action_at)}`:`Previous appointment · ${formatDateTime(stage2State.scheduledFor)}`;document.getElementById('handoffStatus').hidden=true;document.getElementById('handoffDetailsLabel').textContent=`${stage2State.typeLabel} Details`;document.getElementById('handoffDetailsToggle').hidden=false;document.getElementById('handoffDetailsToggle').setAttribute('aria-expanded','false');document.getElementById('copyMessageBlock').hidden=true;document.getElementById('copyFranchiseMessage').hidden=true;document.getElementById('franchiseHandoffActions').hidden=true;document.getElementById('waitingBlock').hidden=true;document.getElementById('stage2UpdateBlock').hidden=false;document.getElementById('appointmentActionLabel').textContent='What happens next?';document.getElementById('rescheduleAppointment').hidden=true;document.getElementById('cancelAppointment').hidden=true;document.getElementById('cancelAppointmentForm').hidden=true;document.getElementById('cancelAppointmentForm').style.display='none';document.getElementById('rescheduleForm').hidden=true;document.getElementById('rescheduleForm').style.display='none';document.getElementById('cancelReschedule').hidden=false;document.querySelector('#rescheduleForm button[type="submit"]').textContent='Reschedule';document.getElementById('notInterestedAction').hidden=false;setStage4DockDisabled(false);document.getElementById('stage4EnrolledButton').hidden=false;document.getElementById('stage4EnrolledButton').textContent=(Array.isArray(data.ad_journey_events)&&data.ad_journey_events.some(event=>event.event_type==='enrollment_reverted'))?'Re-Enroll':'Enrolled';document.getElementById('enrolledForm').hidden=true;document.getElementById('enrolledForm').style.display='none';document.getElementById('notInterestedForm').hidden=true;document.getElementById('notInterestedForm').style.display='none';const events=Array.isArray(data.ad_journey_events)?[...data.ad_journey_events]:[];events.sort((a,b)=>(Number(b.event_at)||Number(b.created_at)||0)-(Number(a.event_at)||Number(a.created_at)||0));renderStage4FollowUp(journey,events);renderRealTimeline(events);}
   async function loadEnrollmentDetail(){if(!demo.journeyId)return;try{const response=await fetch(`${API}/ad_journey_detail?journey_id=${encodeURIComponent(demo.journeyId)}`,{headers:{Authorization:`Bearer ${journeyToken}`}});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.message||data.error||'Unable to load journey details.');const journey=data.journey||{};renderConversationAiCost(journey);const inquiry=data.inquiry||{};const events=Array.isArray(data.ad_journey_events)?[...data.ad_journey_events]:[];events.sort((a,b)=>(Number(b.event_at)||Number(b.created_at)||0)-(Number(a.event_at)||Number(a.created_at)||0));const enrollmentEvent=events.find(event=>event.event_type==='enrollment_reported');const appointment=events.find(event=>event.event_type==='rescheduled'||event.event_type==='trial_scheduled'||event.event_type==='visit_scheduled');const baseSchedule=events.find(event=>event.event_type==='trial_scheduled'||event.event_type==='visit_scheduled');const details={...(baseSchedule?.event_data&&typeof baseSchedule.event_data==='object'?baseSchedule.event_data:{}),...(appointment?.event_data&&typeof appointment.event_data==='object'?appointment.event_data:{})};const child=details.child_name||'';const parent=inquiry.facebook_name||demo.facebookName||'Parent';demo.facebookName=parent;demo.franchiseId=Number(journey.franchise_id)||demo.franchiseId;document.getElementById('journeyParentName').textContent=parent;document.getElementById('journeyLocation').textContent=demo.location;setJourneyHeaderDetails(inquiry,child);document.getElementById('journeyStage').textContent='Enrolled';document.getElementById('journeyStatus').textContent=journey.current_status==='enrollment_reported'?'Enrollment Reported':String(journey.current_status||'Enrollment').replace(/_/g,' ').replace(/\b\w/g,char=>char.toUpperCase());document.getElementById('journeyNextAction').textContent=journey.next_action_type==='process_enrollment'?'Process Enrollment':friendlyNext(journey.next_action_type,'enrollment');document.getElementById('scheduleActionCard').hidden=true;document.getElementById('handoffCard').hidden=true;document.getElementById('enrollmentActionCard').hidden=false;document.getElementById('enrollmentReportedWhen').textContent=enrollmentEvent?`Reported · ${formatDateTime(Number(enrollmentEvent.event_at)||Number(enrollmentEvent.created_at)||0)}`:'Enrollment reported';document.getElementById('enrollmentReportedWhere').textContent=demo.location;document.getElementById('enrollmentReportedNote').textContent=enrollmentEvent?.note||'No enrollment note.';renderRealTimeline(events);}catch(error){document.getElementById('enrollmentActionCard').hidden=true;}}
-  /*   Xano owns the durable parent-confirmation state */
-  /*   Record the appointment confirmation through the same Xano APIs as Copy & Record Sent */
-  async function recordAppointmentConfirmationAutomatically(alreadyChecked=false){
-    const id=Number(demo.journeyId)||0,inquiryId=Number(panel.dataset.inquiryId)||0,x=stage2State;
-    if(!id||!inquiryId||panel.dataset.stage!=='scheduled'||!x||!Number(x.scheduledFor)||x.cancelled)return;
-    if(!lockOwned||lockPending||lockJourneyId!==id)return;
-    const scheduledAt=Number(x.scheduledFor),key=id+':'+scheduledAt;
-    if(autoConfirmationBusy===key)return;
-    autoConfirmationBusy=key;
-    try{
-      if(!alreadyChecked&&await readConfirmationStatus(id,scheduledAt)){
-        parentConfirmationState=true;clearConfirmationRef(id);showParentConfirmationGate();return;
-      }
-      const pending=pendingConfirmationRef(id,scheduledAt);
-      let messageId=Number(pending?.messageId)||0;
-      if(!messageId){
-        const when=new Date(scheduledAt),rows=['👩 Parent: '+x.parent,'👧 Child: '+x.child,'🎂 Age: '+x.age,'📅 Date: '+when.toLocaleDateString([],{month:'long',day:'numeric',year:'numeric'}),'🕘 Time: '+when.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})].join('\n');
-        const message='Hi po! ❤️ Thank you for sending your details.\n\nConfirmed na po ang '+x.typeLabel.toLowerCase()+' schedule ng little one ninyo! 🌷\n\n'+rows+'\n\nSee you po! 💕';
-        const response=await fetch(API+'/ad_reply_record_sent',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify({ad_journey_id:id,ad_inquiry_id:inquiryId,response_text:message,question_id:0,language:'taglish',reply_source:'parent_appointment_confirmation'})});
-        const result=await response.json().catch(()=>({}));
-        if(!response.ok||!result.message?.id)throw Error('The appointment message could not be recorded.');
-        messageId=Number(result.message.id);
-        rememberConfirmationRef(id,scheduledAt,messageId);
-      }
-      try{await saveConfirmationReference(id,scheduledAt,messageId);}
-      catch(error){if(!await readConfirmationStatus(id,scheduledAt).catch(()=>false))throw error;}
-      if(Number(demo.journeyId)!==id||panel.dataset.stage!=='scheduled'||Number(stage2State?.scheduledFor)!==scheduledAt)return;
-      parentConfirmationState=true;clearConfirmationRef(id);resetReplyAssistance();showParentConfirmationGate();
-      conversationFingerprint='';await loadMessengerConversation(inquiryId,false,messageId);
-      window.dispatchEvent(new Event('parent-confirmation-recorded'));
-    }catch(error){
-      if(Number(demo.journeyId)===id&&Number(stage2State?.scheduledFor)===scheduledAt){
-        const pending=pendingConfirmationRef(id,scheduledAt);
-        document.getElementById('scheduleSavedHelp').textContent=pending?'Schedule saved. The confirmation message was recorded, but its confirmation status needs repair. Do not record it again.':'Schedule saved, but the parent confirmation could not be recorded. Please check Conversation before retrying.';
-        console.warn('Automatic parent confirmation recording needs attention:',error);
-        showParentConfirmationGate();
-      }
-    }finally{if(autoConfirmationBusy===key)autoConfirmationBusy='';}
-  }
+  /*   Xano owns the durable parent-confirmation status; sending is an admin action. */
   /*   Prepare the already-saved appointment confirmation in the normal reply workflow */
   function prepareParentConfirmationDraft(){
     if(panel.dataset.stage!=='scheduled'||!stage2State||replyEditor.value.trim())return;
@@ -1565,15 +1574,15 @@ function initJourneyPanel(){
     replyLanguage.value='taglish';renderReplyLanguageButton();replyEditor.value=replyQuickFormDrafts.taglish;replyMatchLabel.textContent='Appointment confirmation · Review before sending';replyStatus.textContent='Review the appointment message before sending.';replyDrawer.open=true;showReplyMode();renderReplyOptions();updateReplyButton();
   }
   async function loadParentConfirmation(scheduledFor){
-    parentConfirmationState=null;const journeyId=Number(demo.journeyId);
+    const journeyId=Number(demo.journeyId),before=parentConfirmationState;
     try{
       const confirmed=await readConfirmationStatus(journeyId,scheduledFor);
       if(Number(demo.journeyId)!==journeyId||!stage2State||Number(stage2State.scheduledFor)!==Number(scheduledFor))return;
-      parentConfirmationState=confirmed;
+      parentConfirmationState=confirmed?true:(pendingConfirmationRef(journeyId,scheduledFor)?null:false);
       if(confirmed)clearConfirmationRef(journeyId);
-      else await recordAppointmentConfirmationAutomatically(true);
-    }catch(_){parentConfirmationState=null;}
+    }catch(_){if(Number(demo.journeyId)!==journeyId)return;parentConfirmationState=null;}
     showParentConfirmationGate();
+    if(before!==parentConfirmationState){conversationFingerprint='';if(conversationInquiryId){if(conversationLoading)conversationReloadQueued=true;else void loadMessengerConversation(conversationInquiryId,false);}}
   }
   function showParentConfirmationGate(){
     if(panel.dataset.stage!=='scheduled'||!stage2State)return;
@@ -1602,7 +1611,7 @@ function initJourneyPanel(){
     document.getElementById('handoffDetailsToggle').hidden=pending;
     document.getElementById('handoffKicker').textContent=pending?'Parent Confirmation':'Franchise Handoff';
     document.getElementById('handoffStatus').textContent=pending?'Parent confirmation needed':'Ready to send';
-    document.getElementById('journeyNextAction').textContent=pending?'Send Confirmation via Reply Assistant':'Send Details to Franchise';
+    document.getElementById('journeyNextAction').textContent=pending?'Review and Post Parent Confirmation':'Send Details to Franchise';
   }
   document.getElementById('shareParentConfirmation').addEventListener('click',async()=>{
     if(!stage2State)return;const x=stage2State,d=new Date(x.scheduledFor),journeyId=Number(demo.journeyId);
