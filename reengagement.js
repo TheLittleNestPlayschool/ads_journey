@@ -236,12 +236,13 @@ const aiConversation=detail.querySelector('#reConversation');
 let aiState={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};
 const hiddenAiTurns=new Set();
 const sentAiKeys=new Set();
+let latestOutgoingAt=0;
 const currentAiAttention=()=>window.adsReplyAttentionByJourney?.get(id)||null;
 function aiIsCurrent(item){return item&&Number(item.unanswered_count)>0&&!item.ai_discarded&&Number(item.ai_turn_id)>0&&Number(item.ai_trigger_message_id)===Number(item.last_parent_message_id)&&item.ai_processing_status==='completed'&&String(item.suggested_reply||'').trim()&&!hiddenAiTurns.has(Number(item.ai_turn_id));}
 function showAiDraft(){
 if(!aiConversation.isConnected||Number(detail.dataset.journeyId)!==id)return;
 aiConversation.querySelector('.re-ai-draft')?.remove();
-const item=currentAiAttention();if(!item||Number(item.unanswered_count)<1||sentAiKeys.has(Number(item.ai_turn_id)+':'+Number(item.last_parent_message_id)))return;
+const item=currentAiAttention();if(!item||Number(item.unanswered_count)<1||sentAiKeys.has(Number(item.ai_turn_id)+':'+Number(item.last_parent_message_id))||(Number(item.last_parent_at)>0&&latestOutgoingAt>=Number(item.last_parent_at)))return;
 const active=aiIsCurrent(item),turnId=Number(item.ai_turn_id)||0;
 if(active&&aiState.turnId!==turnId)aiState={turnId,text:String(item.suggested_reply).trim(),editing:false,posting:false,busy:false,notice:''};
 const bubble=document.createElement('div');bubble.className='re-ai-draft';
@@ -366,6 +367,7 @@ const target=detail.querySelector('#reConversation'),inquiryId=Number(journey.ad
 if(!inquiryId){target.innerHTML='<div class="reengagement-empty">No inquiry linked.</div>';return;}
 try{const res=await fetch(API+'/ad_messenger_conversation?ad_inquiry_id='+inquiryId,{headers:auth});if(!res.ok)throw Error('Conversation unavailable');
 const json=await res.json(),raw=Array.isArray(json.messages)?json.messages:(json.messages?.items||json.messages?.records||[]);
+latestOutgoingAt=raw.filter(m=>m.direction==='outbound'||m.direction==='outgoing').reduce((max,m)=>Math.max(max,Number(m.message_timestamp||m.created_at)||0),0);
 target.innerHTML=raw.length?raw.slice().sort((a,b)=>Number(a.message_timestamp||a.created_at)-Number(b.message_timestamp||b.created_at)).map(m=>'<div class="re-message '+(m.direction==='outbound'||m.direction==='outgoing'?'outgoing':'incoming')+'"><div>'+e(m.message_text||'')+'<small>'+e(date(m.message_timestamp||m.created_at))+'</small></div></div>').join(''):'<div class="reengagement-empty">No Messenger messages recorded for this inquiry yet.</div>';showAiDraft();target.scrollTop=target.scrollHeight;
 }catch(error){target.innerHTML='<div class="reengagement-empty">'+e(error.message)+'</div>';}
 }
