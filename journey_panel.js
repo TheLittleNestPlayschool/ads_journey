@@ -1048,7 +1048,7 @@ function initJourneyPanel(){
     nestHubDelivery.hidden=false;nestHubDelivery.dataset.state=state;
     label.textContent=state==='sent'?'✓ NestHub notified':state==='sending'?'Sending to NestHub…':state==='failed'?'NestHub delivery needs attention':'NestHub notification';
     message.textContent=text||'';
-    retry.hidden=state!=='failed';retry.disabled=nestHubDeliveryBusy;
+    retry.hidden=state!=='failed'||!nestHubDeliveryPayload;retry.disabled=nestHubDeliveryBusy;
   }
   function nestHubActionPayload({journeyId,franchiseId,eventId,type,scheduledFor,parent,child,ageYears,ageMonths,session,notes,facebook,form}){
     if(!journeyId||!franchiseId||!eventId||!scheduledFor)throw Error('The saved schedule is missing a journey, franchise, or schedule event identifier.');
@@ -1387,8 +1387,8 @@ function initJourneyPanel(){
     if(document.getElementById('scheduleDate').value!==values.date||getSelectedTime()!==values.time){captureNotice.textContent='The appointment date or time could not be transferred. Recheck the selected values.';return;}
     closeCaptureReview();
     document.getElementById('scheduleForm').scrollIntoView({block:'nearest',behavior:'smooth'});
-    /*   Use the existing schedule confirmation and API, not a separate saving path. */
-    document.getElementById('scheduleForm').requestSubmit(document.getElementById('journeySaveScheduleTop'));
+    /*   Leave the populated appointment editable; the admin explicitly approves Save Schedule. */
+    showScheduleFeedback('Details transferred. Review and edit the schedule, then click Save Schedule to approve.');
   }
   captureButton.addEventListener('click',()=>openCaptureReview(''));
   captureButton.title='Enter parent details manually while reading the conversation';
