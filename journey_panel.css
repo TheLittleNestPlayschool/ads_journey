@@ -948,3 +948,15 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel .journey-parent-identity-first h2{flex:0 1 auto;min-width:0;max-width:65%;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .journey-panel .journey-parent-identity-first #journeyLocation{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
 .journey-panel .journey-parent-identity>p{margin:0;color:#586b70;font-size:9px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/*   NestHub franchise delivery status — separate from Messenger handoff*/
+.journey-nesthub-delivery{display:flex;align-items:center;flex-wrap:wrap;gap:7px 9px;margin:7px 0 10px;padding:9px 11px;border:1px solid #c9dccb;background:#f2f7f0;border-radius:9px;color:#3c6147;font-size:10px;line-height:1.45}
+.journey-nesthub-delivery[hidden]{display:none!important}
+.journey-nesthub-delivery strong{font-size:11px;white-space:nowrap}
+.journey-nesthub-delivery span{flex:1;min-width:175px}
+.journey-nesthub-delivery[data-state="sending"]{background:#eff4f7;border-color:#c8dce7;color:#466477}
+.journey-nesthub-delivery[data-state="pending"]{background:#f8f2e9;border-color:#e7d3b9;color:#7f6241}
+.journey-nesthub-delivery[data-state="failed"]{background:#fdf0ed;border-color:#e8b6aa;color:#963f34}
+.journey-nesthub-delivery button{border:1px solid #be8379;background:#fff8f5;border-radius:7px;padding:6px 9px;color:#8e3e34;font-size:10px;font-weight:800;cursor:pointer}
+.journey-nesthub-delivery button[hidden]{display:none!important}
+.journey-nesthub-delivery button:disabled{opacity:.55;cursor:wait}
