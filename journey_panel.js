@@ -574,11 +574,9 @@ function initJourneyPanel(){
     if(selectedTime&&Number(selectedTime.slice(3))%5===0){
       const h=Number(selectedTime.slice(0,2));hour.value=String(h%12||12);minute.value=selectedTime.slice(3);period.value=h>=12?'PM':'AM';
     }else{hour.value='';minute.value='00';period.value='AM';}
+    /*   Keep location and preferred time in their parent-form fields, not appointment notes*/
     const noteParts=[];
-    const location=[item.address,item.city].map(x=>String(x||'').trim()).filter(Boolean).join(', ');
-    if(location)noteParts.push('Address: '+location);
     if(item.contact_number)noteParts.push('Contact number: '+item.contact_number);
-    if(rawTime)noteParts.push('Parent preferred time: '+rawTime);
     if(item.notes)noteParts.push(String(item.notes));
     document.getElementById('scheduleNotes').value=noteParts.join('\n');
     const kind=String(item.schedule_type||'').toLowerCase()==='visit'?'visit':'trial';
