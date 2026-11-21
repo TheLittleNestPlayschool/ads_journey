@@ -1073,8 +1073,7 @@ function initJourneyPanel(){
         schedule_type:type,
         notes:String(notes||'')
       },
-      scheduled_at:Number(scheduledFor),
-      due_at:Number(scheduledFor)+3*60*60*1000
+      scheduled_at:Number(scheduledFor)
     };
   }
   async function deliverNestHubAction(payload){
