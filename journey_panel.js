@@ -568,8 +568,8 @@ function initJourneyPanel(){
     const match24=rawTime.match(/^(1\d|2[0-3]|0?\d):([0-5]\d)(?::[0-5]\d)?(?:\s|$)/);
     const match12=rawTime.match(/^(1[0-2]|0?[1-9])(?::([0-5]\d))?\s*(am|pm)\b/i);
     let selectedTime='';
-    if(match24)selectedTime=match24[1].padStart(2,'0')+':'+match24[2];
-    else if(match12){const h=Number(match12[1])%12+(match12[3].toLowerCase()==='pm'?12:0);selectedTime=String(h).padStart(2,'0')+':'+(match12[2]||'00');}
+    if(match12){const h=Number(match12[1])%12+(match12[3].toLowerCase()==='pm'?12:0);selectedTime=String(h).padStart(2,'0')+':'+(match12[2]||'00');}
+    else if(match24)selectedTime=match24[1].padStart(2,'0')+':'+match24[2];
     const hour=document.getElementById('scheduleHour'),minute=document.getElementById('scheduleMinute'),period=document.getElementById('schedulePeriod');
     if(selectedTime&&Number(selectedTime.slice(3))%5===0){
       const h=Number(selectedTime.slice(0,2));hour.value=String(h%12||12);minute.value=selectedTime.slice(3);period.value=h>=12?'PM':'AM';
@@ -1036,7 +1036,7 @@ function initJourneyPanel(){
   stage4FollowUpBlock.innerHTML='<span>Managed parent follow-up</span><div><strong id="stage4FollowUpHeadline"></strong><p id="stage4FollowUpExplanation"></p></div><div id="stage4FinalFollowUp" class="waiting-block" hidden><strong id="stage4FinalFollowUpHeadline">Final follow-up</strong><p id="stage4FinalFollowUpExplanation"></p></div><div class="handoff-actions"><button id="stage4FollowUpSentButton" class="journey-primary" type="button" hidden>Confirm Follow-up Sent</button></div><p id="stage4FollowUpFeedback" role="status"></p>';
   document.getElementById('handoffCard').insertBefore(stage4FollowUpBlock,document.getElementById('parentConfirmationBlock'));
   /*   NestHub delivery is separate from the parent confirmation and manual franchise Messenger send. */
-  let nestHubDeliveryPayload=null,nestHubDeliveryBusy=false;
+  let nestHubDeliveryPayload=null,nestHubDeliveryBusy=false;const nestHubDeliveryInFlight=new Set();
   const nestHubConfirmedKeys=new Set();
   const nestHubKeyPrefix='ads_nesthub_action_confirmed_';
   const nestHubDelivery=document.createElement('div');
@@ -1082,15 +1082,15 @@ function initJourneyPanel(){
   async function deliverNestHubAction(payload){
     if(!payload)return;
     nestHubDeliveryPayload=payload;
-    if(nestHubDeliveryBusy)return;
     const key=payload.request_key,contextId=Number(demo.journeyId);
+    if(nestHubDeliveryInFlight.has(key))return;
     const stored=sessionStorage.getItem(nestHubKeyPrefix+key);
     if(nestHubConfirmedKeys.has(key)||stored==='sent'){
       nestHubConfirmedKeys.add(key);
       if(Number(demo.journeyId)===contextId)showNestHubDelivery('sent','The request is recorded for the franchise Main account. Manual Messenger copying is still available.');
       return;
     }
-    nestHubDeliveryBusy=true;
+    nestHubDeliveryInFlight.add(key);nestHubDeliveryBusy=true;
     if(Number(demo.journeyId)===contextId)showNestHubDelivery('sending','Saving the actionable request for this franchise…');
     try{
       const response=await window.fetch(NESTHUB_ACTION_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify(payload)});
@@ -1110,7 +1110,7 @@ function initJourneyPanel(){
       if(Number(demo.journeyId)===contextId&&nestHubDeliveryPayload?.request_key===key)showNestHubDelivery('sent','Sent to the franchise Main account in NestHub. Copy to Messenger separately while the transition is active.');
     }catch(error){
       if(Number(demo.journeyId)===contextId&&nestHubDeliveryPayload?.request_key===key)showNestHubDelivery('failed',(error?.message||'Delivery could not be verified.')+' The saved booking is unchanged; retry this notification only.');
-    }finally{nestHubDeliveryBusy=false;document.getElementById('journeyNestHubDeliveryRetry').disabled=false;}
+    }finally{nestHubDeliveryInFlight.delete(key);nestHubDeliveryBusy=nestHubDeliveryInFlight.size>0;document.getElementById('journeyNestHubDeliveryRetry').disabled=false;}
   }
   document.getElementById('journeyNestHubDeliveryRetry').addEventListener('click',()=>{if(nestHubDeliveryPayload&&!nestHubDeliveryBusy)void deliverNestHubAction(nestHubDeliveryPayload)});
   function restoreNestHubDelivery(data,appointment,baseSchedule,details,scheduledFor){
