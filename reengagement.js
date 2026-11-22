@@ -310,7 +310,7 @@ submit.disabled=true;enroll.disabled=true;if(reactivate)reactivate.disabled=true
 try{
 const res=await fetch(API+'/ad_journey_reactivate_closed',{method:'POST',headers:{...auth,'Content-Type':'application/json'},body:JSON.stringify({journey_id:id,note:'Parent enrolled while in Stage 1B; returning to active conversation for enrollment.'})});
 const first=await res.json().catch(()=>({}));
-if(!res.ok||first.error||first.code||String(first.ad_journey?.current_stage)!=='inquiry_follow_up')throw Error(first.message||first.error||'Could not prepare this journey for enrollment.');
+if(!res.ok||first.error||first.code||String(first.ad_journey?.current_stage)!=='inquiry')throw Error(first.message||first.error||'Could not prepare this journey for enrollment.');
 reactivated=true;
 const enrolledRes=await fetch(API+'/ad_journey_enrolled_stage1',{method:'POST',headers:{...auth,'Content-Type':'application/json'},body:JSON.stringify({journey_id:id,note})});
 const enrolledData=await enrolledRes.json().catch(()=>({}));
@@ -320,26 +320,26 @@ await releaseLock();
 if(typeof closeDashboardModals==='function')closeDashboardModals();else{modal.hidden=true;document.getElementById('dashboardModalBackdrop').hidden=true;}
 modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;
 if(typeof loadBoard==='function')await loadBoard();await refresh();
-}catch(error){status.textContent=(reactivated?'Journey moved to Stage 1A, but enrollment was not recorded. Open Stage 1A and use Enroll. ':'')+(error.message||'Unable to enroll.');if(reactivated){await releaseLock();if(typeof loadBoard==='function')await loadBoard();await refresh();}else{submit.disabled=!lockOwned;enroll.disabled=!lockOwned;if(reactivate)reactivate.disabled=!lockOwned;if(sent)sent.disabled=!lockOwned;}}
+}catch(error){status.textContent=(reactivated?'Journey moved to Stage 1, but enrollment was not recorded. Open Stage 1 and use Enroll. ':'')+(error.message||'Unable to enroll.');if(reactivated){await releaseLock();if(typeof loadBoard==='function')await loadBoard();await refresh();}else{submit.disabled=!lockOwned;enroll.disabled=!lockOwned;if(reactivate)reactivate.disabled=!lockOwned;if(sent)sent.disabled=!lockOwned;}}
 });
 detail.querySelector('[data-re-reactivate]').addEventListener('click',async()=>{
 const btn=detail.querySelector('[data-re-reactivate]'),sent=detail.querySelector('[data-re-send-shortcut]'),status=detail.querySelector('#reSendStatus');
 if(!lockOwned||lockId!==id){status.textContent='Take Control before reactivating this journey.';return;}
-if(!window.confirm('Reactivate '+name+' and move this journey to Stage 1A — Continue Conversation?'))return;
-btn.disabled=true;if(sent)sent.disabled=true;btn.textContent='Reactivating…';status.textContent='Moving journey to Stage 1A…';
+if(!window.confirm('Reactivate '+name+' and move this journey to Stage 1 — Inquiry?'))return;
+btn.disabled=true;if(sent)sent.disabled=true;btn.textContent='Reactivating…';status.textContent='Moving journey to Stage 1…';
 try{
-const res=await fetch(API+'/ad_journey_reactivate_closed',{method:'POST',headers:{...auth,'Content-Type':'application/json'},body:JSON.stringify({journey_id:id,note:'Reactivated from Stage 1B to Stage 1A — Continue Conversation.'})});
+const res=await fetch(API+'/ad_journey_reactivate_closed',{method:'POST',headers:{...auth,'Content-Type':'application/json'},body:JSON.stringify({journey_id:id,note:'Reactivated from Stage 1B to Stage 1 — Inquiry.'})});
 const result=await res.json().catch(()=>({}));
 if(!res.ok||result.error||result.code||!result.ad_journey)throw Error(result.message||result.error||'Unable to reactivate the journey.');
-if(String(result.ad_journey.current_stage)!=='inquiry_follow_up')throw Error('Xano did not return Stage 1A. Check the reactivation endpoint before trying again.');
+if(String(result.ad_journey.current_stage)!=='inquiry')throw Error('Xano did not return Stage 1. Check the reactivation endpoint before trying again.');
 await releaseLock();
 if(typeof closeDashboardModals==='function')closeDashboardModals();else{modal.hidden=true;document.getElementById('dashboardModalBackdrop').hidden=true;}
 modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;
 if(typeof loadBoard==='function')await loadBoard();
 await refresh();
-const card=document.querySelector('.journey-column[data-stage="inquiry-followup"] .journey-card[data-journey-id="'+CSS.escape(String(id))+'"]');
+const card=document.querySelector('.journey-column[data-stage="inquiry"] .journey-card[data-journey-id="'+CSS.escape(String(id))+'"]');
 if(card){card.click();return;}
-alert('Journey reactivated to Stage 1A, but its card is not visible on the board yet. Please refresh Ads Journey.');
+alert('Journey reactivated to Stage 1, but its card is not visible on the board yet. Please refresh Ads Journey.');
 }catch(error){status.textContent=error.message||'Unable to reactivate this journey.';btn.disabled=!lockOwned;btn.textContent='Reactivate';if(sent)sent.disabled=!lockOwned;}
 });
 detail.querySelector('[data-re-send-shortcut]').addEventListener('click',async()=>{
