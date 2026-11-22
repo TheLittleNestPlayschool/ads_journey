@@ -207,7 +207,7 @@ function initJourneyPanel(){
   manualDrawer.appendChild(manualForm);conversationView.appendChild(manualDrawer);
   /*   Keep the existing manual reply controls, but move them into the Conversation column. */
   const replyDrawer=document.createElement('details');replyDrawer.id='journeyOutgoingComposer';replyDrawer.className='journey-conversation-reply-drawer';
-  replyDrawer.innerHTML='<summary>Write a reply to parent</summary>';
+  replyDrawer.innerHTML='<summary>Manual reply (optional)</summary>';
   replyDrawer.appendChild(assistance.querySelector('.journey-assistance-editor-section'));
   conversationView.appendChild(replyDrawer);
   const manualText=document.getElementById('journeyManualMessageText'),manualStatus=document.getElementById('journeyManualMessageStatus'),manualSave=document.getElementById('journeyManualMessageSave');
