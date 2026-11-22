@@ -1,8 +1,8 @@
 /*   Stage 1B Re-engagement queue*/
 (()=>{
 const API='https://x58r-xped-p4y6.n7e.xano.io/api:0Ddhs4dT';
-const button=document.getElementById('reengagementButton'),badge=document.getElementById('reengagementDueBadge'),modal=document.getElementById('reengagementModal');
-if(!button||!modal)return;
+const modal=document.getElementById('reengagementModal');
+if(!modal)return;
 /*   Explicit inline visibility prevents a hidden queue from painting on reload*/
 modal.hidden=true;modal.style.display='none';
 const visibilityObserver=new MutationObserver(()=>{modal.style.display=modal.hidden?'none':'flex';});
@@ -10,17 +10,6 @@ visibilityObserver.observe(modal,{attributes:true,attributeFilter:['hidden']});
 const body=document.getElementById('reengagementRecords'),daily=document.getElementById('reDaily'),queue=document.getElementById('reengagementQueueView'),detail=document.getElementById('reengagementDetailView');
 let records=[],lockMap=new Map(),request=0,lockId=0,lockOwned=false,lockTimer=null,lockSeq=0;
 const justSent=new Set();
-/*   Stage 1B reply alerts are separate from the Stage 1A board column. */
-const stage1BReplies=()=>[...(window.adsReplyAttentionByJourney?.values()||[])].filter(item=>{const live=typeof boardJourneys!=='undefined'?boardJourneys.find(row=>Number(row.id)===Number(item.ad_journey_id)):null;return String(live?.current_stage||item.current_stage)==='inquiry_follow_up_pending'&&Number(item.unanswered_count)>0;});
-const hasParentReply=r=>Number(window.adsReplyAttentionByJourney?.get(Number(r.id))?.unanswered_count)>0;
-function renderStage1BReplyAlert(){
-let indicator=button.querySelector('.re-ai-attention-badge');
-if(!indicator){indicator=document.createElement('span');indicator.className='re-ai-attention-badge';indicator.style.cssText='padding:3px 8px;margin-left:6px;background:#07ab50;color:#fff;border-radius:12px;font-size:10px;font-weight:800';button.appendChild(indicator);}
-const count=stage1BReplies().length;indicator.hidden=!count;indicator.textContent=count+' NEED REPLY';indicator.title='Open the oldest Stage 1B parent awaiting a reply';
-}
-window.addEventListener('ads-reply-attention-changed',()=>{renderStage1BReplyAlert();if(!modal.hidden&&queue&&!queue.hidden)renderList();});
-window.addEventListener('ads-reply-attention-routing-refresh',renderStage1BReplyAlert);
-renderStage1BReplyAlert();
 const sendConfirm=document.createElement('div');sendConfirm.className='journey-change-overlay';sendConfirm.hidden=true;
 sendConfirm.innerHTML='<div class="journey-change-dialog" role="dialog" aria-modal="true" aria-labelledby="reFollowupConfirmTitle" aria-describedby="reFollowupConfirmDescription"><span class="journey-change-kicker">THE LITTLE NEST · ADS JOURNEY</span><h3 id="reFollowupConfirmTitle">Confirm Follow-up Sent</h3><p id="reFollowupConfirmDescription"></p><div class="journey-change-buttons"><button type="button" class="journey-change-cancel">Cancel</button><button type="button" class="journey-change-confirm">Confirm Sent</button></div></div>';
 document.body.appendChild(sendConfirm);
@@ -113,11 +102,10 @@ records=Array.isArray(data.stage1b_records)?data.stage1b_records:[];
 for(const sentId of justSent){const current=records.find(item=>Number(item.id)===sentId);if(!current||classify(current)==='awaiting')justSent.delete(sentId);}
 try{const lockRes=await fetch(API+'/ad_journey_lock_status?'+params,{cache:'no-store',headers:{Authorization:'Bearer '+localStorage.getItem('ads_journey_token')}});if(!lockRes.ok)throw Error('Lock status unavailable');const lockData=await lockRes.json();if(id!==request)return;lockMap=new Map((Array.isArray(lockData.journey_locks)?lockData.journey_locks:[]).map(item=>[Number(item.id),item]));}catch(_error){if(id!==request)return;lockMap=new Map();}
 draw(data);
-}catch(err){if(id!==request)return;badge.hidden=false;if(!modal.hidden)body.innerHTML='<div class="reengagement-empty">'+e(err.message)+'</div>';}
+}catch(err){if(id!==request)return;if(!modal.hidden)body.innerHTML='<div class="reengagement-empty">'+e(err.message)+'</div>';}
 }
 function draw(data){
 const due=Number(data.due_count)||0;
-badge.textContent=String(due);badge.hidden=false;
 document.getElementById('reDue').textContent=due;
 document.getElementById('reScheduled').textContent=Number(data.scheduled_count)||0;
 document.getElementById('reAwaiting').textContent=Number(data.awaiting_reply_count)||0;
@@ -143,7 +131,6 @@ const nextLabel=needsReply?'Reply to Parent':status==='awaiting'?'Reply deadline
 return divider+'<div class="reengagement-item journey-card reengagement-card '+(status==='due'?'urgent':'')+'" data-re-id="'+e(r.id)+'" role="button" tabindex="0"><div class="card-top"><strong>'+e(recordName(r)||'Journey #'+r.id)+'</strong>'+(lockedLabel?'<span class="re-card-lock">🔒 '+e(lockedLabel)+'</span>':'')+'<span class="priority '+(status==='due'?'overdue':status==='scheduled'?'upcoming':'waiting-parent')+'">'+label+'</span></div><p>'+e(location)+' · Re-engagement</p><div class="card-next"><span>'+nextLabel+'</span><time>'+e(date(r.next_action_at))+'</time></div></div>';
 }).join('');hydrateQueueNames();
 }
-button.addEventListener('click',async event=>{if(event.target.closest('.re-ai-attention-badge')){const first=stage1BReplies().sort((a,b)=>Number(a.last_parent_at)-Number(b.last_parent_at))[0];if(first)window.dispatchEvent(new CustomEvent('open-attention-journey',{detail:{journeyId:first.ad_journey_id,franchiseId:first.franchise_id}}));return;}await releaseLock();showQueueNotice('');modal.style.display='flex';modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();if(typeof openDashboardModal==='function')openDashboardModal('reengagementModal');else{modal.hidden=false;document.getElementById('dashboardModalBackdrop').hidden=false;}await refresh();});
 /*   Allow global Journey Search to open an active Stage 1B record directly*/
 window.openStage1BJourney=async (journeyId,options={})=>{
 const id=Number(journeyId)||0;if(!id)return false;
@@ -406,7 +393,6 @@ if(event.target.closest('.journey-card[data-journey-id]')&&!event.target.closest
 document.querySelector('#reengagementModal .modal-close')?.addEventListener('click',()=>releaseLock());
 document.addEventListener('visibilitychange',()=>{if(document.hidden){++lockSeq;stopRenewal();lockOwned=false;lockId=0;if(!detail.hidden)lockUI('Control must be checked when you return');}else if(!modal.hidden&&!detail.hidden){const id=Number(detail.dataset.journeyId);if(id)takeLock(id);}});
 window.addEventListener('journey-sync-refresh',refresh);
-badge.hidden=false;
 /*   The dashboard restores its franchise selection asynchronously. Load the count once it is ready, without opening the queue. */
 let countSelectionKey='';
 function refreshCountForSelection(){
