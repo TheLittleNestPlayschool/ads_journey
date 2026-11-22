@@ -967,3 +967,22 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel #scheduleActionCard #scheduleAppointmentFields #journeySaveScheduleTop:focus-visible{outline:3px solid #abc9d8;outline-offset:2px}
 .journey-panel #scheduleActionCard #scheduleAppointmentFields #journeySaveScheduleTop[hidden]{display:none!important}
 .journey-panel #scheduleActionCard #scheduleAppointmentFields #journeySaveScheduleTop:disabled{opacity:.58;cursor:wait}
+
+/*   Compact optional Messenger capture and manual reply composers */
+.journey-panel .journey-conversation-incoming-drawer,.journey-panel .journey-conversation-reply-drawer{max-height:none;overflow:visible}
+.journey-panel .journey-conversation-incoming-drawer>summary,.journey-panel .journey-conversation-reply-drawer>summary{padding:6px 11px;line-height:1.25}
+.journey-panel .journey-conversation-incoming-drawer .journey-manual-message-form{padding:6px 11px 8px;gap:5px}
+.journey-panel .journey-conversation-incoming-drawer .journey-manual-message-form>label{display:none}
+.journey-panel .journey-conversation-incoming-drawer #journeyManualMessageText{height:48px;min-height:48px;max-height:100px;padding:6px 9px;line-height:1.4}
+.journey-panel .journey-conversation-incoming-drawer .journey-time-override-row{margin:0;gap:5px}
+.journey-panel .journey-conversation-incoming-drawer .journey-time-override-label{flex:0 0 auto;min-width:0;max-width:none;margin-right:5px;font-size:9px}
+.journey-panel .journey-conversation-incoming-drawer .journey-time-override-row input[type=date]{height:27px}
+.journey-panel .journey-conversation-incoming-drawer .journey-time-entry input[type=text],.journey-panel .journey-conversation-incoming-drawer .journey-time-period{height:27px}
+.journey-panel .journey-conversation-incoming-drawer .journey-manual-message-footer{min-height:29px}
+.journey-panel .journey-conversation-incoming-drawer .journey-manual-message-footer button{padding:5px 10px}
+.journey-panel .journey-conversation-reply-drawer .journey-assistance-editor-section{padding:6px 11px 9px;gap:4px}
+.journey-panel .journey-conversation-reply-drawer .journey-reply-heading{margin-bottom:2px}
+.journey-panel .journey-conversation-reply-drawer #journeyAssistanceReplyText{height:49px!important;min-height:49px!important;max-height:100px!important;padding:6px 9px!important}
+.journey-panel .journey-conversation-reply-drawer .journey-reply-time-details{margin-top:3px}
+.journey-panel .journey-conversation-reply-drawer .journey-reply-time-details summary{padding:6px 9px}
+.journey-panel .journey-conversation-reply-drawer .journey-reply-copy-record{min-height:30px!important;padding:5px 8px!important;margin-top:3px!important}
