@@ -37,6 +37,7 @@ sendConfirm.querySelector('.journey-change-confirm').addEventListener('click',()
 sendConfirm.addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();event.stopPropagation();finishSendConfirmation(false);}});
 const queueNotice=document.createElement('p');queueNotice.className='re-queue-notice';queueNotice.setAttribute('role','status');queueNotice.hidden=true;queue.querySelector('.reengagement-queue-head')?.after(queueNotice);
 function showQueueNotice(message){queueNotice.textContent=message;queueNotice.hidden=!message;}
+async function closeStage1BToBoard(){await releaseLock();if(typeof closeDashboardModals==='function')closeDashboardModals();else{modal.hidden=true;document.getElementById('dashboardModalBackdrop').hidden=true;}modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;}
 const LOCK_RENEW_MS=60000;
 const nameCache=new Map(),nameAttempted=new Set(),nameQueued=new Set(),nameQueue=[];let nameObserver=null,nameLoading=0;
 function recordName(r){
@@ -113,6 +114,7 @@ const counts=data.daily_moved_counts||{};
 daily.innerHTML=Array.from({length:6},(_,i)=>'<div><small>'+keyDate(5-i)+'</small><strong>'+e(counts[String(i)]??0)+'</strong></div>').join('');
 renderList();
 }
+const hasParentReply=r=>Number(window.adsReplyAttentionByJourney?.get(Number(r.id))?.unanswered_count)>0;
 function renderList(){
 const priority={due:0,scheduled:1,awaiting:2};
 const locationOf=r=>{const f=typeof franchises!=='undefined'?franchises.find(f=>Number(f.id)===Number(r.franchise_id)):null;return String(f?(f.location||f.name||f.branch_name):'Franchise #'+r.franchise_id).trim();};
@@ -343,11 +345,10 @@ justSent.add(id);records=records.map(row=>Number(row.id)===id?{...row,current_st
 let historyWarning='';
 try{const logged=await refreshHistoryAfterSend(id,auth,events.length);if(!logged)historyWarning='Follow-up saved, but the new History event could not be confirmed. Check Xano event logging.';}
 catch(_error){historyWarning='Follow-up saved. History could not be reloaded; you can check it through Journey Search.';}
-await releaseLock();modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();renderList();showQueueNotice(historyWarning);
-await refresh();if(typeof loadBoard==='function')loadBoard();
+await closeStage1BToBoard();if(typeof loadBoard==='function')await loadBoard();
 }catch(error){status.textContent=error.message;}finally{btn.disabled=!lockOwned;}
 });
-back.addEventListener('click',async()=>{await releaseLock();modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();refresh();});
+back.addEventListener('click',closeStage1BToBoard);
 detail.querySelectorAll('[data-re-view]').forEach(tab=>tab.addEventListener('click',()=>{detail.querySelectorAll('[data-re-view]').forEach(t=>t.classList.toggle('selected',t===tab));detail.querySelector('#reConversation').hidden=tab.dataset.reView!=='conversation';detail.querySelector('#reHistory').hidden=tab.dataset.reView!=='history';}));
 async function loadConversation(){
 const target=detail.querySelector('#reConversation'),inquiryId=Number(journey.ad_inquiry_id||record.ad_inquiry_id);
@@ -372,7 +373,7 @@ status.textContent='Message sent.';send.reset();
 await loadConversation();await refresh();if(typeof loadBoard==='function')loadBoard();
 }catch(error){status.textContent=error.message||'Could not send message.';}finally{submit.disabled=false;}
 });
-}catch(error){detail.innerHTML='<div class="reengagement-empty">'+e(error.message)+'</div><button type="button" id="reBackFallback">← Back</button>';detail.querySelector('#reBackFallback').addEventListener('click',async()=>{await releaseLock();modal.classList.remove('re-detail-mode');queue.hidden=false;detail.hidden=true;positionQueue();renderList();});}
+}catch(error){detail.innerHTML='<div class="reengagement-empty">'+e(error.message)+'</div><button type="button" id="reBackFallback">← Back</button>';detail.querySelector('#reBackFallback').addEventListener('click',closeStage1BToBoard);}
 }
 document.addEventListener('click',event=>{if(event.target.closest('#franchiseCheckboxList')||event.target.closest('#selectAllFranchises')||event.target.closest('#clearAllFranchises'))setTimeout(refresh,450);});
 /*   Clear this queue when the normal Parent Journey workspace opens*/
