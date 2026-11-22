@@ -667,3 +667,6 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 .compact-journey-card .card-dates time{font-size:9px;white-space:normal}
 .compact-journey-card .parent-reply-banner,.journey-column[data-stage="inquiry"] .compact-journey-card .parent-reply-banner{grid-column:auto;grid-row:auto;margin:0 0 5px;padding:5px 6px;font-size:9px}
 .compact-journey-card .journey-card-lock{margin-top:5px;padding:3px 5px;font-size:9px}
+
+/*   Prevent crowded columns from shrinking card height; scroll the list instead */
+.journey-column-list>.journey-card.compact-journey-card,.journey-column-list>.location-divider{flex:0 0 auto}
