@@ -115,6 +115,7 @@ daily.innerHTML=Array.from({length:6},(_,i)=>'<div><small>'+keyDate(5-i)+'</smal
 renderList();
 }
 const hasParentReply=r=>Number(window.adsReplyAttentionByJourney?.get(Number(r.id))?.unanswered_count)>0;
+const hasReadyFollowup=r=>{const item=window.adsReplyAttentionByJourney?.get(Number(r.id));return Number(item?.unanswered_count)>0&&Number(item?.ai_trigger_event_id)>0&&String(item?.ai_processing_status)==='completed'&&!item?.ai_discarded&&Boolean(String(item?.suggested_reply||'').trim());};
 function renderList(){
 const priority={due:0,scheduled:1,awaiting:2};
 const locationOf=r=>{const f=typeof franchises!=='undefined'?franchises.find(f=>Number(f.id)===Number(r.franchise_id)):null;return String(f?(f.location||f.name||f.branch_name):'Franchise #'+r.franchise_id).trim();};
@@ -128,8 +129,8 @@ const location=locationOf(r);
 const divider=location.toLocaleLowerCase()===lastLocation.toLocaleLowerCase()?'':'<div class="location-divider">'+e(location)+'</div>';
 lastLocation=location;
 const lockedLabel=lockLabel(r);
-const status=classify(r),needsReply=hasParentReply(r),label=needsReply?'Parent Reply Needed':status==='due'?'Due now':status==='scheduled'?'Scheduled':'Awaiting Reply';
-const nextLabel=needsReply?'Reply to Parent':status==='awaiting'?'Reply deadline':'Follow Up With Parent';
+const status=classify(r),needsReply=hasParentReply(r),followupReady=hasReadyFollowup(r),label=followupReady?'Follow-up Ready':needsReply?'Parent Reply Needed':status==='due'?'Due now':status==='scheduled'?'Scheduled':'Awaiting Reply';
+const nextLabel=followupReady?'Review Follow-up':needsReply?'Reply to Parent':status==='awaiting'?'Reply deadline':'Follow Up With Parent';
 return divider+'<div class="reengagement-item journey-card reengagement-card '+(status==='due'?'urgent':'')+'" data-re-id="'+e(r.id)+'" role="button" tabindex="0"><div class="card-top"><strong>'+e(recordName(r)||'Journey #'+r.id)+'</strong>'+(lockedLabel?'<span class="re-card-lock">🔒 '+e(lockedLabel)+'</span>':'')+'<span class="priority '+(status==='due'?'overdue':status==='scheduled'?'upcoming':'waiting-parent')+'">'+label+'</span></div><p>'+e(location)+' · Re-engagement</p><div class="card-next"><span>'+nextLabel+'</span><time>'+e(date(r.next_action_at))+'</time></div></div>';
 }).join('');hydrateQueueNames();
 }
