@@ -986,3 +986,14 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel .journey-conversation-reply-drawer .journey-reply-time-details{margin-top:3px}
 .journey-panel .journey-conversation-reply-drawer .journey-reply-time-details summary{padding:6px 9px}
 .journey-panel .journey-conversation-reply-drawer .journey-reply-copy-record{min-height:30px!important;padding:5px 8px!important;margin-top:3px!important}
+
+/*   Readable conversation dates and compact Stage 1B timing context*/
+.journey-panel .journey-message-meta{font-size:11px;line-height:1.45;font-weight:600;color:#526372;margin-top:7px;letter-spacing:0}
+.journey-panel .journey-message-recorded{font-size:10px;line-height:1.45;font-weight:500;color:#63717d;margin-top:3px}
+.journey-conversation-date-break{display:flex;align-items:center;gap:12px;align-self:stretch;margin:6px 2px 2px;color:#435568;font-size:11px;font-weight:750;letter-spacing:.01em;text-align:center}
+.journey-conversation-date-break::before,.journey-conversation-date-break::after{content:"";flex:1;min-width:10px;height:1px;background:#d4dbdb}
+.journey-stage1b-timing{display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;margin:0 12px 0;padding:9px 12px;border:1px solid #d7e3db;border-radius:9px;background:#f1f6f2;color:#354b4a;font-size:11px;line-height:1.4;flex:none}
+.journey-stage1b-timing[hidden]{display:none!important}
+.journey-stage1b-timing span{display:inline-flex;gap:5px;align-items:baseline;min-width:0}
+.journey-stage1b-timing strong{font-weight:750;color:#37594d}
+.journey-stage1b-timing time{font-variant-numeric:tabular-nums;font-weight:650;color:#263f48}
