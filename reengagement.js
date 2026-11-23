@@ -405,3 +405,4 @@ refreshCountForSelection();
 const countReadyPoll=setInterval(refreshCountForSelection,1000);
 window.addEventListener('pageshow',refreshCountForSelection);
 })();
+
