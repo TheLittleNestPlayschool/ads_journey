@@ -278,7 +278,7 @@ if(!verification.ok)throw Error('Could not verify the latest parent message.');
 const list=await verification.json(),latest=(Array.isArray(list.replies)?list.replies:[]).find(x=>Number(x.ad_journey_id)===id);
 if(!aiIsCurrent(latest)||Number(latest.ai_turn_id)!==turnId||Number(latest.last_parent_message_id)!==Number(item.last_parent_message_id))throw Error('The parent conversation changed. Review the updated suggestion.');
 const endpoint=action==='copy'?'ad_reply_record_sent':'ad_messenger_send';
-const payload=action==='copy'?{ad_journey_id:id,ad_inquiry_id:Number(journey.ad_inquiry_id||record.ad_inquiry_id),response_text:message,question_id:0,language:'english',reply_source:'admin_composed'}:{journey_id:id,message_text:message};
+const payload=action==='copy'?{ad_journey_id:id,ad_inquiry_id:Number(journey.ad_inquiry_id||record.ad_inquiry_id),response_text:message,question_id:0,language:'english',reply_source:'admin_composed',ai_turn_id:turnId}:{journey_id:id,message_text:message};
 const response=await fetch(API+'/'+endpoint,{method:'POST',headers:{...auth,'Content-Type':'application/json'},body:JSON.stringify(payload)});
 const data=await response.json().catch(()=>({})),saved=action==='copy'?data.message:data.outgoing_message;
 if(!response.ok||data.success===false||!saved?.id||(action==='post'&&!String(saved.message_id||'').trim()))throw Error(typeof data.message==='string'?data.message:(data.error?.message||data.error||'Outgoing message was not confirmed.'));
