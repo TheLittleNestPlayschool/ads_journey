@@ -123,26 +123,28 @@ async function fetchLatestJourneyEventId(){const response=await fetch(`${API_BAS
 async function initializeJourneySync(){try{currentEventId=await fetchLatestJourneyEventId();}catch(error){currentEventId=null;}if(journeySyncTimer)clearInterval(journeySyncTimer);journeySyncTimer=setInterval(checkJourneySync,5000);}
 async function checkJourneySync(){if(journeySyncChecking||document.hidden)return;journeySyncChecking=true;try{const latestEventId=await fetchLatestJourneyEventId();if(latestEventId===null)return;if(currentEventId===null){currentEventId=latestEventId;return;}if(latestEventId!==currentEventId){await loadBoard();currentEventId=latestEventId;window.dispatchEvent(new CustomEvent('journey-sync-refresh',{detail:{latestEventId}}));}}catch(error){}finally{journeySyncChecking=false;}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkJourneySync();refreshReplyAttention();}});
-/*   Attention is based on unanswered incoming messages, not whether AI has finished.*/
+/*   Attention includes unanswered parent messages and generated Stage 1B follow-ups.*/
 function resolvedAttentionStage(item){const journey=boardJourneys.find(row=>Number(row.id)===Number(item.ad_journey_id));return normalizeStage(journey?.current_stage||item.current_stage);}
+function isStage1bFollowupAttention(item){return Number(item?.ai_trigger_event_id)>0&&resolvedAttentionStage(item)==='inquiry-follow-up-pending';}
+function attentionCardLabel(item){const count=Number(item?.unanswered_count)||0;return isStage1bFollowupAttention(item)?'● FOLLOW-UP READY':'● PARENT REPLY NEEDED'+(count>1?' · '+count+' MESSAGES':'');}
 function stageAttentionCount(stage){return [...replyAttentionByJourney.values()].filter(item=>resolvedAttentionStage(item)===stage).length;}
 function renderStageReplyAttention(){
   document.querySelectorAll('.journey-column').forEach(column=>{
     const stage=column.dataset.stage,header=column.querySelector('header');if(!header)return;
     const count=stageAttentionCount(stage);let button=header.querySelector('.stage-reply-attention');
     if(!button){button=document.createElement('button');button.type='button';button.className='stage-reply-attention';button.addEventListener('click',event=>{event.stopPropagation();openReplyAttentionStage(stage);});header.appendChild(button);}
-    header.classList.toggle('has-parent-replies',count>0);button.hidden=!count;button.textContent=count+' NEED '+(count===1?'REPLY':'REPLIES');
-    button.title=count+' unanswered parent '+(count===1?'conversation':'conversations')+' across all franchises — open oldest';
+    header.classList.toggle('has-parent-replies',count>0);button.hidden=!count;button.textContent=stage==='inquiry-follow-up-pending'?count+' NEED ATTENTION':count+' NEED '+(count===1?'REPLY':'REPLIES');
+    button.title=stage==='inquiry-follow-up-pending'?count+' Stage 1B conversation'+(count===1?'':'s')+' needing attention — open oldest':count+' unanswered parent '+(count===1?'conversation':'conversations')+' across all franchises — open oldest';
   });
 }
 function renderCardReplyAttention(){
   document.querySelectorAll('.journey-card[data-journey-id]').forEach(card=>{
-    const attention=replyAttentionByJourney.get(Number(card.dataset.journeyId)),count=Number(attention?.unanswered_count)||0;
+    const attention=replyAttentionByJourney.get(Number(card.dataset.journeyId));
     card.classList.toggle('parent-reply-needed',Boolean(attention));
     let badge=card.querySelector('.parent-reply-banner');
     if(!attention){badge?.remove();return;}
     if(!badge){badge=document.createElement('div');badge.className='parent-reply-banner';card.prepend(badge);}
-    badge.textContent='● PARENT REPLY NEEDED'+(count>1?' · '+count+' MESSAGES':'');
+    badge.textContent=attentionCardLabel(attention);
   });
 }
 async function openReplyAttentionStage(stage){
@@ -326,7 +328,7 @@ function buildJourneyCard(journey){
   }
   if(lockHtml)article.insertAdjacentHTML('beforeend',lockHtml);
   const attention=replyAttentionByJourney.get(Number(journey.id));
-  if(attention){article.classList.add('parent-reply-needed');const count=Number(attention.unanswered_count)||0;article.insertAdjacentHTML('afterbegin','<div class="parent-reply-banner">● PARENT REPLY NEEDED'+(count>1?' · '+count+' MESSAGES':'')+'</div>');}
+  if(attention){article.classList.add('parent-reply-needed');article.insertAdjacentHTML('afterbegin','<div class="parent-reply-banner">'+attentionCardLabel(attention)+'</div>');}
   return article;
 }
 function normalizeStage(stage){const value=String(stage||'inquiry').toLowerCase();if(value==='inquiry_follow_up')return'inquiry';if(value==='inquiry_follow_up_pending')return'inquiry-follow-up-pending';if(value==='awaiting_outcome')return'awaiting-outcome';if(value==='follow_up')return'followup';return value;}
