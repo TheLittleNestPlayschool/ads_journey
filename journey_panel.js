@@ -883,6 +883,11 @@ function initJourneyPanel(){
       });
       conversationList.replaceChildren(fragment);
       conversationList.scrollTop=initial||nearBottom?conversationList.scrollHeight:previousScroll;
+      /*   Finish the initial scroll after the panel and conversation have laid out. */
+      if(initial){
+        const scrollToLatest=()=>{if(request===conversationRequest&&conversationInquiryId===inquiryId&&panel.classList.contains('open'))conversationList.scrollTop=conversationList.scrollHeight;};
+        requestAnimationFrame(()=>requestAnimationFrame(scrollToLatest));
+      }
       showNewlySavedConversationMessage();
     }catch(error){if(request===conversationRequest&&initial)conversationNotice('Unable to load Messenger conversation. Please reopen this inquiry.');}
     finally{conversationLoading=false;if(conversationReloadQueued&&panel.classList.contains('open')&&conversationInquiryId){conversationReloadQueued=false;void loadMessengerConversation(conversationInquiryId,false);}}
