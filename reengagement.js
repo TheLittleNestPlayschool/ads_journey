@@ -228,6 +228,13 @@ const hiddenAiTurns=new Set();
 const sentAiKeys=new Set();
 let latestOutgoingAt=0;
 const currentAiAttention=()=>window.adsReplyAttentionByJourney?.get(id)||null;
+/*   Preserve the secure parent form link from the referenced AI turn when recording a follow-up.*/
+function aiParentFormUrl(item){
+const raw=String(item?.ai_turn_data?.parent_form_url||item?.parent_form_url||item?._ai_conversation_turn?.parent_form_url||'').trim();
+if(!raw)return '';
+try{const url=new URL(raw);return url.protocol==='https:'&&url.hostname==='forms.thelittle-nest.com'&&url.searchParams.has('t')?raw:'';}catch(_){return '';}
+}
+function aiMessageForSending(text,item){const message=String(text||'').trim(),url=aiParentFormUrl(item);return url&&!message.includes(url)?message+'\n\n'+url:message;}
 /*   Stage 1B follow-up drafts are proactive outreach, not unanswered parent messages.*/
 const isStage1bFollowupAttention=item=>Number(item?.ai_trigger_event_id)>0;
 function aiIsCurrent(item){return item&&Number(item.unanswered_count)>0&&!item.ai_discarded&&Number(item.ai_turn_id)>0&&(isStage1bFollowupAttention(item)||Number(item.ai_trigger_message_id)===Number(item.last_parent_message_id))&&item.ai_processing_status==='completed'&&String(item.suggested_reply||'').trim()&&!hiddenAiTurns.has(Number(item.ai_turn_id));}
@@ -243,6 +250,8 @@ const title=document.createElement('strong');title.textContent=active?'âœ¦ Lunaâ
 if(active){
 if(aiState.editing){const edit=document.createElement('textarea');edit.className='re-ai-editor';edit.value=aiState.text;bubble.appendChild(edit);}
 else{const text=document.createElement('p');text.textContent=aiState.text;bubble.appendChild(text);}
+const formUrl=aiParentFormUrl(item);
+if(formUrl&&!aiState.text.includes(formUrl)){const form=document.createElement('div');form.className='re-ai-form-link';form.style.overflowWrap='anywhere';const link=document.createElement('a');link.href=formUrl;link.textContent=formUrl;link.target='_blank';link.rel='noopener noreferrer';form.appendChild(link);bubble.appendChild(form);}
 const actions=document.createElement('div');actions.className='re-ai-actions';
 const labels=[['edit',aiState.editing?'Done Editing':'Edit'],['delete','Delete'],['copy','Copy'],['post','Post']];
 labels.forEach(([key,label])=>{const control=document.createElement('button');control.type='button';control.dataset.reAiAction=key;control.textContent=label;control.disabled=aiState.busy||!lockOwned||lockId!==id;actions.appendChild(control);});
@@ -270,7 +279,7 @@ if(!res.ok||data.ai_discarded!==true)throw Error(data.message||data.error||'Coul
 hiddenAiTurns.add(turnId);aiState={turnId:0,text:'',editing:false,posting:false,busy:false,notice:''};window.dispatchEvent(new Event('ads-reply-attention-refresh-request'));showAiDraft();return;
 }
 if(action==='copy'||action==='post'){
-const message=aiState.text.trim();if(!message)throw Error('Write a reply before sending.');
+const message=aiMessageForSending(aiState.text,item);if(!message)throw Error('Write a reply before sending.');
 if(action==='post'&&!await confirmAiPost()){aiState.busy=false;showAiDraft();return;}
 if(action==='copy'){
 try{if(!navigator.clipboard?.writeText)throw Error('Clipboard unavailable.');await navigator.clipboard.writeText(message);}
@@ -279,7 +288,7 @@ catch(error){aiState.busy=false;aiState.notice='Clipboard unavailable. Nothing w
 const verification=await fetch(API+'/ai_reply_attention',{cache:'no-store',headers:auth});
 if(!verification.ok)throw Error('Could not verify the latest parent message.');
 const list=await verification.json(),latest=(Array.isArray(list.replies)?list.replies:[]).find(x=>Number(x.ad_journey_id)===id);
-if(!aiIsCurrent(latest)||Number(latest.ai_turn_id)!==turnId||Number(latest.last_parent_message_id)!==Number(item.last_parent_message_id))throw Error('The parent conversation changed. Review the updated suggestion.');
+if(!aiIsCurrent(latest)||Number(latest.ai_turn_id)!==turnId||Number(latest.last_parent_message_id)!==Number(item.last_parent_message_id)||aiParentFormUrl(latest)!==aiParentFormUrl(item))throw Error('The parent conversation or form link changed. Review the updated suggestion.');
 const endpoint=action==='copy'?'ad_reply_record_sent':'ad_messenger_send';
 const payload=action==='copy'?{ad_journey_id:id,ad_inquiry_id:Number(journey.ad_inquiry_id||record.ad_inquiry_id),response_text:message,question_id:0,language:'english',reply_source:'admin_composed',ai_turn_id:turnId}:{journey_id:id,message_text:message};
 const response=await fetch(API+'/'+endpoint,{method:'POST',headers:{...auth,'Content-Type':'application/json'},body:JSON.stringify(payload)});
