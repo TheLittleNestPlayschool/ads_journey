@@ -642,10 +642,12 @@ function initJourneyPanel(){
   }
   /*   Pending Luna–Terra replies are drafts, never Messenger messages until admin confirms sending.*/
   function currentInlineAttention(){return window.adsReplyAttentionByJourney?.get(Number(demo.journeyId))||null;}
+  /*   Stage 1B follow-ups are new outreach, not unanswered parent messages.*/
+  function isStage1bFollowupAttention(attention){return Number(attention?.ai_trigger_event_id)>0;}
   function currentAiSuggestion(attention){
     if(!attention||Number(attention.unanswered_count)<1||attention.ai_discarded)return false;
     const turnId=Number(attention.ai_turn_id)||0;
-    return turnId>0&&Number(attention.ai_trigger_message_id)===Number(attention.last_parent_message_id)&&String(attention.ai_processing_status)==='completed'&&Boolean(String(attention.suggested_reply||'').trim())&&!inlineAiHiddenTurns.has(turnId);
+    return turnId>0&&(isStage1bFollowupAttention(attention)||Number(attention.ai_trigger_message_id)===Number(attention.last_parent_message_id))&&String(attention.ai_processing_status)==='completed'&&Boolean(String(attention.suggested_reply||'').trim())&&!inlineAiHiddenTurns.has(turnId);
   }
   /*   An appointment confirmation is a reviewable draft until the admin sends or records it. */
   function appointmentConfirmationText(x){
@@ -827,7 +829,7 @@ function initJourneyPanel(){
        const latestOutgoingAt=messages.filter(item=>item.direction==='outbound'||item.direction==='outgoing').reduce((max,item)=>Math.max(max,Number(item.message_timestamp||item.created_at)||0),0);
        const lastParentAt=Number(attention?.last_parent_at)||0;
        const alreadyReplied=lastParentAt>0&&latestOutgoingAt>=lastParentAt;
-       const hasUnanswered=attention&&Number(attention.unanswered_count)>0&&!inlineAiSentKeys.has(sentKey)&&!alreadyReplied;
+       const hasUnanswered=attention&&Number(attention.unanswered_count)>0&&!inlineAiSentKeys.has(sentKey)&&(!alreadyReplied||isStage1bFollowupAttention(attention));
       const aiKind=hasUnanswered?(currentAiSuggestion(attention)?'ai':'ai-waiting'):null;
       const timeline=[
         ...messages.map(item=>({kind:'message',item,timestamp:Number(item.message_timestamp||item.created_at)||0})),
@@ -835,7 +837,7 @@ function initJourneyPanel(){
         ...(aiKind?[{kind:aiKind,item:attention,timestamp:Math.max(Number(attention.last_parent_at)||0,...messages.map(m=>Number(m.message_timestamp||m.created_at)||0))+1}]:[]),
         ...(activeAppointmentDraft()?[{kind:'appointment-draft',item:appointmentDraft,timestamp:Math.max(Number(stage2State?.scheduleRecordedAt)||0,...messages.map(m=>Number(m.message_timestamp||m.created_at)||0),...forms.map(f=>Number(f.submitted_at||f.created_at)||0))+2}]:[])
       ].sort((a,b)=>a.timestamp-b.timestamp);
-      const fingerprint=JSON.stringify(timeline.map(({kind,item,timestamp})=>kind==='form'?[kind,item.id,item.status,timestamp]:kind==='ai'||kind==='ai-waiting'?[kind,item.ai_turn_id,item.last_parent_message_id,item.ai_trigger_message_id,item.suggested_reply,item.ai_discarded,timestamp]:kind==='appointment-draft'?[kind,item.journeyId,item.scheduledAt,timestamp]:[kind,item.id,item.message_id,item.message_text,item.direction,timestamp]));
+      const fingerprint=JSON.stringify(timeline.map(({kind,item,timestamp})=>kind==='form'?[kind,item.id,item.status,timestamp]:kind==='ai'||kind==='ai-waiting'?[kind,item.ai_turn_id,item.last_parent_message_id,item.ai_trigger_message_id,item.ai_trigger_event_id,item.suggested_reply,item.ai_discarded,timestamp]:kind==='appointment-draft'?[kind,item.journeyId,item.scheduledAt,timestamp]:[kind,item.id,item.message_id,item.message_text,item.direction,timestamp]));
       if(fingerprint===conversationFingerprint){showNewlySavedConversationMessage();return;}
       conversationFingerprint=fingerprint;
       if(!timeline.length){conversationNotice('No conversation messages or parent forms recorded yet.');return;}
