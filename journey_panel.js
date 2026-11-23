@@ -642,6 +642,13 @@ function initJourneyPanel(){
   }
   /*   Pending Luna–Terra replies are drafts, never Messenger messages until admin confirms sending.*/
   function currentInlineAttention(){return window.adsReplyAttentionByJourney?.get(Number(demo.journeyId))||null;}
+  /*   The AI turn owns the secure form URL; attention only carries its related read-only data.*/
+  function aiParentFormUrl(item){
+    const raw=String(item?.ai_turn_data?.parent_form_url||item?.parent_form_url||item?._ai_conversation_turn?.parent_form_url||'').trim();
+    if(!raw)return '';
+    try{const url=new URL(raw);return url.protocol==='https:'&&url.hostname==='forms.thelittle-nest.com'&&url.searchParams.has('t')?raw:'';}catch(_){return '';}
+  }
+  function aiMessageForSending(text,item){const message=String(text||'').trim(),url=aiParentFormUrl(item);return url&&!message.includes(url)?message+'\n\n'+url:message;}
   /*   Stage 1B follow-ups are new outreach, not unanswered parent messages.*/
   function isStage1bFollowupAttention(attention){return Number(attention?.ai_trigger_event_id)>0;}
   function currentAiSuggestion(attention){
@@ -685,6 +692,8 @@ function initJourneyPanel(){
       if(inlineAiDraft.turnId!==id)inlineAiDraft={turnId:id,text:String(attention.suggested_reply||'').trim(),editing:false,posting:false,busy:false,notice:''};
       if(inlineAiDraft.editing){const editor=document.createElement('textarea');editor.className='ai-draft-editor';editor.value=inlineAiDraft.text;editor.maxLength=5000;editor.setAttribute('aria-label','Edit pending AI reply');editor.addEventListener('input',()=>{if(inlineAiDraft.turnId===id)inlineAiDraft.text=editor.value;});bubble.appendChild(editor);}
       else{const text=document.createElement('div');text.className='journey-message-text ai-draft-text';text.textContent=inlineAiDraft.text;bubble.appendChild(text);}
+      const formUrl=aiParentFormUrl(attention);
+      if(formUrl&&!inlineAiDraft.text.includes(formUrl)){const form=document.createElement('div');form.className='journey-message-text ai-draft-form-link';form.style.overflowWrap='anywhere';const link=document.createElement('a');link.href=formUrl;link.textContent=formUrl;link.target='_blank';link.rel='noopener noreferrer';form.appendChild(link);bubble.appendChild(form);}
       const actions=document.createElement('div');actions.className='ai-draft-actions';
       const buttons=[['edit',inlineAiDraft.editing?'Done Editing':'Edit'],['delete','Delete'],['copy','Copy'],['post','Post']];
       buttons.forEach(([action,label])=>{const button=document.createElement('button');button.type='button';button.dataset.inlineAiAction=action;button.textContent=label;button.disabled=inlineAiDraft.busy;actions.appendChild(button);});
@@ -694,12 +703,12 @@ function initJourneyPanel(){
   }
   function refreshInlineAiRow(){const old=conversationList.querySelector('.ai-draft-row:not(.appointment-draft-row)');const attention=currentInlineAttention();if(!old||!attention)return;const waiting=!currentAiSuggestion(attention);old.replaceWith(inlineAiRow(attention,waiting));}
   function inlineAiNotice(message){inlineAiDraft.notice=String(message||'');const status=conversationList.querySelector('.ai-draft-row:not(.appointment-draft-row) .ai-draft-status');if(status)status.textContent=inlineAiDraft.notice;}
-  async function verifyInlineAiCurrent(id,lastParentMessageId){
+  async function verifyInlineAiCurrent(id,lastParentMessageId,expectedFormUrl){
     const response=await fetch(AI_REPLY_ATTENTION_ENDPOINT,{headers:{Authorization:'Bearer '+journeyToken},cache:'no-store'});
     if(!response.ok)throw Error('Could not verify latest parent messages. Nothing was recorded.');
     const data=await response.json(),items=Array.isArray(data.replies)?data.replies:[];
     const found=items.find(item=>Number(item.ad_journey_id)===Number(demo.journeyId));
-    if(!found||Number(found.ai_turn_id)!==id||Number(found.last_parent_message_id)!==lastParentMessageId||!currentAiSuggestion(found))throw Error('The parent conversation has changed. Review the updated suggestion.');
+    if(!found||Number(found.ai_turn_id)!==id||Number(found.last_parent_message_id)!==lastParentMessageId||!currentAiSuggestion(found)||aiParentFormUrl(found)!==expectedFormUrl)throw Error('The parent conversation or form link has changed. Review the updated suggestion.');
   }
   conversationList.addEventListener('click',async event=>{
     const button=event.target.closest('button[data-inline-ai-action]');if(!button)return;
@@ -720,7 +729,7 @@ function initJourneyPanel(){
       return;
     }
     if(action==='copy'||action==='post'){
-      const journeyId=Number(demo.journeyId),inquiryId=Number(conversationInquiryId),message=inlineAiDraft.text.trim(),lastParentId=Number(attention.last_parent_message_id);
+      const journeyId=Number(demo.journeyId),inquiryId=Number(conversationInquiryId),message=aiMessageForSending(inlineAiDraft.text,attention),lastParentId=Number(attention.last_parent_message_id);
       if(!message){inlineAiNotice('Write a reply before sending.');return;}
       if(action==='post'&&!await window.adsJourneyConfirmReplyPost())return;
       /*   Copy stays the production workflow: copy immediately, then record through Xano. */
@@ -730,7 +739,7 @@ function initJourneyPanel(){
       }
       inlineAiDraft.busy=true;inlineAiDraft.editing=false;inlineAiDraft.notice=action==='copy'?'Copied. Recording the reply…':'Sending directly to Messenger…';refreshInlineAiRow();
       try{
-        await verifyInlineAiCurrent(turnId,lastParentId);
+        await verifyInlineAiCurrent(turnId,lastParentId,aiParentFormUrl(attention));
         const endpoint=action==='copy'?'ad_reply_record_sent':'ad_messenger_send';
         const payload=action==='copy'?{ad_journey_id:journeyId,ad_inquiry_id:inquiryId,response_text:message,question_id:0,language:replyLanguage.value,reply_source:'admin_composed',ai_turn_id:turnId}:{journey_id:journeyId,message_text:message};
         const response=await fetch(API+'/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify(payload)});
@@ -837,7 +846,7 @@ function initJourneyPanel(){
         ...(aiKind?[{kind:aiKind,item:attention,timestamp:Math.max(Number(attention.last_parent_at)||0,...messages.map(m=>Number(m.message_timestamp||m.created_at)||0))+1}]:[]),
         ...(activeAppointmentDraft()?[{kind:'appointment-draft',item:appointmentDraft,timestamp:Math.max(Number(stage2State?.scheduleRecordedAt)||0,...messages.map(m=>Number(m.message_timestamp||m.created_at)||0),...forms.map(f=>Number(f.submitted_at||f.created_at)||0))+2}]:[])
       ].sort((a,b)=>a.timestamp-b.timestamp);
-      const fingerprint=JSON.stringify(timeline.map(({kind,item,timestamp})=>kind==='form'?[kind,item.id,item.status,timestamp]:kind==='ai'||kind==='ai-waiting'?[kind,item.ai_turn_id,item.last_parent_message_id,item.ai_trigger_message_id,item.ai_trigger_event_id,item.suggested_reply,item.ai_discarded,timestamp]:kind==='appointment-draft'?[kind,item.journeyId,item.scheduledAt,timestamp]:[kind,item.id,item.message_id,item.message_text,item.direction,timestamp]));
+      const fingerprint=JSON.stringify(timeline.map(({kind,item,timestamp})=>kind==='form'?[kind,item.id,item.status,timestamp]:kind==='ai'||kind==='ai-waiting'?[kind,item.ai_turn_id,item.last_parent_message_id,item.ai_trigger_message_id,item.ai_trigger_event_id,aiParentFormUrl(item),item.suggested_reply,item.ai_discarded,timestamp]:kind==='appointment-draft'?[kind,item.journeyId,item.scheduledAt,timestamp]:[kind,item.id,item.message_id,item.message_text,item.direction,timestamp]));
       if(fingerprint===conversationFingerprint){showNewlySavedConversationMessage();return;}
       conversationFingerprint=fingerprint;
       if(!timeline.length){conversationNotice('No conversation messages or parent forms recorded yet.');return;}
