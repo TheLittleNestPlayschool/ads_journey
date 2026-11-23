@@ -730,7 +730,7 @@ function initJourneyPanel(){
       try{
         await verifyInlineAiCurrent(turnId,lastParentId);
         const endpoint=action==='copy'?'ad_reply_record_sent':'ad_messenger_send';
-        const payload=action==='copy'?{ad_journey_id:journeyId,ad_inquiry_id:inquiryId,response_text:message,question_id:0,language:replyLanguage.value,reply_source:'admin_composed'}:{journey_id:journeyId,message_text:message};
+        const payload=action==='copy'?{ad_journey_id:journeyId,ad_inquiry_id:inquiryId,response_text:message,question_id:0,language:replyLanguage.value,reply_source:'admin_composed',ai_turn_id:turnId}:{journey_id:journeyId,message_text:message};
         const response=await fetch(API+'/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+journeyToken},body:JSON.stringify(payload)});
         const data=await response.json().catch(()=>({}));
         const saved=action==='copy'?data.message:data.outgoing_message;
