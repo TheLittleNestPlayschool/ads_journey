@@ -227,11 +227,13 @@ const hiddenAiTurns=new Set();
 const sentAiKeys=new Set();
 let latestOutgoingAt=0;
 const currentAiAttention=()=>window.adsReplyAttentionByJourney?.get(id)||null;
-function aiIsCurrent(item){return item&&Number(item.unanswered_count)>0&&!item.ai_discarded&&Number(item.ai_turn_id)>0&&Number(item.ai_trigger_message_id)===Number(item.last_parent_message_id)&&item.ai_processing_status==='completed'&&String(item.suggested_reply||'').trim()&&!hiddenAiTurns.has(Number(item.ai_turn_id));}
+/*   Stage 1B follow-up drafts are proactive outreach, not unanswered parent messages.*/
+const isStage1bFollowupAttention=item=>Number(item?.ai_trigger_event_id)>0;
+function aiIsCurrent(item){return item&&Number(item.unanswered_count)>0&&!item.ai_discarded&&Number(item.ai_turn_id)>0&&(isStage1bFollowupAttention(item)||Number(item.ai_trigger_message_id)===Number(item.last_parent_message_id))&&item.ai_processing_status==='completed'&&String(item.suggested_reply||'').trim()&&!hiddenAiTurns.has(Number(item.ai_turn_id));}
 function showAiDraft(){
 if(!aiConversation.isConnected||Number(detail.dataset.journeyId)!==id)return;
 aiConversation.querySelector('.re-ai-draft')?.remove();
-const item=currentAiAttention();if(!item||Number(item.unanswered_count)<1||sentAiKeys.has(Number(item.ai_turn_id)+':'+Number(item.last_parent_message_id))||(Number(item.last_parent_at)>0&&latestOutgoingAt>=Number(item.last_parent_at)))return;
+const item=currentAiAttention();if(!item||Number(item.unanswered_count)<1||sentAiKeys.has(Number(item.ai_turn_id)+':'+Number(item.last_parent_message_id))||(!isStage1bFollowupAttention(item)&&Number(item.last_parent_at)>0&&latestOutgoingAt>=Number(item.last_parent_at)))return;
 const active=aiIsCurrent(item),turnId=Number(item.ai_turn_id)||0;
 if(active&&aiState.turnId!==turnId)aiState={turnId,text:String(item.suggested_reply).trim(),editing:false,posting:false,busy:false,notice:''};
 const bubble=document.createElement('div');bubble.className='re-ai-draft';
