@@ -650,6 +650,8 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 .compact-journey-card .card-top strong,.journey-column[data-stage="inquiry"] .compact-journey-card .card-top strong{display:block;grid-column:auto;grid-row:auto;min-width:0;font-size:11.5px;line-height:1.25;font-weight:750;overflow-wrap:anywhere;color:#20344a}
 .compact-journey-card .card-top .priority{flex-shrink:0;padding:3px 6px;font-size:9px}
 .compact-journey-card p.compact-location,.journey-column[data-stage="inquiry"] .compact-journey-card p.compact-location{display:block!important;grid-column:auto;grid-row:auto;margin:3px 0 0!important;font-size:10px;line-height:1.25;color:#607589}
+/*   Quiet confirmation of the second Stage 1B follow-up; only visible after a recorded send */
+.journey-column[data-stage="inquiry-follow-up-pending"] .compact-journey-card .stage1b-second-sent{float:right;display:inline-block;margin:-1px 0 0 5px;padding:2px 5px;border:1px solid #bbd8cb;border-radius:5px;background:#e5f2eb;color:#27644c;font-size:9px;line-height:1.15;font-weight:750;white-space:nowrap}
 .compact-journey-card .journey-card-details{margin:7px -9px -8px;border-top:1px solid #e3e8ec;min-width:0}
 .compact-journey-card .journey-card-details summary{display:flex;align-items:center;justify-content:center;gap:5px;padding:5px 9px;min-height:22px;cursor:pointer;color:#5c7182;font-size:9px;font-weight:700;list-style:none;user-select:none}
 .compact-journey-card .journey-card-details summary::-webkit-details-marker{display:none}
