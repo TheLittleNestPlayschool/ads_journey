@@ -124,7 +124,7 @@ async function initializeJourneySync(){try{currentEventId=await fetchLatestJourn
 async function checkJourneySync(){if(journeySyncChecking||document.hidden)return;journeySyncChecking=true;try{const latestEventId=await fetchLatestJourneyEventId();if(latestEventId===null)return;if(currentEventId===null){currentEventId=latestEventId;return;}if(latestEventId!==currentEventId){await loadBoard();currentEventId=latestEventId;window.dispatchEvent(new CustomEvent('journey-sync-refresh',{detail:{latestEventId}}));}}catch(error){}finally{journeySyncChecking=false;}}
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkJourneySync();refreshReplyAttention();}});
 /*   Attention includes unanswered parent messages and generated Stage 1B follow-ups.*/
-function resolvedAttentionStage(item){const journey=boardJourneys.find(row=>Number(row.id)===Number(item.ad_journey_id));return normalizeStage(journey?.current_stage||item.current_stage);}
+function resolvedAttentionStage(item){const journey=boardJourneys.find(row=>Number(row.id)===Number(item.ad_journey_id));return journey?normalizeStage(journey.current_stage):null;}
 function isStage1bFollowupAttention(item){return Number(item?.ai_trigger_event_id)>0&&resolvedAttentionStage(item)==='inquiry-follow-up-pending';}
 function attentionCardLabel(item){const count=Number(item?.unanswered_count)||0;return isStage1bFollowupAttention(item)?'● FOLLOW-UP READY':'● PARENT REPLY NEEDED'+(count>1?' · '+count+' MESSAGES':'');}
 function stageAttentionCount(stage){return [...replyAttentionByJourney.values()].filter(item=>resolvedAttentionStage(item)===stage).length;}
