@@ -127,30 +127,31 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkJour
 function resolvedAttentionStage(item){const journey=boardJourneys.find(row=>Number(row.id)===Number(item.ad_journey_id));return journey?normalizeStage(journey.current_stage):null;}
 function isStage1bFollowupAttention(item){return Number(item?.ai_trigger_event_id)>0&&resolvedAttentionStage(item)==='inquiry-follow-up-pending';}
 function attentionCardLabel(item){const count=Number(item?.unanswered_count)||0;return isStage1bFollowupAttention(item)?'● FOLLOW-UP READY':'● PARENT REPLY NEEDED'+(count>1?' · '+count+' MESSAGES':'');}
-function stageAttentionCount(stage){return [...replyAttentionByJourney.values()].filter(item=>resolvedAttentionStage(item)===stage).length;}
+function stageAttentionCount(stage){if(stage==='followup'){const ids=new Set(boardJourneys.filter(isStage4Due).map(j=>Number(j.id)));replyAttentionByJourney.forEach(item=>{if(resolvedAttentionStage(item)==='followup')ids.add(Number(item.ad_journey_id));});return ids.size;}return [...replyAttentionByJourney.values()].filter(item=>resolvedAttentionStage(item)===stage).length;}
 function renderStageReplyAttention(){
   document.querySelectorAll('.journey-column').forEach(column=>{
     const stage=column.dataset.stage,header=column.querySelector('header');if(!header)return;
     const count=stageAttentionCount(stage);let button=header.querySelector('.stage-reply-attention');
     if(!button){button=document.createElement('button');button.type='button';button.className='stage-reply-attention';button.addEventListener('click',event=>{event.stopPropagation();openReplyAttentionStage(stage);});header.appendChild(button);}
-    header.classList.toggle('has-parent-replies',count>0);button.hidden=!count;button.textContent=stage==='inquiry-follow-up-pending'?count+' NEED ATTENTION':count+' NEED '+(count===1?'REPLY':'REPLIES');
-    button.title=stage==='inquiry-follow-up-pending'?count+' Stage 1B conversation'+(count===1?'':'s')+' needing attention — open oldest':count+' unanswered parent '+(count===1?'conversation':'conversations')+' across all franchises — open oldest';
+    header.classList.toggle('has-parent-replies',count>0);button.hidden=!count;button.textContent=['inquiry-follow-up-pending','followup'].includes(stage)?count+' NEED ATTENTION':count+' NEED '+(count===1?'REPLY':'REPLIES');
+    button.title=stage==='followup'?count+' Stage 4 journey'+(count===1?'':'s')+' needing admin attention — open oldest':stage==='inquiry-follow-up-pending'?count+' Stage 1B conversation'+(count===1?'':'s')+' needing attention — open oldest':count+' unanswered parent '+(count===1?'conversation':'conversations')+' across selected franchises — open oldest';
   });
 }
 function renderCardReplyAttention(){
   document.querySelectorAll('.journey-card[data-journey-id]').forEach(card=>{
     const attention=replyAttentionByJourney.get(Number(card.dataset.journeyId));
-    card.classList.toggle('parent-reply-needed',Boolean(attention));
+    const stage4Due=card.dataset.stage4Due==='true';
+    card.classList.toggle('parent-reply-needed',Boolean(attention)||stage4Due);
     let badge=card.querySelector('.parent-reply-banner');
-    if(!attention){badge?.remove();return;}
+    if(!attention&&!stage4Due){badge?.remove();return;}
     if(!badge){badge=document.createElement('div');badge.className='parent-reply-banner';card.prepend(badge);}
-    badge.textContent=attentionCardLabel(attention);
+    badge.textContent=attention?attentionCardLabel(attention):'● FOLLOW-UP DUE';
   });
 }
 async function openReplyAttentionStage(stage){
   const pending=[...replyAttentionByJourney.values()].filter(item=>resolvedAttentionStage(item)===stage).sort((a,b)=>(Number(a.last_parent_at)||0)-(Number(b.last_parent_at)||0));
-  if(!pending.length)return;
-  const first=pending[0];window.dispatchEvent(new CustomEvent('open-attention-journey',{detail:{journeyId:first.ad_journey_id,franchiseId:first.franchise_id}}));
+  if(pending.length){const first=pending[0];window.dispatchEvent(new CustomEvent('open-attention-journey',{detail:{journeyId:first.ad_journey_id,franchiseId:first.franchise_id}}));return;}
+  if(stage==='followup'){const due=boardJourneys.filter(isStage4Due).sort((a,b)=>(Number(a.next_action_at)||0)-(Number(b.next_action_at)||0));const first=due[0];if(first)window.dispatchEvent(new CustomEvent('open-attention-journey',{detail:{journeyId:first.id,franchiseId:first.franchise_id}}));}
 }
 async function refreshReplyAttention(){
   if(replyAttentionBusy||document.hidden)return;replyAttentionBusy=true;
@@ -275,10 +276,9 @@ function renderBoard(journeys){
       previousLocation=location;
     });
     [...list.querySelectorAll('.journey-card')].forEach(card=>{if(!desiredIds.has(card.dataset.journeyId))card.remove();});
-    const dueCount=stage==='followup'?rows.filter(journey=>isStage4Due(journey)).length:0,remainingCount=rows.length-dueCount;
     const count=column.querySelector('.column-count');
-    if(count&&count.textContent!==String(remainingCount))count.textContent=String(remainingCount);
-    if(stage==='followup'){const badge=column.querySelector('.stage4-due-badge'),number=column.querySelector('.stage4-due-number');if(number)number.textContent=String(dueCount);if(badge){badge.title=`${dueCount} due now`;badge.setAttribute('aria-label',`${dueCount} due now`);}if(count){count.title=`${remainingCount} not due`;count.setAttribute('aria-label',`${remainingCount} not due`);}}
+    if(count&&count.textContent!==String(rows.length))count.textContent=String(rows.length);
+    if(stage==='followup'&&count){count.title=`${rows.length} Stage 4 journeys`;count.setAttribute('aria-label',`${rows.length} Stage 4 journeys`);}
   });
   updateSummaryCounts();
   renderStageReplyAttention();renderCardReplyAttention();window.dispatchEvent(new Event('ads-reply-attention-routing-refresh'));
@@ -317,7 +317,7 @@ function buildJourneyCard(journey){
   const urgent=stage==='followup'?isStage4Due(journey):stage!=='scheduled'&&!enrolled&&nextAt>0&&nextAt<=Date.now();
   const updated=lastUpdateTimestamp(journey),originalAt=Number(inquiry.first_message_at)||Number(inquiry.created_at)||0;
   const article=document.createElement('article');article.className=`journey-card work-row${enrolled?'':' compact-journey-card'}${urgent?' urgent':''}${enrolled?' enrolled':''}`;
-  article.dataset.franchise=location;article.dataset.status=status;article.dataset.journeyId=String(journey.id);article.dataset.inquiryId=String(journey.ad_inquiry_id||'');article.dataset.franchiseId=String(journey.franchise_id||'');
+  article.dataset.franchise=location;article.dataset.status=status;article.dataset.journeyId=String(journey.id);article.dataset.inquiryId=String(journey.ad_inquiry_id||'');article.dataset.franchiseId=String(journey.franchise_id||'');article.dataset.stage4Due=String(stage==='followup'&&isStage4Due(journey));
   const name=escapeHtml(inquiry.facebook_name||`Journey #${journey.id}`),lockText=journeyLockLabel(journey),lockHtml=lockText?`<div class="journey-card-lock" aria-label="${escapeHtml(lockText)}">🔒 ${escapeHtml(lockText)}</div>`:'';
   const secondFollowupSentAt=stage==='inquiry-follow-up-pending'?(Number(journey.stage1b_followup2_sent_at)||0):0;
   const secondFollowupBadge=secondFollowupSentAt>0?`<span class="stage1b-second-sent" title="Second follow-up confirmed sent · ${escapeHtml(formatCardTimestamp(secondFollowupSentAt))}">✓ 2nd sent</span>`:'';
@@ -330,7 +330,7 @@ function buildJourneyCard(journey){
   }
   if(lockHtml)article.insertAdjacentHTML('beforeend',lockHtml);
   const attention=replyAttentionByJourney.get(Number(journey.id));
-  if(attention){article.classList.add('parent-reply-needed');article.insertAdjacentHTML('afterbegin','<div class="parent-reply-banner">'+attentionCardLabel(attention)+'</div>');}
+  if(attention||(stage==='followup'&&isStage4Due(journey))){article.classList.add('parent-reply-needed');article.insertAdjacentHTML('afterbegin','<div class="parent-reply-banner">'+(attention?attentionCardLabel(attention):'● FOLLOW-UP DUE')+'</div>');}
   return article;
 }
 function normalizeStage(stage){const value=String(stage||'inquiry').toLowerCase();if(value==='inquiry_follow_up')return'inquiry';if(value==='inquiry_follow_up_pending')return'inquiry-follow-up-pending';if(value==='awaiting_outcome')return'awaiting-outcome';if(value==='follow_up')return'followup';return value;}
