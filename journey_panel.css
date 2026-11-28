@@ -913,6 +913,12 @@ body:has(#journeyPanel.open){overflow:hidden}
 .journey-panel .ai-draft-actions button:hover{background:#e5f1e9}
 .journey-panel .ai-draft-actions button[data-inline-ai-action="post"],.journey-panel .ai-draft-actions button[data-inline-ai-action="confirm"]{background:#15824d;border-color:#0d7240;color:#fff}
 .journey-panel .ai-draft-actions button[data-inline-ai-action="post"]:hover,.journey-panel .ai-draft-actions button[data-inline-ai-action="confirm"]:hover{background:#086b3b}
+/*   Stage 4 admin follow-up reuses the inline draft visuals without involving AI */
+.journey-panel #scheduleSavedNotice[hidden]{display:none!important}
+.journey-panel .stage4-manual-draft-row .stage4-draft-placeholder{color:#7b8d83;font-style:italic}
+.journey-panel .ai-draft-actions button[data-stage4-draft-action="post"]{background:#15824d;border-color:#0d7240;color:#fff}
+.journey-panel .ai-draft-actions button[data-stage4-draft-action="post"]:hover{background:#086b3b}
+.journey-panel .ai-draft-actions button[data-stage4-draft-action="post"]:disabled{opacity:.5;cursor:not-allowed}
 .journey-panel .ai-draft-actions button[data-inline-ai-action="delete"]{border-color:#cb9c99;color:#8c3733}
 .journey-panel .ai-draft-actions button:disabled{opacity:.55;cursor:wait}
 .journey-panel .ai-draft-status{font-size:11px;line-height:1.45;color:#466c58;margin-top:9px}
