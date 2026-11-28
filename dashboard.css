@@ -670,6 +670,8 @@ body{background:linear-gradient(135deg,#101e30,#172d40 58%,#263d50)}
 .compact-journey-card .parent-reply-banner,.journey-column[data-stage="inquiry"] .compact-journey-card .parent-reply-banner{grid-column:auto;grid-row:auto;margin:0 0 5px;padding:5px 6px;font-size:9px}
 /*   Green Stage 1B follow-up ready already signals action; retain red Due now only for overdue cards without a ready reply */
 .journey-column[data-stage="inquiry-follow-up-pending"] .journey-card.parent-reply-needed .priority.overdue{display:none}
+/*   Stage 4 due actions use the same green attention card treatment as Stages 1/1B */
+.journey-column[data-stage="followup"] .journey-card.parent-reply-needed .priority.overdue{display:none}
 .compact-journey-card .journey-card-lock{margin-top:5px;padding:3px 5px;font-size:9px}
 
 /*   Prevent crowded columns from shrinking card height; scroll the list instead */
